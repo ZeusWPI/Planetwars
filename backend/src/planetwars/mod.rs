@@ -21,11 +21,11 @@ pub struct PlanetWarsGame {
 
 impl PlanetWarsGame {
 
-    fn dispatch_state(&self, updates: &mut Vec<game::Update>, ) {
+    fn dispatch_state(&self, were_alive: Vec<usize>, updates: &mut Vec<game::Update>, ) {
         let state = pw_serializer::serialize(&self.state);
         println!("{}", serde_json::to_string(&state).unwrap());
 
-        for player in self.state.players.iter() {
+        for player in self.state.players.iter().filter(|p| were_alive.contains(&p.id)) {
             let state = pw_serializer::serialize_rotated(&self.state, player.id);
             let state = if player.alive {
                 proto::ServerMessage::GameState(state)
@@ -36,6 +36,10 @@ impl PlanetWarsGame {
             updates.push(
                 game::Update::Player((player.id as u64).into(), serde_json::to_vec(&state).unwrap())
             );
+
+            if !player.alive {
+                updates.push(game::Update::Kick((player.id as u64).into()));
+            }
         }
     }
 
@@ -113,11 +117,13 @@ impl game::GameController for PlanetWarsGame {
     fn step<'a>(&mut self, turns: Vec<game::PlayerTurn<'a>>) -> Vec<game::Update> {
         let mut updates = Vec::new();
 
+        let alive = self.state.living_players();
+
         self.state.repopulate();
         self.execute_commands(turns, &mut updates);
         self.state.step();
 
-        self.dispatch_state(&mut updates);
+        self.dispatch_state(alive, &mut updates);
 
         updates
     }
