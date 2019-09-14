@@ -1,3 +1,7 @@
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
 
 extern crate tokio;
 extern crate futures;
@@ -10,6 +14,9 @@ use mozaic::messaging::types::*;
 use mozaic::errors;
 
 use mozaic::modules::{Aggregator, Steplock, game};
+
+
+mod planetwars;
 
 // Load the config and start the game.
 fn main() {

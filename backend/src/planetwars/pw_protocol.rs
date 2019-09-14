@@ -4,7 +4,7 @@ pub struct Expedition {
     pub ship_count: u64,
     pub origin: String,
     pub destination: String,
-    pub owner: u32,
+    pub owner: usize,
     pub turns_remaining: u64,
 }
 
@@ -13,7 +13,7 @@ pub struct Planet {
     pub ship_count: u64,
     pub x: f64,
     pub y: f64,
-    pub owner: Option<u32>,
+    pub owner: Option<usize>,
     pub name: String,
 }
 
@@ -28,11 +28,6 @@ pub struct Command {
     pub origin: String,
     pub destination: String,
     pub ship_count: u64,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Map {
-    pub planets: Vec<Planet>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -81,25 +76,4 @@ pub enum ServerMessage {
     PlayerAction(PlayerAction),
     /// The game is over, and this is the concluding state.
     FinalState(State),
-}
-
-// lobby messages
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-#[serde(tag = "type", content = "content")]
-pub enum ControlMessage {
-    PlayerConnected {
-        player_id: u64,
-    },
-    PlayerDisconnected {
-        player_id: u64,
-    },
-    GameState(State),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-#[serde(tag = "type", content = "content")]
-pub enum LobbyCommand {
-    StartMatch,
 }

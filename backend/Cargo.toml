@@ -11,3 +11,6 @@ mozaic = { git = "https://github.com/ajuvercr/MOZAIC" }
 tokio = "0.1.22"
 rand = { version = "0.6.5", default-features = true }
 futures = "0.1.28"
+serde = "1.0.100"
+serde_derive = "1.0.100"
+serde_json = "1.0"

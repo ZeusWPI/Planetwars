@@ -1,4 +1,3 @@
-use server::ClientId;
 
 /// The planet wars game rules.
 pub struct PlanetWars {
@@ -14,7 +13,7 @@ pub struct PlanetWars {
 
 #[derive(Debug)]
 pub struct Player {
-    pub id: ClientId,
+    pub id: usize,
     pub alive: bool,
 }
 
@@ -136,7 +135,7 @@ impl PlanetWars {
         return remaining < 2 || self.turn_num >= self.max_turns;
     }
 
-    pub fn living_players(&self) -> Vec<ClientId> {
+    pub fn living_players(&self) -> Vec<usize> {
         self.players.iter().filter_map(|p| {
             if p.alive {
                 Some(p.id)

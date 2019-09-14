@@ -7,10 +7,6 @@ use serde_json;
 use super::pw_protocol as proto;
 use super::pw_rules::*;
 
-// TODO
-use server::ClientId;
-
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub map_file: String,
@@ -18,7 +14,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn create_game(&self, clients: Vec<ClientId>) -> PlanetWars {
+    pub fn create_game(&self, clients: Vec<usize>) -> PlanetWars {
         let planets = self.load_map(clients.len());
         let players = clients.into_iter()
             .map(|client_id| Player { id: client_id, alive: true })
@@ -45,7 +41,7 @@ impl Config {
                 let owner = planet.owner.and_then(|owner_num| {
                     // in the current map format, player numbers start at 1.
                     // TODO: we might want to change this.
-                    let player_num = owner_num as usize - 1;
+                    let player_num = owner_num - 1;
                     // ignore players that are not in the game
                     if player_num < num_players {
                         Some(player_num)
@@ -69,11 +65,16 @@ impl Config {
             }).collect();
     }
 
-    fn read_map(&self) -> io::Result<proto::Map> {
+    fn read_map(&self) -> io::Result<Map> {
         let mut file = File::open(&self.map_file)?;
         let mut buf = String::new();
         file.read_to_string(&mut buf)?;
         let map = serde_json::from_str(&buf)?;
         return Ok(map);
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Map {
+    pub planets: Vec<proto::Planet>,
 }
