@@ -15,9 +15,18 @@ use wasm_bindgen::prelude::*;
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
+pub struct Location {
+    x: f64,
+    y: f64,
+    angle: f64,
+}
+
+#[wasm_bindgen]
 pub struct Game {
     states : Vec<types::State>,
+
     /* put extra shit here */
+    current_turn: Vec<Location>,
 }
 
 #[wasm_bindgen]
@@ -31,12 +40,27 @@ impl Game {
         ).collect();
 
         Self {
-            states
+            states,
+            current_turn: Vec::new()
         }
     }
 
     pub fn turn_count(&self) -> usize {
         self.states.len()
+    }
+
+    pub fn add_location(&mut self, x: f64, y: f64, angle: f64) {
+        self.current_turn.push(
+            Location { x, y, angle}
+        );
+    }
+
+    pub fn location_count(&self) -> usize {
+        self.current_turn.len()
+    }
+
+    pub fn locations(&self) -> *const Location {
+        self.current_turn.as_ptr()
     }
 }
 
