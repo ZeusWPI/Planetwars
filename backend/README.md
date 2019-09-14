@@ -1,0 +1,3 @@
+# Planetwars backend
+
+The main planetwars server that instanciates planetwars matches etc...
