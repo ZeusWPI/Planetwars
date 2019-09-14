@@ -12,7 +12,7 @@ mod pw_rules;
 mod pw_protocol;
 use pw_protocol::{ self as proto, CommandError };
 use pw_rules::Dispatch;
-
+pub use pw_config::Config;
 
 pub struct PlanetWarsGame {
     state: pw_rules::PlanetWars,
@@ -20,6 +20,14 @@ pub struct PlanetWarsGame {
 }
 
 impl PlanetWarsGame {
+
+    pub fn new(state: pw_rules::PlanetWars) -> Self {
+        let planet_map = state.planets.iter().map(|p| (p.name.clone(), p.id)).collect();
+
+        Self {
+            state, planet_map
+        }
+    }
 
     fn dispatch_state(&self, were_alive: Vec<usize>, updates: &mut Vec<game::Update>, ) {
         let state = pw_serializer::serialize(&self.state);

@@ -14,9 +14,9 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn create_game(&self, clients: Vec<usize>) -> PlanetWars {
-        let planets = self.load_map(clients.len());
-        let players = clients.into_iter()
+    pub fn create_game(&self, clients: usize) -> PlanetWars {
+        let planets = self.load_map(clients);
+        let players = (0..clients)
             .map(|client_id| Player { id: client_id, alive: true })
             .collect();
 
