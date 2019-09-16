@@ -1,5 +1,6 @@
 import { Game } from "planetwars";
 import { memory } from "planetwars/plantwars_bg"
+import { Shader } from "./webgl/shader"
 
 const URL = window.location.origin+window.location.pathname;
 const LOCATION = URL.substring(0, URL.lastIndexOf("/") + 1);

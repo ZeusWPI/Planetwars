@@ -5,6 +5,8 @@ use serde_json;
 
 use std::collections::HashMap;
 use std::convert::TryInto;
+use std::fs::File;
+use std::io::Write;
 
 mod pw_config;
 mod pw_serializer;
@@ -17,25 +19,30 @@ pub use pw_config::Config;
 pub struct PlanetWarsGame {
     state: pw_rules::PlanetWars,
     planet_map: HashMap<String, usize>,
+    log_file: File
 }
 
 impl PlanetWarsGame {
 
     pub fn new(state: pw_rules::PlanetWars) -> Self {
         let planet_map = state.planets.iter().map(|p| (p.name.clone(), p.id)).collect();
+        let file = File::create("game.json").unwrap();
 
         Self {
-            state, planet_map
+            state, planet_map,
+            log_file: file,
         }
     }
 
-    fn dispatch_state(&self, were_alive: Vec<usize>, updates: &mut Vec<game::Update>, ) {
+    fn dispatch_state(&mut self, were_alive: Vec<usize>, updates: &mut Vec<game::Update>, ) {
         let state = pw_serializer::serialize(&self.state);
-        println!("{}", serde_json::to_string(&state).unwrap());
+        write!(self.log_file, "{}\n", serde_json::to_string(&state).unwrap()).unwrap();
+
+        // println!("{}", serde_json::to_string(&state).unwrap());
 
         for player in self.state.players.iter().filter(|p| were_alive.contains(&p.id)) {
             let state = pw_serializer::serialize_rotated(&self.state, player.id);
-            let state = if player.alive {
+            let state = if player.alive && !self.state.is_finished() {
                 proto::ServerMessage::GameState(state)
             } else {
                 proto::ServerMessage::FinalState(state)
@@ -45,7 +52,7 @@ impl PlanetWarsGame {
                 game::Update::Player((player.id as u64).into(), serde_json::to_vec(&state).unwrap())
             );
 
-            if !player.alive {
+            if !player.alive || self.state.is_finished() {
                 updates.push(game::Update::Kick((player.id as u64).into()));
             }
         }

@@ -43,7 +43,7 @@ pub fn run(args : Vec<String>) {
 
     let ids: HashMap<util::Identifier, util::PlayerId> = (0..number_of_clients).map(|x| (rand::thread_rng().gen::<u64>().into(), x.into())).collect();
 
-    let config = planetwars::Config { map_file: String::from("map.json"), max_turns: 500 };
+    let config = planetwars::Config { map_file: String::from("hex.json"), max_turns: 500 };
     let game = planetwars::PlanetWarsGame::new(config.create_game(number_of_clients as usize));
 
     println!("Tokens:");
