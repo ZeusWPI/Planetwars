@@ -2,7 +2,8 @@
   "name": "create-wasm-app",
   "version": "0.1.0",
   "description": "create an app to consume rust-generated wasm packages",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "webpack --config webpack.config.js",
     "start": "webpack-dev-server"
@@ -18,6 +19,9 @@
     "webpack",
     "mozaic"
   ],
+  "dependencies": {
+    "planetwars": "file:../pkg"
+  },
   "author": "Arthur Vercruysse <arthur.vercruysse@outlook.com>",
   "license": "(MIT OR Apache-2.0)",
   "bugs": {
@@ -25,8 +29,9 @@
   },
   "homepage": "https://github.com/ajuvercr/Planetwars#Readme",
   "devDependencies": {
-    "planetwars": "file:../pkg",
     "webpack": "^4.29.3",
+    "ts-loader": "^6.0.2",
+    "typescript": "^3.5.2",
     "webpack-cli": "^3.1.0",
     "webpack-dev-server": "^3.1.5",
     "copy-webpack-plugin": "^5.0.0"
