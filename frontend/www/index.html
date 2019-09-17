@@ -3,9 +3,12 @@
   <head>
     <meta charset="utf-8">
     <title>Hello wasm-pack!</title>
+    <link rel="stylesheet" type="text/css" href="static/res/style.css">
   </head>
   <body>
-    <canvas id="c" width=1700 height=900></canvas>
+    <div id="loader" class="loading">
+      <canvas id="c" width=1700 height=900></canvas>
+    </div>
 
     <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
     <script src="./bootstrap.js"></script>

@@ -39,7 +39,7 @@ export class FPSCounter {
 
   frame(now: number) {
     this.count += 1;
-    if (now - this.last > 1) {
+    if (now - this.last > 1000) {
       this.last = now;
       console.log(this.count + " fps");
       this.count = 0;
@@ -47,83 +47,122 @@ export class FPSCounter {
   }
 }
 
-export class M3 {
-  _data: any;
+export class Resizer {
+    hoovering: boolean;
+    dragging: boolean;
 
-  constructor(data: any) {
-    this._data = data;
-  }
+    mouse_pos: number[];
+    last_drag: number[];
 
-  static ident(): M3 {
-    return new M3([
-      1, 0, 0,
-      0, 1, 0,
-      0, 0, 1
-    ]);
-  }
+    viewbox: number[];
+    orig_viewbox: number[];
 
-  multiply(other: M3): M3 {
-    const a = this._data;
-    const b = other._data;
+    el_width: number;
 
-    var a00 = a[0 * 3 + 0];
-    var a01 = a[0 * 3 + 1];
-    var a02 = a[0 * 3 + 2];
-    var a10 = a[1 * 3 + 0];
-    var a11 = a[1 * 3 + 1];
-    var a12 = a[1 * 3 + 2];
-    var a20 = a[2 * 3 + 0];
-    var a21 = a[2 * 3 + 1];
-    var a22 = a[2 * 3 + 2];
-    var b00 = b[0 * 3 + 0];
-    var b01 = b[0 * 3 + 1];
-    var b02 = b[0 * 3 + 2];
-    var b10 = b[1 * 3 + 0];
-    var b11 = b[1 * 3 + 1];
-    var b12 = b[1 * 3 + 2];
-    var b20 = b[2 * 3 + 0];
-    var b21 = b[2 * 3 + 1];
-    var b22 = b[2 * 3 + 2];
+    scaleX = 1;
+    scaleY = 1;
 
-    return new M3([
-      b00 * a00 + b01 * a10 + b02 * a20,
-      b00 * a01 + b01 * a11 + b02 * a21,
-      b00 * a02 + b01 * a12 + b02 * a22,
-      b10 * a00 + b11 * a10 + b12 * a20,
-      b10 * a01 + b11 * a11 + b12 * a21,
-      b10 * a02 + b11 * a12 + b12 * a22,
-      b20 * a00 + b21 * a10 + b22 * a20,
-      b20 * a01 + b21 * a11 + b22 * a21,
-      b20 * a02 + b21 * a12 + b22 * a22,
-    ]);
-  }
+    constructor(el: HTMLCanvasElement, viewbox: number[], keep_aspect_ratio=false) {
+      console.log("viewbox:" + viewbox);
+        this.hoovering = false;
+        this.dragging = false;
 
-  translation(x: number, y: number): M3 {
-    const out = [...this._data];
-    out[6] += x;
-    out[7] += y;
-    return new M3(out);
-  }
+        this.mouse_pos = [0, 0];
+        this.last_drag = [0, 0];
 
-  rotate(rad: number): M3 {
-    var c = Math.cos(rad);
-    var s = Math.sin(rad);
+        this.viewbox = [...viewbox];
 
-    const out = new M3([...this._data]);
+        if (keep_aspect_ratio) {
+            const or_width = this.viewbox[2];
+            const or_height = this.viewbox[3];
+            const scaleX = el.height / el.width;
+            if (scaleX < 1) {
+                this.scaleX= 1 / scaleX;
 
-    return out.multiply(new M3([
-      c, -s, 0,
-      s, c, 0,
-      0, 0, 1
-    ]));
-  }
+                this.viewbox[2] *= this.scaleX;
+            } else {
+                this.scaleY = scaleX;
+                this.viewbox[3] *= scaleX;
+            }
 
-  scale(s_x: number, s_y = s_x, s_z = 1): M3 {
-    const out = new M3([...this._data]);
-    return out.multiply(new M3([
-      s_x, 0, 0,
-      0, s_y, 0,
-      0, 0, s_z,
-    ]));
-  }
+            this.viewbox[0] -= (this.viewbox[2] - or_width) / 2;
+            this.viewbox[1] -= (this.viewbox[3] - or_height) / 2;
+        }
+
+        this.orig_viewbox = [...this.viewbox];
+
+        this.el_width = el.width;
+
+        el.addEventListener("mouseenter", this.mouseenter.bind(this), { capture: false, passive: true});
+        el.addEventListener("mouseleave", this.mouseleave.bind(this), { capture: false, passive: true});
+        el.addEventListener("mousemove", this.mousemove.bind(this), { capture: false, passive: true});
+        el.addEventListener("mousedown", this.mousedown.bind(this), { capture: false, passive: true});
+        el.addEventListener("mouseup", this.mouseup.bind(this), { capture: false, passive: true});
+
+        window.addEventListener('wheel', this.wheel.bind(this), { capture: false, passive: true});
+    }
+
+    clip_viewbox() {
+        this.viewbox[0] = Math.max(this.viewbox[0], this.orig_viewbox[0]);
+        this.viewbox[1] = Math.max(this.viewbox[1], this.orig_viewbox[1]);
+
+        this.viewbox[0] = Math.min(this.viewbox[0] + this.viewbox[2], this.orig_viewbox[0] + this.orig_viewbox[2]) - this.viewbox[2];
+        this.viewbox[1] = Math.min(this.viewbox[1] + this.viewbox[3], this.orig_viewbox[1] + this.orig_viewbox[3]) - this.viewbox[3];
+    }
+
+    mouseenter() {
+        this.hoovering = true;
+    }
+
+    mouseleave() {
+        this.hoovering = false;
+        this.dragging = false;
+    }
+
+    mousemove(e: MouseEvent) {
+        this.mouse_pos = [e.offsetX, this.el_width - e.offsetY];
+
+        if (this.dragging) {
+            const scale = this.viewbox[3] / this.orig_viewbox[3];
+            this.viewbox[0] += (this.last_drag[0] - this.mouse_pos[0]) * scale;
+            this.viewbox[1] += (this.last_drag[1] - this.mouse_pos[1]) * scale;
+
+            this.last_drag = [...this.mouse_pos];
+
+            this.clip_viewbox();
+        }
+    }
+
+    mousedown() {
+        this.dragging = true;
+        this.last_drag = [...this.mouse_pos];
+    }
+
+    mouseup() {
+        this.dragging = false;
+    }
+
+    wheel(e: WheelEvent) {
+        if (this.hoovering) {
+            const dx =  e.deltaY * this.scaleX;
+            this.viewbox[2] += dx;
+            this.viewbox[0] -= dx / 2;
+            this.viewbox[2] = Math.min(this.viewbox[2], this.orig_viewbox[2]);
+
+            const dy = e.deltaY * this.scaleY;
+            this.viewbox[3] += dy;
+            this.viewbox[1] -= dy / 2;
+            this.viewbox[3] = Math.min(this.viewbox[3], this.orig_viewbox[3]);
+
+            this.clip_viewbox();
+        }
+    }
+
+    get_viewbox(): number[] {
+        return this.viewbox;
+    }
+
+    get_mouse_pos(): number[] {
+        return this.mouse_pos;
+    }
 }

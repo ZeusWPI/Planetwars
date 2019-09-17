@@ -1,7 +1,7 @@
 import { Dictionary } from './util';
 
 function error(msg: string) {
-  console.log(msg);
+  console.error(msg);
 }
 
 const defaultShaderType = [
@@ -9,6 +9,7 @@ const defaultShaderType = [
   "FRAGMENT_SHADER"
 ];
 
+/// Create Shader from Source string
 function loadShader(
   gl: WebGLRenderingContext,
   shaderSource: string,
@@ -41,6 +42,7 @@ function loadShader(
   return shader;
 }
 
+/// Actually Create Program with Shader's
 function createProgram(
   gl: WebGLRenderingContext,
   shaders: WebGLShader[],
@@ -76,61 +78,51 @@ function createProgram(
   return program;
 }
 
-function createShaderFromScript(
-  gl: WebGLRenderingContext,
-  scriptId: string,
-  context: Dictionary<any>,
-  opt_shaderType: number,
-  opt_errorCallback: any,
-): WebGLShader {
-  var shaderSource = "";
-  var shaderType;
-  var shaderScript = document.getElementById(scriptId) as HTMLScriptElement;
-  if (!shaderScript) {
-    console.log("*** Error: unknown script element" + scriptId);
-  }
-  shaderSource = shaderScript.text;
+export class ShaderFactory {
+  frag_source: string;
+  vert_source: string;
 
-  for (let key in context) {
-    console.log("substitute " + key);
-    shaderSource = shaderSource.replace(new RegExp("\\$" + key, 'g'), context[key]);
+  static async create_factory(frag_url: string, vert_url: string): Promise<ShaderFactory> {
+    const sources = await Promise.all([
+      fetch(frag_url).then((r) => r.text()),
+      fetch(vert_url).then((r) => r.text()),
+    ]);
+
+    return new ShaderFactory(sources[0], sources[1]);
   }
 
-  if (!opt_shaderType) {
-    if (shaderScript.type === "x-shader/x-vertex") {
-      shaderType = 35633;
-    } else if (shaderScript.type === "x-shader/x-fragment") {
-      shaderType = 35632;
-    } else if (shaderType !== gl.VERTEX_SHADER && shaderType !== gl.FRAGMENT_SHADER) {
-      console.log("*** Error: unknown shader type");
+  constructor(frag_source: string, vert_source: string ) {
+    this.frag_source = frag_source;
+    this.vert_source = vert_source;
+  }
+
+  create_shader(
+    gl: WebGLRenderingContext,
+    context?: Dictionary<string>,
+    opt_attribs?: string[],
+    opt_locations?: number[],
+    opt_errorCallback?: any,
+  ): Shader {
+    let vert = this.vert_source.slice();
+    let frag = this.frag_source.slice();
+    for (let key in context) {
+      vert = vert.replace(new RegExp("\\$" + key, 'g'), context[key]);
+      frag = frag.replace(new RegExp("\\$" + key, 'g'), context[key]);
     }
-  }
 
-  return loadShader(
-    gl, shaderSource, opt_shaderType ? opt_shaderType : shaderType,
-    opt_errorCallback);
+    const shaders = [
+      loadShader(gl, vert, gl.VERTEX_SHADER, opt_errorCallback),
+      loadShader(gl, frag, gl.FRAGMENT_SHADER, opt_errorCallback),
+    ];
+
+    return new Shader(createProgram(gl, shaders, opt_attribs, opt_locations, opt_errorCallback));
+  }
 }
 
 export class Shader {
   shader: WebGLProgram;
   uniformCache: Dictionary<WebGLUniformLocation>;
   attribCache: Dictionary<number>;
-
-  static createProgramFromScripts(
-    gl: WebGLRenderingContext,
-    shaderScriptIds: string[],
-    context = {},
-    opt_attribs?: string[],
-    opt_locations?: number[],
-    opt_errorCallback?: any,
-  ): Shader {
-    var shaders = [];
-    for (var ii = 0; ii < shaderScriptIds.length; ++ii) {
-      shaders.push(createShaderFromScript(
-        gl, shaderScriptIds[ii], context, (gl as any)[defaultShaderType[ii % 2]] as number, opt_errorCallback));
-    }
-    return new Shader(createProgram(gl, shaders, opt_attribs, opt_locations, opt_errorCallback));
-  }
 
   static async createProgramFromUrls(
     gl: WebGLRenderingContext,
@@ -198,6 +190,10 @@ export class Shader {
 
     uniform.setUniform(gl, location);
   }
+
+  clear(gl: WebGLRenderingContext) {
+    gl.deleteProgram(this.shader);
+  }
 }
 
 export interface Uniform {
@@ -223,6 +219,22 @@ export class Uniform3fv implements Uniform {
 
   setUniform(gl: WebGLRenderingContext, location: WebGLUniformLocation) {
     gl.uniform3fv(location, this.data);
+  }
+}
+
+export class Uniform3f implements Uniform {
+  x: number;
+  y: number;
+  z: number;
+
+  constructor(x: number, y: number, z: number) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+  }
+
+  setUniform(gl: WebGLRenderingContext, location: WebGLUniformLocation) {
+    gl.uniform3f(location, this.x ,this.y, this.z);
   }
 }
 
@@ -265,9 +277,9 @@ export class Uniform2f implements Uniform {
   x: number;
   y: number;
 
-  constructor(x: number, y: number) {
-    this.x = x;
-    this.y = y;
+  constructor(xy: number[]) {
+    this.x = xy[0];
+    this.y = xy[1];
   }
 
   setUniform(gl: WebGLRenderingContext, location: WebGLUniformLocation) {
@@ -281,25 +293,14 @@ export class Uniform4f implements Uniform {
   v2: number;
   v3: number;
 
-  constructor(vec: number[]) {
-    this.v0 = vec[0];
-    this.v1 = vec[1];
-    this.v2 = vec[2];
-    this.v3 = vec[3];
+  constructor(xyzw: number[]) {
+    this.v0 = xyzw[0];
+    this.v1 = xyzw[1];
+    this.v2 = xyzw[2];
+    this.v3 = xyzw[3];
   }
 
   setUniform(gl: WebGLRenderingContext, location: WebGLUniformLocation) {
     gl.uniform4f(location, this.v0, this.v1, this.v2, this.v3);
-  }
-}
-
-export class UniformMatrix3fv implements Uniform {
-  data: number[];
-  constructor(data: number[]) {
-    this.data = data;
-  }
-
-  setUniform(gl: WebGLRenderingContext, location: WebGLUniformLocation) {
-    gl.uniformMatrix3fv(location, false, this.data);
   }
 }
