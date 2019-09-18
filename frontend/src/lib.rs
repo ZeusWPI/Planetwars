@@ -23,11 +23,11 @@ pub struct Game {
     turn: usize,
 
     /* put extra shit here */
-    planets: Vec<Vec3<f64>>,
-    view_box: Vec<f64>,
+    planets: Vec<Vec3<f32>>,
+    view_box: Vec<f32>,
 
-    ship_locations: Vec<Mat3<f64>>,
-    current_planet_colours: Vec<Vec3<f64>>,
+    ship_locations: Vec<Mat3<f32>>,
+    current_planet_colours: Vec<Vec3<f32>>,
 }
 
 #[wasm_bindgen]
@@ -41,7 +41,7 @@ impl Game {
         ).collect();
 
         Self {
-            planets: utils::get_planets(&states[0].planets, 10.0),
+            planets: utils::get_planets(&states[0].planets, 2.0),
             view_box: utils::caclulate_viewbox(&states[0].planets),
             turn: 0,
             states,
@@ -50,15 +50,15 @@ impl Game {
         }
     }
 
-    pub fn get_viewbox(&self) -> *const f64 {
+    pub fn get_viewbox(&self) -> *const f32 {
         self.view_box.as_ptr()
     }
 
-    pub fn get_planets(&self) -> *const Vec3<f64> {
+    pub fn get_planets(&self) -> *const Vec3<f32> {
         self.planets.as_ptr()
     }
 
-    pub fn get_planet_colors(&self) -> *const Vec3<f64> {
+    pub fn get_planet_colors(&self) -> *const Vec3<f32> {
         self.current_planet_colours.as_ptr()
     }
 
@@ -71,7 +71,7 @@ impl Game {
     }
 
     pub fn update_turn(&mut self, turn: usize) {
-        self.turn = turn.min(self.states.len());
+        self.turn = turn.min(self.states.len() -1);
 
         self.update_planet_colours();
         self.update_ship_locations()
@@ -88,7 +88,7 @@ impl Game {
 
     }
 
-    // pub fn add_location(&mut self, x: f64, y: f64, angle: f64) {
+    // pub fn add_location(&mut self, x: f32, y: f32, angle: f32) {
     //     self.current_turn.push(
     //         Location { x, y, angle}
     //     );
@@ -98,7 +98,7 @@ impl Game {
         self.ship_locations.len()
     }
 
-    pub fn get_ship_locations(&self) -> *const Mat3<f64> {
+    pub fn get_ship_locations(&self) -> *const Mat3<f32> {
         self.ship_locations.as_ptr()
     }
 }

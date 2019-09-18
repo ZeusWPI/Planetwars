@@ -1,3 +1,6 @@
+body {
+  background-color: #333;
+}
 
 .loading {
     position: relative;
@@ -21,6 +24,7 @@
 
  #c {
      position: relative;
+     background-color: black;
  }
 
 /* ----------------------------------------------

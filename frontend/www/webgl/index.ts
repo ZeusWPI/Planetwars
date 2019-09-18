@@ -17,7 +17,7 @@ async function main() {
     var canvas = <HTMLCanvasElement>document.getElementById("c");
     const resolution = [canvas.width, canvas.height];
 
-    const resizer = new Resizer(canvas, [0, 0, 900, 900], true);
+    const resizer = new Resizer(canvas, [-100, -10, 200, 20], true);
 
     var gl = canvas.getContext("webgl");
     if (!gl) {
@@ -88,9 +88,9 @@ async function main() {
         program.uniform(gl, "u_viewbox", new Uniform4f(resizer.get_viewbox()));
         program.uniform(gl, "u_resolution", new Uniform2f(resolution));
         program.uniform(gl, "u_circles", new Uniform3fv([
-            450, 450, 100,
-            200, 200, 200,
-            900, 0, 300,
+            0, 0, 3.5,
+            -2, -2, 2,
+            5, 2, 4,
         ]));
         program.uniform(gl, "u_color", new Uniform4f([1, blue, 0, 1]));
 
@@ -105,11 +105,13 @@ async function main() {
 
 main();
 
-const loader = document.getElementById("loader");
-setInterval(() => {
-    if (loader.classList.contains("loading")) {
-        loader.classList.remove("loading")
-    } else {
-        loader.classList.add("loading");
-    }
-}, 2000);
+document.getElementById("loader").classList.remove("loading");
+
+// const loader = document.getElementById("loader");
+// setInterval(() => {
+//     if (loader.classList.contains("loading")) {
+//         loader.classList.remove("loading")
+//     } else {
+//         loader.classList.add("loading");
+//     }
+// }, 2000);

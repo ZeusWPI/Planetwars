@@ -201,8 +201,8 @@ export interface Uniform {
 }
 
 export class Uniform2fv implements Uniform {
-  data: number[];
-  constructor(data: number[]) {
+  data: number[] | Float32Array;
+  constructor(data: number[] | Float32Array) {
     this.data = data;
   }
 
@@ -212,8 +212,8 @@ export class Uniform2fv implements Uniform {
 }
 
 export class Uniform3fv implements Uniform {
-  data: number[];
-  constructor(data: number[]) {
+  data: number[] | Float32Array;
+  constructor(data: number[] | Float32Array) {
     this.data = data;
   }
 
@@ -239,8 +239,8 @@ export class Uniform3f implements Uniform {
 }
 
 export class Uniform1iv implements Uniform {
-  data: number[];
-  constructor(data: number[]) {
+  data: number[] | Int32List;
+  constructor(data: number[] | Int32List) {
     this.data = data;
   }
 

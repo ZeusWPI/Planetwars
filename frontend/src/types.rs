@@ -11,8 +11,8 @@ pub struct Expedition {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Planet {
     pub ship_count: u64,
-    pub x: f64,
-    pub y: f64,
+    pub x: f32,
+    pub y: f32,
     pub owner: Option<u32>,
     pub name: String,
 }

@@ -48,50 +48,47 @@ export class FPSCounter {
 }
 
 export class Resizer {
-    hoovering: boolean;
-    dragging: boolean;
+    hoovering = false;
+    dragging = false;
 
-    mouse_pos: number[];
-    last_drag: number[];
+    mouse_pos = [0, 0];
+    last_drag = [0, 0];
 
     viewbox: number[];
     orig_viewbox: number[];
 
-    el_width: number;
+    el_box: number[];
 
     scaleX = 1;
     scaleY = 1;
 
     constructor(el: HTMLCanvasElement, viewbox: number[], keep_aspect_ratio=false) {
-      console.log("viewbox:" + viewbox);
-        this.hoovering = false;
-        this.dragging = false;
-
-        this.mouse_pos = [0, 0];
-        this.last_drag = [0, 0];
 
         this.viewbox = [...viewbox];
+        this.el_box = [el.width, el.height];
 
         if (keep_aspect_ratio) {
             const or_width = this.viewbox[2];
             const or_height = this.viewbox[3];
-            const scaleX = el.height / el.width;
-            if (scaleX < 1) {
-                this.scaleX= 1 / scaleX;
 
-                this.viewbox[2] *= this.scaleX;
+            const width_percentage =  this.viewbox[2] / el.width;
+            const height_percentage = this.viewbox[3] / el.height;
+
+            if (width_percentage < height_percentage) {
+                // width should be larger
+                this.viewbox[2] = height_percentage * el.width;
             } else {
-                this.scaleY = scaleX;
-                this.viewbox[3] *= scaleX;
+                this.viewbox[3] = width_percentage * el.height;
+                // height should be larger
             }
 
             this.viewbox[0] -= (this.viewbox[2] - or_width) / 2;
             this.viewbox[1] -= (this.viewbox[3] - or_height) / 2;
+
+            this.scaleX = this.viewbox[2] / this.viewbox[3];
         }
 
         this.orig_viewbox = [...this.viewbox];
-
-        this.el_width = el.width;
 
         el.addEventListener("mouseenter", this.mouseenter.bind(this), { capture: false, passive: true});
         el.addEventListener("mouseleave", this.mouseleave.bind(this), { capture: false, passive: true});
@@ -102,7 +99,7 @@ export class Resizer {
         window.addEventListener('wheel', this.wheel.bind(this), { capture: false, passive: true});
     }
 
-    clip_viewbox() {
+    _clip_viewbox() {
         this.viewbox[0] = Math.max(this.viewbox[0], this.orig_viewbox[0]);
         this.viewbox[1] = Math.max(this.viewbox[1], this.orig_viewbox[1]);
 
@@ -116,20 +113,21 @@ export class Resizer {
 
     mouseleave() {
         this.hoovering = false;
-        this.dragging = false;
     }
 
     mousemove(e: MouseEvent) {
-        this.mouse_pos = [e.offsetX, this.el_width - e.offsetY];
+        this.mouse_pos = [e.offsetX, this.el_box[1] - e.offsetY];
 
         if (this.dragging) {
-            const scale = this.viewbox[3] / this.orig_viewbox[3];
-            this.viewbox[0] += (this.last_drag[0] - this.mouse_pos[0]) * scale;
-            this.viewbox[1] += (this.last_drag[1] - this.mouse_pos[1]) * scale;
+            const scaleX = this.viewbox[2] / this.el_box[0];
+            const scaleY = this.viewbox[3] / this.el_box[1];
+
+            this.viewbox[0] += (this.last_drag[0] - this.mouse_pos[0]) * scaleX;
+            this.viewbox[1] += (this.last_drag[1] - this.mouse_pos[1]) * scaleY;
 
             this.last_drag = [...this.mouse_pos];
 
-            this.clip_viewbox();
+            this._clip_viewbox();
         }
     }
 
@@ -144,17 +142,19 @@ export class Resizer {
 
     wheel(e: WheelEvent) {
         if (this.hoovering) {
-            const dx =  e.deltaY * this.scaleX;
+            const delta = e.deltaY > 0 ? 0.1 * this.viewbox[2] : -0.1 * this.viewbox[2];
+            const dx =  delta * this.scaleX;
+
             this.viewbox[2] += dx;
             this.viewbox[0] -= dx / 2;
             this.viewbox[2] = Math.min(this.viewbox[2], this.orig_viewbox[2]);
 
-            const dy = e.deltaY * this.scaleY;
+            const dy = delta * this.scaleY;
             this.viewbox[3] += dy;
             this.viewbox[1] -= dy / 2;
             this.viewbox[3] = Math.min(this.viewbox[3], this.orig_viewbox[3]);
 
-            this.clip_viewbox();
+            this._clip_viewbox();
         }
     }
 
