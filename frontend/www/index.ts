@@ -67,20 +67,11 @@ class GameInstance {
         this.resizer = new Resizer(CANVAS, [...f32v(game.get_viewbox(), 4)], true);
         this.renderer = new Renderer();
         // this.renderer.addToDraw(indexBuffer, vao, this.shader);
-        this.game.update_turn(10);
+        this.game.update_turn(0);
 
         const planets = f32v(game.get_planets(), this.planet_count * 3);
-        const colours = f32v(game.get_planet_colors(), this.planet_count * 3);
 
-        console.log(planets.length);
-        console.log(colours.length);
-
-
-        console.log(this.planet_count);
         for(let i=0; i < this.planet_count; i++){
-            const colour = new Uniform3f(colours[i*3], colours[i*3 + 1], colours[i*3 + 2]);
-
-            console.log(colour);
 
             const transform = new UniformMatrix3fv([
                 1, 0, 0,
@@ -89,7 +80,6 @@ class GameInstance {
             ]);
 
             const indexBuffer = new IndexBuffer(GL, meshes[i % meshes.length].cells);
-
             const positionBuffer = new VertexBuffer(GL, meshes[i % meshes.length].positions);
 
             const layout = new VertexBufferLayout();
@@ -102,7 +92,6 @@ class GameInstance {
                 vao,
                 this.shader,
                 {
-                    "u_color": colour,
                     "u_trans": transform,
                 }
             )
@@ -145,16 +134,11 @@ var game_instance: GameInstance;
 
 export async function set_instance(game: Game) {
     const meshes = await Promise.all(
-        ["earth.svg", "jupiter.svg", "mars.svg"].map(
+        ["earth.svg", "mars.svg", "venus.svg"].map(
             (name) => "static/res/assets/" + name
         ).map(url_to_mesh)
     );
-    console.log(meshes[0]);
     game_instance = new GameInstance(game, meshes);
-
-    console.log(game.turn_count());
-
-    console.log(f32v(game.get_viewbox(), 4));
 }
 
 
