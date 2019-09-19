@@ -304,3 +304,14 @@ export class Uniform4f implements Uniform {
     gl.uniform4f(location, this.v0, this.v1, this.v2, this.v3);
   }
 }
+
+export class UniformMatrix3fv implements Uniform {
+  data: number[];
+  constructor(data: number[]) {
+    this.data = data;
+  }
+
+  setUniform(gl: WebGLRenderingContext, location: WebGLUniformLocation) {
+    gl.uniformMatrix3fv(location, false, this.data);
+  }
+}

@@ -1,3 +1,6 @@
+var loadSvg = require('load-svg')
+var parsePath = require('extract-svg-path').parse
+var svgMesh3d = require('svg-mesh-3d')
 
 export interface Dictionary<T> {
   [Key: string]: T;
@@ -159,10 +162,38 @@ export class Resizer {
     }
 
     get_viewbox(): number[] {
-        return this.viewbox;
+      return this.viewbox;
+        // return [this.viewbox[0] / this.orig_viewbox[0], this.viewbox[1] / this.orig_viewbox[1], this.viewbox[2] / this.orig_viewbox[2], this.viewbox[3] / this.orig_viewbox[3],];
     }
 
     get_mouse_pos(): number[] {
         return this.mouse_pos;
     }
+}
+
+export class Mesh {
+  cells: number[];
+  positions: number[];
+
+  constructor(mesh: any) {
+      this.cells = mesh.cells.flat();
+      this.positions = mesh.positions.flat();
+  }
+}
+
+export async function url_to_mesh(url: string): Promise<Mesh> {
+
+    return new Promise(function(resolve) {
+      loadSvg(url, function (err: any, svg: any) {
+        if (err) throw err;
+
+        var svgPath = parsePath(svg);
+        var mesh = svgMesh3d(svgPath, {
+            delaunay: false,
+            scale: 10,
+        });
+
+        resolve(new Mesh(mesh));
+      });
+    });
 }

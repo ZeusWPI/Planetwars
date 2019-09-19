@@ -1,24 +1,61 @@
+import { Renderer } from "./renderer";
 
-
-// TODO: fix texture locations, not use only 0
 export class Texture {
     texture: WebGLTexture;
-    image: HTMLImageElement;
+    width: number;
+    height: number;
     loaded: boolean;
     name: string;
 
-    constructor(
+    static fromImage(
         gl: WebGLRenderingContext,
         path: string,
+        name: string,
+    ): Texture {
+        const out = new Texture(gl, name);
+
+        const image = new Image();
+        image.onload = out.setImage.bind(out, gl, image);
+        image.onerror = error;
+        image.src = path;
+
+        return out;
+    }
+
+    static fromRenderer(
+        gl: WebGLRenderingContext,
+        name: string,
+        width: number,
+        height: number,
+        renderer: Renderer
+    ): Texture {
+        const out = new Texture(gl, name);
+        out.width = width;
+        out.height = height;
+
+        gl.texImage2D(
+            gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0,
+            gl.RGBA, gl.UNSIGNED_BYTE, null);
+
+        const fb = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+
+        const attachmentPoint = gl.COLOR_ATTACHMENT0;
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, out.texture, 0);
+
+        renderer.render(gl, fb, width, height);
+
+        out.loaded = true;
+
+        return out;
+    }
+
+    constructor(
+        gl: WebGLRenderingContext,
         name: string,
     ) {
         this.loaded = false;
         this.name = name;
-
-        this.image = new Image();
-        this.image.onload = () => this.handleImageLoaded(gl);
-        this.image.onerror = error;
-        this.image.src = path;
 
         this.texture = gl.createTexture();
         this.bind(gl);
@@ -32,11 +69,12 @@ export class Texture {
             gl.UNSIGNED_BYTE, new Uint8Array([255, 0, 0, 255]));
     }
 
-    handleImageLoaded(gl: WebGLRenderingContext) {
-        console.log('handling image loaded');
+    setImage(gl: WebGLRenderingContext, image: HTMLImageElement) {
         this.bind(gl);
+        this.width = image.width;
+        this.height = image.height;
 
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
 
         this.unbind(gl);
 
@@ -54,11 +92,11 @@ export class Texture {
 
 
     getWidth(): number {
-        return this.image.width;
+        return this.width;
     }
 
     getHeight(): number {
-        return this.image.height;
+        return this.height;
     }
 }
 

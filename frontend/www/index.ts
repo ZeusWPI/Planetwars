@@ -1,7 +1,7 @@
 import { Game } from "planetwars";
 import { memory } from "planetwars/plantwars_bg";
-import { Resizer, resizeCanvasToDisplaySize, FPSCounter } from "./webgl/util";
-import { Shader, Uniform4f, Uniform2fv, Uniform3fv, Uniform1i, Uniform1f, Uniform2f, ShaderFactory } from './webgl/shader';
+import { Resizer, resizeCanvasToDisplaySize, FPSCounter, url_to_mesh, Mesh } from "./webgl/util";
+import { Shader, Uniform4f, Uniform2fv, Uniform3fv, Uniform1i, Uniform1f, Uniform2f, ShaderFactory, Uniform3f, UniformMatrix3fv } from './webgl/shader';
 import { Renderer } from "./webgl/renderer";
 import { VertexBuffer, IndexBuffer } from "./webgl/buffer";
 import { VertexBufferLayout, VertexArray } from "./webgl/vertexBufferLayout";
@@ -34,6 +34,8 @@ const CANVAS = <HTMLCanvasElement>document.getElementById("c");
 const RESOLUTION = [CANVAS.width, CANVAS.height];
 
 const GL = CANVAS.getContext("webgl");
+
+
 resizeCanvasToDisplaySize(<HTMLCanvasElement>GL.canvas);
 GL.viewport(0, 0, GL.canvas.width, GL.canvas.height);
 
@@ -42,23 +44,6 @@ GL.clear(GL.COLOR_BUFFER_BIT);
 
 GL.enable(GL.BLEND);
 GL.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA);
-
-const positionBuffer = new VertexBuffer(GL, [
-    -1, -1,
-    -1, 1,
-    1, -1,
-    1, 1,
-]);
-
-const layout = new VertexBufferLayout();
-layout.push(GL.FLOAT, 2, 4, "a_position");
-const vao = new VertexArray();
-vao.addBuffer(positionBuffer, layout);
-
-const indexBuffer = new IndexBuffer(GL, [
-    0, 1, 2,
-    1, 2, 3,
-]);
 
 var SHADERFACOTRY: ShaderFactory;
 ShaderFactory.create_factory(
@@ -75,13 +60,53 @@ class GameInstance {
     last_time = 0;
     frame = -1;
 
-    constructor(game: Game)  {
+    constructor(game: Game, meshes: Mesh[])  {
         this.game = game;
         this.planet_count = this.game.get_planet_count();
         this.shader = SHADERFACOTRY.create_shader(GL, {"MAX_CIRCLES": ''+this.planet_count});
         this.resizer = new Resizer(CANVAS, [...f32v(game.get_viewbox(), 4)], true);
         this.renderer = new Renderer();
-        this.renderer.addToDraw(indexBuffer, vao, this.shader);
+        // this.renderer.addToDraw(indexBuffer, vao, this.shader);
+        this.game.update_turn(10);
+
+        const planets = f32v(game.get_planets(), this.planet_count * 3);
+        const colours = f32v(game.get_planet_colors(), this.planet_count * 3);
+
+        console.log(planets.length);
+        console.log(colours.length);
+
+
+        console.log(this.planet_count);
+        for(let i=0; i < this.planet_count; i++){
+            const colour = new Uniform3f(colours[i*3], colours[i*3 + 1], colours[i*3 + 2]);
+
+            console.log(colour);
+
+            const transform = new UniformMatrix3fv([
+                1, 0, 0,
+                0, 1, 0,
+                planets[i*3], planets[i*3+1], 1,
+            ]);
+
+            const indexBuffer = new IndexBuffer(GL, meshes[i % meshes.length].cells);
+
+            const positionBuffer = new VertexBuffer(GL, meshes[i % meshes.length].positions);
+
+            const layout = new VertexBufferLayout();
+            layout.push(GL.FLOAT, 3, 4, "a_position");
+            const vao = new VertexArray();
+            vao.addBuffer(positionBuffer, layout);
+
+            this.renderer.addToDraw(
+                indexBuffer,
+                vao,
+                this.shader,
+                {
+                    "u_color": colour,
+                    "u_trans": transform,
+                }
+            )
+        }
 
         // this.game.update_turn(this.frame);
 
@@ -94,27 +119,38 @@ class GameInstance {
             this.last_time = time;
             this.frame ++;
             this.game.update_turn(this.frame);
-        }
 
-        this.shader.uniform(GL, "u_circle_count", new Uniform1i(this.planet_count));
+            const colours = f32v(this.game.get_planet_colors(), this.planet_count * 3);
+            for(let i=0; i < this.planet_count; i++){
+                const u = new Uniform3f(colours[i*3], colours[i*3 + 1], colours[i*3 + 2]);
+                this.renderer.updateUniform(i, (us) => us["u_color"] = u);
+            }
+        }
+        GL.bindFramebuffer(GL.FRAMEBUFFER, null);
+        GL.viewport(0, 0, GL.canvas.width, GL.canvas.height);
+        GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
         this.shader.uniform(GL, "u_time", new Uniform1f(time * 0.001));
         this.shader.uniform(GL, "u_mouse", new Uniform2f(this.resizer.get_mouse_pos()));
         this.shader.uniform(GL, "u_viewbox", new Uniform4f(this.resizer.get_viewbox()));
         this.shader.uniform(GL, "u_resolution", new Uniform2f(RESOLUTION));
 
-        this.shader.uniform(GL, "u_circles", new Uniform3fv(f32v(this.game.get_planets(), 3 * this.planet_count)));
-        this.shader.uniform(GL, "u_colors", new Uniform3fv(f32v(this.game.get_planet_colors(), 3 * this.planet_count)));
-
         this.renderer.render(GL);
+
         COUNTER.frame(time);
     }
 }
 
 var game_instance: GameInstance;
 
-export function set_instance(game: Game) {
-    game_instance = new GameInstance(game);
+export async function set_instance(game: Game) {
+    const meshes = await Promise.all(
+        ["earth.svg", "jupiter.svg", "mars.svg"].map(
+            (name) => "static/res/assets/" + name
+        ).map(url_to_mesh)
+    );
+    console.log(meshes[0]);
+    game_instance = new GameInstance(game, meshes);
 
     console.log(game.turn_count());
 

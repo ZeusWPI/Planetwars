@@ -1,45 +1,66 @@
-
-import { Shader, Uniform4f, Uniform2fv, Uniform3fv, Uniform1i, Uniform1f, Uniform2f, ShaderFactory } from './shader';
-import { resizeCanvasToDisplaySize, FPSCounter, onload2promise, Resizer } from "./util";
+import { Shader, Uniform4f, Uniform2fv, Uniform3fv, Uniform1i, Uniform1f, Uniform2f, ShaderFactory, UniformMatrix3fv, Uniform3f } from './shader';
+import { resizeCanvasToDisplaySize, FPSCounter, onload2promise, Resizer, url_to_mesh } from "./util";
 import { VertexBuffer, IndexBuffer } from './buffer';
 import { VertexArray, VertexBufferLayout } from './vertexBufferLayout';
 import { Renderer } from './renderer';
 import { Texture } from './texture';
 
+const URL = window.location.origin+window.location.pathname;
+const LOCATION = URL.substring(0, URL.lastIndexOf("/") + 1);
+
+async function create_texture_from_svg(gl: WebGLRenderingContext, name: string, path: string, width: number, height: number): Promise<Texture> {
+
+    const [mesh, factory] = await Promise.all([
+        url_to_mesh(path),
+        ShaderFactory.create_factory(LOCATION + "static/shaders/frag/static_color.glsl", LOCATION + "static/shaders/vert/svg.glsl")
+    ]);
+
+    const program = factory.create_shader(gl);
+    const renderer = new Renderer();
+
+    var positionBuffer = new VertexBuffer(gl, mesh.positions);
+    var layout = new VertexBufferLayout();
+    layout.push(gl.FLOAT, 3, 4, "a_position");
+
+    const vao = new VertexArray();
+    vao.addBuffer(positionBuffer, layout);
+
+    program.bind(gl);
+    vao.bind(gl, program);
+
+    var indexBuffer = new IndexBuffer(gl, mesh.cells);
+    indexBuffer.bind(gl);
+
+    renderer.addToDraw(indexBuffer, vao, program, {});
+
+    return Texture.fromRenderer(gl, name, width, height, renderer);
+}
+
 
 async function main() {
-
-    const URL = window.location.origin+window.location.pathname;
-    const LOCATION = URL.substring(0, URL.lastIndexOf("/") + 1);
-
 
     // Get A WebGL context
     var canvas = <HTMLCanvasElement>document.getElementById("c");
     const resolution = [canvas.width, canvas.height];
 
-    const resizer = new Resizer(canvas, [-100, -10, 200, 20], true);
+    const resizer = new Resizer(canvas, [-10, -10, 20, 20], true);
 
     var gl = canvas.getContext("webgl");
     if (!gl) {
         return;
     }
 
+    const mesh = await url_to_mesh("static/res/images/earth.svg");
+    console.log(Math.max(...mesh.positions), Math.min(...mesh.positions));
     const renderer = new Renderer();
 
-    const factory = await ShaderFactory.create_factory(LOCATION + "static/shaders/frag/simple.glsl", LOCATION + "static/shaders/vert/simple.glsl");
-    const program = factory.create_shader(gl, {"MAX_CIRCLES": "50"});
+    const factory = await ShaderFactory.create_factory(LOCATION + "static/shaders/frag/static_color.glsl", LOCATION + "static/shaders/vert/simple.glsl");
+    const program = factory.create_shader(gl);
 
-    var positions = [
-        -1, -1, 0, 1,
-        -1, 1, 0, 0,
-        1, -1, 1, 1,
-        1, 1, 1, 0,
-    ];
-
-    var positionBuffer = new VertexBuffer(gl, positions);
+    var positionBuffer = new VertexBuffer(gl, mesh.positions);
     var layout = new VertexBufferLayout();
-    layout.push(gl.FLOAT, 2, 4, "a_position");
-    layout.push(gl.FLOAT, 2, 4, "a_tex");
+    layout.push(gl.FLOAT, 3, 4, "a_position");
+    // layout.push(gl.FLOAT, 2, 4, "a_tex");
 
     const vao = new VertexArray();
     vao.addBuffer(positionBuffer, layout);
@@ -59,40 +80,23 @@ async function main() {
     program.bind(gl);
     vao.bind(gl, program);
 
-    var indices = [
-        0, 1, 2,
-        1, 2, 3,
-    ];
-
-    var indexBuffer = new IndexBuffer(gl, indices);
+    var indexBuffer = new IndexBuffer(gl, mesh.cells);
     indexBuffer.bind(gl);
 
-    renderer.addToDraw(indexBuffer, vao, program);
-
-    var blue = 1.0;
-    var inc = 0.05;
+    renderer.addToDraw(indexBuffer, vao, program, {});
 
     const counter = new FPSCounter();
 
     const step = function (time: number) {
-        blue += inc;
-        // if (blue > 1.0 || blue < 0.0) {
-        //     inc = -1 * inc;
-        //     blue += inc;
-        // }
 
-        program.uniform(gl, "u_circle_count", new Uniform1i(3));
+        // console.log(resizer.get_viewbox());
 
         program.uniform(gl, "u_time", new Uniform1f(time * 0.001));
         program.uniform(gl, "u_mouse", new Uniform2f(resizer.get_mouse_pos()));
         program.uniform(gl, "u_viewbox", new Uniform4f(resizer.get_viewbox()));
         program.uniform(gl, "u_resolution", new Uniform2f(resolution));
-        program.uniform(gl, "u_circles", new Uniform3fv([
-            0, 0, 3.5,
-            -2, -2, 2,
-            5, 2, 4,
-        ]));
-        program.uniform(gl, "u_color", new Uniform4f([1, blue, 0, 1]));
+        program.uniform(gl, "u_trans", new UniformMatrix3fv([1, 0, 0, 0, 1, 0, 0, 0, 1]));
+        program.uniform(gl, "u_color", new Uniform3f(1.0, 0.5, 0.0));
 
         renderer.render(gl);
 
@@ -102,6 +106,7 @@ async function main() {
 
     requestAnimationFrame(step);
 }
+
 
 main();
 
