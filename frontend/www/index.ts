@@ -104,22 +104,26 @@ class GameInstance {
     }
 
     render(time: number) {
-        if (time > this.last_time + 100) {
+        if (time > this.last_time + 1000) {
             this.last_time = time;
             this.frame ++;
             this.game.update_turn(this.frame);
 
-            const colours = f32v(this.game.get_planet_colors(), this.planet_count * 3);
+            const colours = f32v(this.game.get_planet_colors(), this.planet_count * 6);
             for(let i=0; i < this.planet_count; i++){
-                const u = new Uniform3f(colours[i*3], colours[i*3 + 1], colours[i*3 + 2]);
+                const u = new Uniform3f(colours[i*6], colours[i*6 + 1], colours[i*6 + 2]);
                 this.renderer.updateUniform(i, (us) => us["u_color"] = u);
+                const u2 = new Uniform3f(colours[i*6 + 3], colours[i*6 + 4], colours[i*6 + 5]);
+                this.renderer.updateUniform(i, (us) => us["u_color_next"] = u2);
             }
+
         }
         GL.bindFramebuffer(GL.FRAMEBUFFER, null);
         GL.viewport(0, 0, GL.canvas.width, GL.canvas.height);
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-        this.shader.uniform(GL, "u_time", new Uniform1f(time * 0.001));
+        this.shader.uniform(GL, "u_step_interval", new Uniform1f(1000));
+        this.shader.uniform(GL, "u_time", new Uniform1f(time));
         this.shader.uniform(GL, "u_mouse", new Uniform2f(this.resizer.get_mouse_pos()));
         this.shader.uniform(GL, "u_viewbox", new Uniform4f(this.resizer.get_viewbox()));
         this.shader.uniform(GL, "u_resolution", new Uniform2f(RESOLUTION));

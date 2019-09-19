@@ -78,10 +78,20 @@ impl Game {
     }
 
     fn update_planet_colours(&mut self) {
-        self.current_planet_colours = self.states[self.turn].planets
-            .iter()
-            .map(|p| utils::COLORS[p.owner.unwrap_or(0) as usize % utils::COLORS.len()].into())
-            .collect();
+        let mut new_vec = Vec::new();
+        let planets_now = self.states[self.turn].planets.iter();
+        let planets_later = self.states[(self.turn + 1).min(self.states.len() - 1)].planets.iter();
+
+        for (p1, p2) in planets_now.zip(planets_later) {
+            new_vec.push(
+                utils::COLORS[p1.owner.unwrap_or(0) as usize % utils::COLORS.len()].into()
+            );
+            new_vec.push(
+                utils::COLORS[p2.owner.unwrap_or(0) as usize % utils::COLORS.len()].into()
+            );
+        }
+
+        self.current_planet_colours = new_vec;
     }
 
     fn update_ship_locations(&mut self) {
