@@ -306,8 +306,8 @@ export class Uniform4f implements Uniform {
 }
 
 export class UniformMatrix3fv implements Uniform {
-  data: number[];
-  constructor(data: number[]) {
+  data: number[] | Float32Array;
+  constructor(data: number[] | Float32Array) {
     this.data = data;
   }
 

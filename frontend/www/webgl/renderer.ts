@@ -9,41 +9,109 @@ export interface Renderable {
     render(gl: WebGLRenderingContext): void;
 }
 
-export class Renderer {
-    renderables: Renderable[];
-
-    indexBuffers: IndexBuffer[];
-    vertexArrays: VertexArray[];
-    shaders: Shader[];
+class RenderShit implements Renderable {
+    ibo: IndexBuffer;
+    va: VertexArray;
+    shader: Shader;
     textures: Texture[];
-    uniforms: Dictionary<Uniform>[];
+    uniforms: Dictionary<Uniform>;
+
+    enabled: boolean;
+
+    constructor(
+        ibo: IndexBuffer,
+        va: VertexArray,
+        shader: Shader,
+        textures: Texture[],
+        uniforms: Dictionary<Uniform>,
+    ) {
+        this.enabled = true;
+        this.ibo = ibo;
+        this.va = va;
+        this.shader = shader;
+        this.textures = textures;
+        this.uniforms = uniforms;
+    }
+
+    render(gl: WebGLRenderingContext): void {
+        if (!this.enabled) {
+            return;
+        }
+
+        const indexBuffer = this.ibo;
+        const vertexArray = this.va;
+        const uniforms = this.uniforms;
+
+        const shader = this.shader;
+        const textures = this.textures;
+        let texLocation = 0;
+
+        for (let texture of textures) {
+
+            shader.uniform(gl, texture.name, new Uniform1i(texLocation));
+            texture.bind(gl, texLocation);
+
+            texLocation ++;
+            // if (texLocation > maxTextures) {
+            //     console.error("Using too many textures, this is not supported yet\nUndefined behaviour!");
+            // }
+        }
+
+        if (vertexArray && shader && uniforms) {
+            for(let key in uniforms) {
+                shader.uniform(gl, key, uniforms[key]);
+            }
+
+            vertexArray.bind(gl, shader);
+
+            if (indexBuffer) {
+                indexBuffer.bind(gl);
+                gl.drawElements(gl.TRIANGLES, indexBuffer.getCount(), gl.UNSIGNED_SHORT, 0);
+            } else {
+                console.error("IndexBuffer is required to render, for now");
+            }
+        }
+
+    }
+
+}
+
+export class Renderer {
+    renderables: RenderShit[];
 
     constructor() {
-        this.indexBuffers = [];
-        this.vertexArrays = [];
-        this.shaders = [];
-        this.textures = [];
-        this.uniforms = [];
+        this.renderables = [];
     }
 
     updateUniform(i: number, f: (uniforms: Dictionary<Uniform>) => void) {
-        f(this.uniforms[i]);
+        f(this.renderables[i].uniforms);
     }
 
-    addRenderable(item: Renderable) {
-        this.renderables.push(item);
+    disableRenderShift(i: number) {
+        this.renderables[i].enabled = false;
     }
 
-    addToDraw(indexBuffer: IndexBuffer, vertexArray: VertexArray, shader: Shader, uniforms: Dictionary<Uniform>,texture?: Texture): number {
-        this.indexBuffers.push(indexBuffer);
-        this.vertexArrays.push(vertexArray);
-        this.shaders.push(shader);
-        this.textures.push(texture);
+    enableRendershit(i: number) {
+        this.renderables[i].enabled = true;
+    }
 
-        this.uniforms.push(uniforms);
+    // addRenderable(item: Renderable) {
+    //     this.renderables.push(item);
+    // }
 
+    addToDraw(indexBuffer: IndexBuffer, vertexArray: VertexArray, shader: Shader, uniforms?: Dictionary<Uniform>, texture?: Texture[]): number {
 
-        return this.indexBuffers.length - 1;
+        this.renderables.push(
+            new RenderShit(
+                indexBuffer,
+                vertexArray,
+                shader,
+                texture || [],
+                uniforms || {},
+            )
+        );
+
+        return this.renderables.length - 1;
     }
 
     render(gl: WebGLRenderingContext, frameBuffer?: WebGLFramebuffer, width?: number, height?: number) {
@@ -52,41 +120,10 @@ export class Renderer {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         const maxTextures = gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS);
-        let texLocation = 0;
 
-        for(let i = 0; i < this.indexBuffers.length; i ++) {
-            const indexBuffer = this.indexBuffers[i];
-            const vertexArray = this.vertexArrays[i];
-            const uniforms = this.uniforms[i];
-
-            const shader = this.shaders[i];
-            const texture = this.textures[i];
-
-            if (texture) {
-
-                shader.uniform(gl, texture.name, new Uniform1i(texLocation));
-                texture.bind(gl, texLocation);
-
-                texLocation ++;
-                if (texLocation > maxTextures) {
-                    console.error("Using too many textures, this is not supported yet\nUndefined behaviour!");
-                }
-            }
-
-            if (vertexArray && shader && uniforms) {
-                for(let key in uniforms) {
-                    shader.uniform(gl, key, uniforms[key]);
-                }
-
-                vertexArray.bind(gl, shader);
-
-                if (indexBuffer) {
-                    indexBuffer.bind(gl);
-                    gl.drawElements(gl.TRIANGLES, indexBuffer.getCount(), gl.UNSIGNED_SHORT, 0);
-                } else {
-                    console.error("IndexBuffer is required to render, for now");
-                }
-            }
+        for (let r of this.renderables) {
+            r.render(gl);
         }
+
     }
 }
