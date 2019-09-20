@@ -30,19 +30,33 @@ pub struct Circle {
 
 impl Circle {
     pub fn new(p1: &types::Planet, p2: &types::Planet) -> Self {
-        let dx = p1.x - p2.x;
-        let dy = p1.y - p2.y;
-        let dr = (dx * dx + dy * dy).sqrt();
-        let r = dr * 1.05;
-        let distance = (dx * dx + dy * dy).sqrt().ceil() as usize;
+        let x1 = p1.x;
+        let y1 = p1.y;
+        let x2 = p2.x;
+        let y2 = p2.y;
 
-        let d = p1.x * p2.y - p2.x * p1.y;
+        let q = ((x2-x1).powi(2) + (y2-y1).powi(2)).sqrt();
+        let x3 = (x1+x2)/2.0;
+        let y3 = (y1+y2)/2.0;
 
-        let x = (d * dy + dy.signum() * dx * (r * r * dr * dr - d * d).sqrt()) / (dr * dr);
-        let y = (-d * dx + dy.abs() * (r * r * dr * dr - d * d).sqrt()) / (dr * dr);
+        let r = q * 1.1;
 
-        let a1 = (y - p1.y).atan2(x - p1.x);
-        let a2 = (y - p2.y).atan2(x - p2.x);
+        let (x, y) = if true {
+            (
+                x3 + (r.powi(2)-(q/2.0).powi(2)).sqrt() * (y1-y2)/q,
+                y3 + (r.powi(2)-(q/2.0).powi(2)).sqrt() * (x2-x1)/q
+            )
+        } else {
+            (
+                x3 - (r.powi(2)-(q/2.0).powi(2)).sqrt() * (y1-y2)/q,
+                y3 - (r.powi(2)-(q/2.0).powi(2)).sqrt() * (x2-x1)/q
+            )
+        };
+
+        let a1 = (y - y1).atan2(x - x1);
+        let a2 = (y - y2).atan2(x - x2);
+
+        let distance = q.ceil() as usize + 1;
 
         Self {
             r, x, y, a1, a2, distance
@@ -57,23 +71,16 @@ impl Circle {
     }
 
     fn get_remaining(&self, remaining: usize) -> Mat3<f32> {
-        let alpha = self.a1 + (1.0 - (remaining as f32 / self.distance as f32)) * (self.a2 - self.a1);
-        let c = alpha.cos();
-        let s = alpha.sin();
+        let alpha = (self.a1 * remaining as f32 + (self.distance - remaining) as f32 * self.a2) / self.distance as f32;
 
+        let cos = alpha.cos();
+        let sin = alpha.sin();
+        // Mat3::rotate_z(alpha) *
         Mat3::new(
-            c, -s, 0.0,
-            s, c, 0.0,
-            0.0, 0.0, 1.0
-        ) * Mat3::new(
-            1.0, 0.0, 0.0,
-            0.0, 1.0, 0.0,
-            self.x, self.y, 1.0,
-        ) * Mat3::new(
-            c, -s, 0.0,
-            s, c, 0.0,
-            0.0, 0.0, 1.0
-        )
+            0.3, 0.0, 0.0,
+            0.0, 0.4, 0.0,
+            -self.x + cos * self.r, -self.y + sin * self.r, 0.3,
+        ) * Mat3::rotate_z(alpha)
     }
 }
 
@@ -114,8 +121,6 @@ impl Line {
         // let x = self.x1 + (remaining as f32 / self.d as f32) * (self.x2 - self.x1);
         let y = (self.y1 * remaining as f32 + (self.d - remaining) as f32 * self.y2) / self.d as f32;
 
-        let c = self.a.cos();
-        let s = self.a.sin();
         // let y = self.y1 + (remaining as f32 / self.d as f32) * (self.y2 - self.y1);
         Mat3::new(
             0.3, 0.0, 0.0,
@@ -131,7 +136,7 @@ pub struct Game {
     states: Vec<types::State>,
     turn: usize,
 
-    planet_map: HashMap<(String, String), Line>,
+    planet_map: HashMap<(String, String), Circle>,
 
     /* put extra shit here */
     view_box: Vec<f32>,
@@ -162,7 +167,7 @@ impl Game {
         // Iterator?
         for p1 in states[0].planets.iter() {
             for p2 in states[0].planets.iter() {
-                planet_map.insert((p1.name.clone(), p2.name.clone()), Line::new(&p1, &p2));
+                planet_map.insert((p1.name.clone(), p2.name.clone()), Circle::new(&p1, &p2));
             }
         }
 

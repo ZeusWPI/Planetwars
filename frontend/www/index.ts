@@ -80,7 +80,7 @@ class GameInstance {
             const transform = new UniformMatrix3fv([
                 1, 0, 0,
                 0, 1, 0,
-                planets[i*3], planets[i*3+1], 1,
+                -planets[i*3], -planets[i*3+1], 1,
             ]);
 
             const indexBuffer = new IndexBuffer(GL, meshes[i % meshes.length].cells);
