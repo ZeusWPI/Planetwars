@@ -142,6 +142,10 @@ class GameInstance {
         SLIDER.max = this.turn_count - 1 + '';
     }
 
+    on_resize() {
+        this.resizer = new Resizer(CANVAS, [...f32v(this.game.get_viewbox(), 4)], true);
+    }
+
     _update_state() {
         const colours = f32v(this.game.get_planet_colors(), this.planet_count * 6);
         for(let i=0; i < this.planet_count; i++){
@@ -275,6 +279,15 @@ export async function set_instance(source: string) {
 
     set_loading(false);
 }
+
+window.addEventListener('resize', function() {
+    CANVAS.width = CANVAS.getBoundingClientRect().width;
+    CANVAS.height = CANVAS.getBoundingClientRect().height;
+
+    if (game_instance) {
+        game_instance.on_resize();
+    }
+}, { capture: false, passive: true})
 
 SLIDER.oninput = function() {
     if (game_instance) {
