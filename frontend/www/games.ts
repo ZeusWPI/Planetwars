@@ -1,5 +1,5 @@
 
-import { LOCATION, set_instance } from './index'
+import { set_loading, LOCATION, set_instance } from './index'
 import { ConfigIniParser } from 'config-ini-parser'
 
 const OPTIONS = document.getElementById("options");
@@ -14,6 +14,7 @@ fetch(game_location)
     }).catch(console.error);
 
 export function handle(location) {
+    set_loading(true);
 
     fetch(location)
         .then((r) => r.text())
@@ -64,6 +65,4 @@ function parse_ini(inifile: string) {
             create_option(loc+name, game , turns, players)
         );
     }
-
-    console.log(parser);
 }

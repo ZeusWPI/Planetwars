@@ -28,7 +28,7 @@ document.getElementById("addbutton").onclick = function() {
     FILESELECTOR.click();
 }
 
-function set_loading(loading: boolean) {
+export function set_loading(loading: boolean) {
     if (loading) {
         if (!LOADER.classList.contains("loading")) {
             LOADER.classList.add("loading");
@@ -84,8 +84,6 @@ class GameInstance {
         this.resizer = new Resizer(CANVAS, [...f32v(game.get_viewbox(), 4)], true);
         this.renderer = new Renderer();
         this.game.update_turn(0);
-
-        console.log(this.resizer);
 
         // Setup key handling
         document.addEventListener('keydown', this.handleKey.bind(this));
@@ -274,6 +272,8 @@ export async function set_instance(source: string) {
     CANVAS.width = CANVAS.getBoundingClientRect().width;
     CANVAS.height = CANVAS.getBoundingClientRect().height;
     game_instance = new GameInstance(Game.new(source), meshes.slice(1), meshes[0]);
+
+    set_loading(false);
 }
 
 SLIDER.oninput = function() {
@@ -300,10 +300,7 @@ SPEED.onchange = function() {
 
 function step(time: number) {
     if (game_instance) {
-        set_loading(false);
         game_instance.render(time);
-    } else {
-        set_loading(true);
     }
 
     requestAnimationFrame(step);

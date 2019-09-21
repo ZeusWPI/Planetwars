@@ -36,9 +36,6 @@ function loadShader(
     return null;
   }
 
-  console.log("created shader with source");
-  console.log(shaderSource);
-
   return shader;
 }
 
@@ -185,7 +182,7 @@ export class Shader {
     this.bind(gl);
     const location = this.getUniformLocation(gl, name);
     if (location < 0) {
-      console.log("No location found with name " + name);
+      console.error("No location found with name " + name);
     }
 
     uniform.setUniform(gl, location);
