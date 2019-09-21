@@ -175,6 +175,9 @@ class GameInstance {
 
         if (!this.playing) {
             this.last_time = time;
+
+            this.shader.uniform(GL, "u_viewbox", new Uniform4f(this.resizer.get_viewbox()));
+            this.renderer.render(GL);
             return;
         }
         if (time > this.last_time + ms_per_frame) {
