@@ -4,8 +4,6 @@ precision mediump float;
 
 attribute vec2 a_position;
 
-
-uniform float u_step_interval;
 uniform float u_time;
 
 uniform vec4 u_viewbox;         // [x, y, width, height]
@@ -13,13 +11,20 @@ uniform vec2 u_resolution;
 uniform mat3 u_trans;
 uniform mat3 u_trans_next;
 
+uniform bool u_animated;
+
 varying vec2 v_pos;
 
 void main() {
     vec3 pos = vec3(a_position, 1.0);
 
-    // float part = fract(u_time / u_step_interval);
-    mat3 trans = (u_trans_next * (1.0 - u_time)) + (u_trans * u_time);
+    mat3 trans;
+
+    if (u_animated) {
+        trans = (u_trans_next * (1.0 - u_time)) + (u_trans * u_time);
+    } else {
+        trans = u_trans;
+    }
 
     pos = trans * pos;
 

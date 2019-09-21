@@ -35,7 +35,6 @@ const RESOLUTION = [CANVAS.width, CANVAS.height];
 
 const GL = CANVAS.getContext("webgl");
 
-
 resizeCanvasToDisplaySize(<HTMLCanvasElement>GL.canvas);
 GL.viewport(0, 0, GL.canvas.width, GL.canvas.height);
 
@@ -59,6 +58,8 @@ class GameInstance {
     renderer: Renderer;
     planet_count: number;
 
+    playing = true;    // 0 is paused, 1 is playing but not rerendered, 2 is playing and rerendered
+    time_stopped_delta = 0;
     last_time = 0;
     frame = -1;
 
@@ -70,8 +71,10 @@ class GameInstance {
         this.shader = SHADERFACOTRY.create_shader(GL, {"MAX_CIRCLES": ''+this.planet_count});
         this.resizer = new Resizer(CANVAS, [...f32v(game.get_viewbox(), 4)], true);
         this.renderer = new Renderer();
-        // this.renderer.addToDraw(indexBuffer, vao, this.shader);
         this.game.update_turn(0);
+
+        // Setup key handling
+        document.addEventListener('keydown', this.handleKey.bind(this));
 
         const planets = f32v(game.get_planets(), this.planet_count * 3);
 
@@ -123,9 +126,13 @@ class GameInstance {
     }
 
     render(time: number) {
+        COUNTER.frame(time);
+
+        if (!this.playing) {
+            this.last_time = time;
+            return;
+        }
         if (time > this.last_time + 500) {
-            const transparant = new Uniform3f(0, 0, 0);
-            const transform = new UniformMatrix3fv([0, 0, 0, 0, 0, 0, 0, 0, 0, ]);
 
             this.last_time = time;
             this.frame ++;
@@ -171,15 +178,29 @@ class GameInstance {
         GL.viewport(0, 0, GL.canvas.width, GL.canvas.height);
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-        this.shader.uniform(GL, "u_step_interval", new Uniform1f(500));
         this.shader.uniform(GL, "u_time", new Uniform1f((time - this.last_time) / 500));
         this.shader.uniform(GL, "u_mouse", new Uniform2f(this.resizer.get_mouse_pos()));
         this.shader.uniform(GL, "u_viewbox", new Uniform4f(this.resizer.get_viewbox()));
         this.shader.uniform(GL, "u_resolution", new Uniform2f(RESOLUTION));
 
-        this.renderer.render(GL);
+        this.shader.uniform(GL, "u_animated", new Uniform1i(+this.playing));
 
-        COUNTER.frame(time);
+        this.renderer.render(GL);
+    }
+
+    handleKey(event: KeyboardEvent) {
+        console.log(event.keyCode);
+        console.log(event.key);
+
+        // Space
+        if (event.keyCode == 32) {
+            if (this.playing) {
+                this.playing = false;
+            } else {
+                this.playing = true;
+            }
+
+        }
     }
 }
 
