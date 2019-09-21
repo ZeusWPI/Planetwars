@@ -41,20 +41,21 @@ impl Circle {
 
         let r = q * 1.1;
 
-        let (x, y) = if true {
-            (
-                x3 + (r.powi(2)-(q/2.0).powi(2)).sqrt() * (y1-y2)/q,
-                y3 + (r.powi(2)-(q/2.0).powi(2)).sqrt() * (x2-x1)/q
-            )
-        } else {
-            (
-                x3 - (r.powi(2)-(q/2.0).powi(2)).sqrt() * (y1-y2)/q,
-                y3 - (r.powi(2)-(q/2.0).powi(2)).sqrt() * (x2-x1)/q
-            )
-        };
+        let mut x = x3 + (r.powi(2)-(q/2.0).powi(2)).sqrt() * (y1-y2)/q;
+        let mut y = y3 + (r.powi(2)-(q/2.0).powi(2)).sqrt() * (x2-x1)/q;
 
-        let a1 = (y - y1).atan2(x - x1);
-        let a2 = (y - y2).atan2(x - x2);
+
+        let mut a1 = (y - y1).atan2(x - x1);
+        let mut a2 = (y - y2).atan2(x - x2);
+
+        if a2 < a1 {
+
+            x = x3 - (r.powi(2)-(q/2.0).powi(2)).sqrt() * (y1-y2)/q;
+            y = y3 - (r.powi(2)-(q/2.0).powi(2)).sqrt() * (x2-x1)/q;
+
+            a2 = (y - y1).atan2(x - x1);
+            a1 = (y - y2).atan2(x - x2);
+        }
 
         let distance = q.ceil() as usize + 1;
 
