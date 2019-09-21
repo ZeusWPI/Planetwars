@@ -19,6 +19,7 @@ const COUNTER = new FPSCounter();
 const LOADER = document.getElementById("loader");
 
 const SLIDER = <HTMLInputElement>document.getElementById("turnSlider");
+const FILESELECTOR = <HTMLInputElement> document.getElementById("fileselect");
 
 function set_loading(loading: boolean) {
     if (loading) {
@@ -248,6 +249,17 @@ SLIDER.oninput = function() {
     }
 }
 
+FILESELECTOR.onchange = function(){
+    const file = FILESELECTOR.files[0];
+    var reader = new FileReader();
+
+    reader.onload = function() {
+        console.log(reader.result);
+      set_instance(Game.new(<string> reader.result));
+    }
+
+    reader.readAsText(file);
+}
 
 function step(time: number) {
     if (game_instance) {
