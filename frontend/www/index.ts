@@ -15,6 +15,8 @@ function i32v(ptr: number, size: number): Int32Array {
     return new Int32Array(memory.buffer, ptr, size);
 }
 
+const TURNCOUNTER = document.getElementById("turnCounter");
+
 const COUNTER = new FPSCounter();
 const LOADER = document.getElementById("main");
 
@@ -73,6 +75,8 @@ class GameInstance {
 
     ship_indices: number[];
 
+    turn_count = 0;
+
     constructor(game: Game, meshes: Mesh[], ship_mesh: Mesh)  {
         this.game = game;
         this.planet_count = this.game.get_planet_count();
@@ -115,6 +119,8 @@ class GameInstance {
             );
         }
 
+        this.turn_count = game.turn_count();
+
         this.ship_indices = [];
         const ship_ibo = new IndexBuffer(GL, ship_mesh.cells);
         const ship_positions = new VertexBuffer(GL, ship_mesh.positions);
@@ -135,7 +141,7 @@ class GameInstance {
         }
 
         // Set slider correctly
-        SLIDER.max = this.game.turn_count() - 1 + '';
+        SLIDER.max = this.turn_count - 1 + '';
     }
 
     _update_state() {
@@ -214,6 +220,7 @@ class GameInstance {
             this.playing = true;
         }
 
+        TURNCOUNTER.innerHTML = this.frame + " / " + this.turn_count;
         SLIDER.value = this.frame + '';
     }
 
