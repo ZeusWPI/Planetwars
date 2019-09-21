@@ -39,7 +39,7 @@ function set_loading(loading: boolean) {
 }
 
 const URL = window.location.origin+window.location.pathname;
-const LOCATION = URL.substring(0, URL.lastIndexOf("/") + 1);
+export const LOCATION = URL.substring(0, URL.lastIndexOf("/") + 1);
 const CANVAS = <HTMLCanvasElement>document.getElementById("c");
 const RESOLUTION = [CANVAS.width, CANVAS.height];
 

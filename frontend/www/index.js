@@ -2,6 +2,7 @@ import { Game } from "planetwars";
 import { Shader } from "./webgl/shader"
 
 import { set_instance } from './index.ts'
+import { } from './games.ts' // IMPORT GAMES PLEASE, thank you webpack <3
 
 const URL = window.location.origin+window.location.pathname;
 const LOCATION = URL.substring(0, URL.lastIndexOf("/") + 1);

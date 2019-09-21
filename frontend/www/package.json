@@ -20,9 +20,10 @@
     "mozaic"
   ],
   "dependencies": {
-    "planetwars": "file:../pkg",
+    "config-ini-parser": "^1.2.2",
     "extract-svg-path": "^2.1.0",
     "load-svg": "^1.0.0",
+    "planetwars": "file:../pkg",
     "svg-mesh-3d": "^1.1.0"
   },
   "author": "Arthur Vercruysse <arthur.vercruysse@outlook.com>",
