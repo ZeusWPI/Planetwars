@@ -20,7 +20,12 @@ mod planetwars;
 
 // Load the config and start the game.
 fn main() {
-    run(env::args().collect());
+    let args: Vec<String> = env::args().collect();
+    let name = args[0].clone();
+    match run(args) {
+        None => print_info(&name),
+        _ => {},
+    };
 }
 
 use mozaic::server::runtime::{Broker};
@@ -30,7 +35,11 @@ use mozaic::modules::ConnectionManager;
 use mozaic::modules::util;
 use std::collections::HashMap;
 
-pub fn run(args : Vec<String>) {
+fn print_info(name: &str) {
+    println!("Usage: {} map_location [number_of_clients [output [max_turns]]]", name);
+}
+
+pub fn run(args : Vec<String>) -> Option<()> {
 
     let addr = "127.0.0.1:9142".parse::<SocketAddr>().unwrap();
 
@@ -39,12 +48,15 @@ pub fn run(args : Vec<String>) {
     let aggregator_id: ReactorId = rand::thread_rng().gen();
     let steplock_id: ReactorId = rand::thread_rng().gen();
 
-    let number_of_clients = args.get(1).map(|x| x.parse().unwrap_or(1)).unwrap_or(1);
+    let map = args.get(1)?;
+    let number_of_clients = args.get(2).map(|x| x.parse().expect("Client number should be a number")).unwrap_or(1);
+    let location = args.get(3).map(|x| x.as_str()).unwrap_or("game.json");
+    let max_turns = args.get(4).map(|x| x.parse().expect("Max turns should be a number")).unwrap_or(500);
 
     let ids: HashMap<util::Identifier, util::PlayerId> = (0..number_of_clients).map(|x| (rand::thread_rng().gen::<u64>().into(), x.into())).collect();
 
-    let config = planetwars::Config { map_file: String::from("hex.json"), max_turns: 500 };
-    let game = planetwars::PlanetWarsGame::new(config.create_game(number_of_clients as usize));
+    let config = planetwars::Config { map_file: map.to_string(), max_turns: max_turns };
+    let game = planetwars::PlanetWarsGame::new(config.create_game(number_of_clients as usize), location);
 
     println!("Tokens:");
     let keys: Vec<u64> = ids.keys().map(|&x| x.into()).collect();
@@ -66,4 +78,6 @@ pub fn run(args : Vec<String>) {
 
         Ok(())
     }));
+
+    Some(())
 }

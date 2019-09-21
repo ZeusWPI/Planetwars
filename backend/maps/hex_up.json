@@ -1,0 +1,42 @@
+{
+    "planets": [
+        {
+            "name": "protos",
+            "x": -3,
+            "y": 4,
+            "owner": 1,
+            "ship_count": 6
+        },
+        {
+            "name": "duteros",
+            "x": 0,
+            "y": 9,
+            "ship_count": 6
+        },
+        {
+            "name": "tritos",
+            "x": 6,
+            "y": 9,
+            "ship_count": 6
+        },
+        {
+            "name": "tetartos",
+            "x": 9,
+            "y": 4,
+            "owner": 2,
+            "ship_count": 6
+        },
+        {
+            "name": "pemptos",
+            "x": 6,
+            "y": -1,
+            "ship_count": 6
+        },
+        {
+            "name": "extos",
+            "x": 0,
+            "y": -1,
+            "ship_count": 6
+        }
+    ]
+}

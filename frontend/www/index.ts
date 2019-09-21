@@ -78,6 +78,8 @@ class GameInstance {
         this.renderer = new Renderer();
         this.game.update_turn(0);
 
+        console.log(this.resizer);
+
         // Setup key handling
         document.addEventListener('keydown', this.handleKey.bind(this));
 

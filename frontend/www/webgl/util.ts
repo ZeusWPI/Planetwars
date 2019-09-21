@@ -66,7 +66,7 @@ export class Resizer {
     scaleY = 1;
 
     constructor(el: HTMLCanvasElement, viewbox: number[], keep_aspect_ratio=false) {
-
+        viewbox = [-viewbox[0] - viewbox[2], - viewbox[1] - viewbox[3], viewbox[2], viewbox[3]];
         this.viewbox = [...viewbox];
         this.el_box = [el.width, el.height];
 

@@ -24,9 +24,9 @@ pub struct PlanetWarsGame {
 
 impl PlanetWarsGame {
 
-    pub fn new(state: pw_rules::PlanetWars) -> Self {
+    pub fn new(state: pw_rules::PlanetWars, location: &str) -> Self {
         let planet_map = state.planets.iter().map(|p| (p.name.clone(), p.id)).collect();
-        let file = File::create("game.json").unwrap();
+        let file = File::create(location).unwrap();
 
         Self {
             state, planet_map,
