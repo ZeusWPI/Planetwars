@@ -20,7 +20,7 @@ const LOADER = document.getElementById("loader");
 
 const SLIDER = <HTMLInputElement>document.getElementById("turnSlider");
 const FILESELECTOR = <HTMLInputElement> document.getElementById("fileselect");
-
+const SPEED = <HTMLInputElement> document.getElementById("speed");
 function set_loading(loading: boolean) {
     if (loading) {
         if (!LOADER.classList.contains("loading")) {
@@ -37,6 +37,8 @@ const CANVAS = <HTMLCanvasElement>document.getElementById("c");
 const RESOLUTION = [CANVAS.width, CANVAS.height];
 
 const GL = CANVAS.getContext("webgl");
+
+var ms_per_frame = 500;
 
 resizeCanvasToDisplaySize(<HTMLCanvasElement>GL.canvas);
 GL.viewport(0, 0, GL.canvas.width, GL.canvas.height);
@@ -175,7 +177,7 @@ class GameInstance {
             this.last_time = time;
             return;
         }
-        if (time > this.last_time + 500) {
+        if (time > this.last_time + ms_per_frame) {
 
             this.last_time = time;
             this.updateTurn(this.frame + 1);
@@ -185,7 +187,7 @@ class GameInstance {
         GL.viewport(0, 0, GL.canvas.width, GL.canvas.height);
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-        this.shader.uniform(GL, "u_time", new Uniform1f((time - this.last_time) / 500));
+        this.shader.uniform(GL, "u_time", new Uniform1f((time - this.last_time) / ms_per_frame));
         this.shader.uniform(GL, "u_mouse", new Uniform2f(this.resizer.get_mouse_pos()));
         this.shader.uniform(GL, "u_viewbox", new Uniform4f(this.resizer.get_viewbox()));
         this.shader.uniform(GL, "u_resolution", new Uniform2f(RESOLUTION));
@@ -210,6 +212,7 @@ class GameInstance {
     }
 
     handleKey(event: KeyboardEvent) {
+        console.log(event.keyCode);
         // Space
         if (event.keyCode == 32) {
             if (this.playing) {
@@ -228,6 +231,18 @@ class GameInstance {
         // Arrow right
         if (event.keyCode == 39) {
             this.updateTurn(this.frame + 1);
+        }
+
+        // d key
+        if (event.keyCode == 68) {
+            SPEED.value = ms_per_frame + 10 + '';
+            SPEED.onchange(undefined);
+        }
+
+        // a key
+        if (event.keyCode == 65) {
+            SPEED.value = Math.max(ms_per_frame - 10, 0) + '';
+            SPEED.onchange(undefined);
         }
     }
 }
@@ -259,6 +274,10 @@ FILESELECTOR.onchange = function(){
     }
 
     reader.readAsText(file);
+}
+
+SPEED.onchange = function() {
+    ms_per_frame = parseInt(SPEED.value);
 }
 
 function step(time: number) {
