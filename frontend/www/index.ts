@@ -18,6 +18,8 @@ function i32v(ptr: number, size: number): Int32Array {
 const COUNTER = new FPSCounter();
 const LOADER = document.getElementById("loader");
 
+const SLIDER = <HTMLInputElement>document.getElementById("turnSlider");
+
 function set_loading(loading: boolean) {
     if (loading) {
         if (!LOADER.classList.contains("loading")) {
@@ -123,6 +125,9 @@ class GameInstance {
                 )
             );
         }
+
+        // Set slider correctly
+        SLIDER.max = this.game.turn_count() - 1 + '';
     }
 
     _update_state() {
@@ -197,13 +202,13 @@ class GameInstance {
             this.playing = false;
         } else {
             this._update_state();
+            this.playing = true;
         }
+
+        SLIDER.value = this.frame + '';
     }
 
     handleKey(event: KeyboardEvent) {
-        console.log(event.keyCode);
-        console.log(event.key);
-
         // Space
         if (event.keyCode == 32) {
             if (this.playing) {
@@ -235,6 +240,12 @@ export async function set_instance(game: Game) {
         ).map(url_to_mesh)
     );
     game_instance = new GameInstance(game, meshes.slice(1), meshes[0]);
+}
+
+SLIDER.oninput = function() {
+    if (game_instance) {
+        game_instance.updateTurn(parseInt(SLIDER.value));
+    }
 }
 
 
