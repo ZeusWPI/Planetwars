@@ -125,6 +125,43 @@ class GameInstance {
         }
     }
 
+    _update_state() {
+        const colours = f32v(this.game.get_planet_colors(), this.planet_count * 6);
+        for(let i=0; i < this.planet_count; i++){
+            const u = new Uniform3f(colours[i*6], colours[i*6 + 1], colours[i*6 + 2]);
+            this.renderer.updateUniform(i, (us) => us["u_color"] = u);
+            const u2 = new Uniform3f(colours[i*6 + 3], colours[i*6 + 4], colours[i*6 + 5]);
+            this.renderer.updateUniform(i, (us) => us["u_color_next"] = u2);
+        }
+
+        const ships = f32v(this.game.get_ship_locations(), this.game.get_ship_count() * 9 * 2);
+        const ship_colours = f32v(this.game.get_ship_colours(), this.game.get_ship_count() * 3);
+
+        for (let i=0; i < this.game.get_max_ships(); i++) {
+            const index = this.ship_indices[i];
+            if (i < this.game.get_ship_count()) {
+
+                this.renderer.enableRendershit(index);
+
+                const u = new Uniform3f(ship_colours[i*3], ship_colours[i*3 + 1], ship_colours[i*3 + 2]);
+                // const t1 = new UniformMatrix3fv(new Float32Array(ships, i * 18, 9));
+                // const t2 = new UniformMatrix3fv(new Float32Array(ships, i * 18 + 9, 9));
+
+                const t1 = new UniformMatrix3fv(ships.slice(i * 18, i * 18 + 9));
+                const t2 = new UniformMatrix3fv(ships.slice(i * 18 + 9, i * 18 + 18));
+
+                this.renderer.updateUniform(index, (us) => {
+                    us["u_color"] = u;
+                    us["u_color_next"] = u;
+                    us["u_trans"] = t1;
+                    us["u_trans_next"] = t2;
+                });
+            } else {
+                this.renderer.disableRenderShift(index);
+            }
+        }
+    }
+
     render(time: number) {
         COUNTER.frame(time);
 
@@ -135,43 +172,7 @@ class GameInstance {
         if (time > this.last_time + 500) {
 
             this.last_time = time;
-            this.frame ++;
-            this.game.update_turn(this.frame);
-
-            const colours = f32v(this.game.get_planet_colors(), this.planet_count * 6);
-            for(let i=0; i < this.planet_count; i++){
-                const u = new Uniform3f(colours[i*6], colours[i*6 + 1], colours[i*6 + 2]);
-                this.renderer.updateUniform(i, (us) => us["u_color"] = u);
-                const u2 = new Uniform3f(colours[i*6 + 3], colours[i*6 + 4], colours[i*6 + 5]);
-                this.renderer.updateUniform(i, (us) => us["u_color_next"] = u2);
-            }
-
-            const ships = f32v(this.game.get_ship_locations(), this.game.get_ship_count() * 9 * 2);
-            const ship_colours = f32v(this.game.get_ship_colours(), this.game.get_ship_count() * 3);
-
-            for (let i=0; i < this.game.get_max_ships(); i++) {
-                const index = this.ship_indices[i];
-                if (i < this.game.get_ship_count()) {
-
-                    this.renderer.enableRendershit(index);
-
-                    const u = new Uniform3f(ship_colours[i*3], ship_colours[i*3 + 1], ship_colours[i*3 + 2]);
-                    // const t1 = new UniformMatrix3fv(new Float32Array(ships, i * 18, 9));
-                    // const t2 = new UniformMatrix3fv(new Float32Array(ships, i * 18 + 9, 9));
-
-                    const t1 = new UniformMatrix3fv(ships.slice(i * 18, i * 18 + 9));
-                    const t2 = new UniformMatrix3fv(ships.slice(i * 18 + 9, i * 18 + 18));
-
-                    this.renderer.updateUniform(index, (us) => {
-                        us["u_color"] = u;
-                        us["u_color_next"] = u;
-                        us["u_trans"] = t1;
-                        us["u_trans_next"] = t2;
-                    });
-                } else {
-                    this.renderer.disableRenderShift(index);
-                }
-            }
+            this.updateTurn(this.frame + 1);
         }
 
         GL.bindFramebuffer(GL.FRAMEBUFFER, null);
@@ -188,6 +189,17 @@ class GameInstance {
         this.renderer.render(GL);
     }
 
+    updateTurn(turn: number) {
+        this.frame = Math.max(0, turn);
+        const new_frame = this.game.update_turn(this.frame);
+        if (new_frame < this.frame) {
+            this.frame = new_frame;
+            this.playing = false;
+        } else {
+            this._update_state();
+        }
+    }
+
     handleKey(event: KeyboardEvent) {
         console.log(event.keyCode);
         console.log(event.key);
@@ -199,7 +211,17 @@ class GameInstance {
             } else {
                 this.playing = true;
             }
+        }
 
+        // Arrow left
+        if (event.keyCode == 37) {
+            // This feels more natural than -1 what it should be, I think
+            this.updateTurn(this.frame - 2);
+        }
+
+        // Arrow right
+        if (event.keyCode == 39) {
+            this.updateTurn(this.frame + 1);
         }
     }
 }

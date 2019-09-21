@@ -4,7 +4,7 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate octoon_math;
 
-use octoon_math::{Mat3, Vec3, One};
+use octoon_math::{Mat3, Vec3};
 
 mod utils;
 mod types;
@@ -75,7 +75,6 @@ impl Circle {
 
         let cos = alpha.cos();
         let sin = alpha.sin();
-        // Mat3::rotate_z(alpha) *
         Mat3::new(
             0.3, 0.0, 0.0,
             0.0, 0.4, 0.0,
@@ -84,51 +83,51 @@ impl Circle {
     }
 }
 
-struct Line {
-    x1: f32,
-    y1: f32,
-    x2: f32,
-    y2: f32,
-    a: f32,
-    d: usize,
-}
-impl Line {
-    pub fn new(p1: &types::Planet, p2: &types::Planet) -> Self {
-        let dx = p1.x - p2.x;
-        let dy = p1.y - p2.y;
-        let a = dy.atan2(dx);
-        // let a = (dy / dx).atan();
-        let d = (dx * dx + dy * dy).sqrt().ceil() as usize + 1;
+// struct Line {
+//     x1: f32,
+//     y1: f32,
+//     x2: f32,
+//     y2: f32,
+//     a: f32,
+//     d: usize,
+// }
+// impl Line {
+//     pub fn new(p1: &types::Planet, p2: &types::Planet) -> Self {
+//         let dx = p1.x - p2.x;
+//         let dy = p1.y - p2.y;
+//         let a = dy.atan2(dx);
+//         // let a = (dy / dx).atan();
+//         let d = (dx * dx + dy * dy).sqrt().ceil() as usize + 1;
 
-        Self {
-            x1: p1.x,
-            x2: p2.x,
-            y1: p1.y,
-            y2: p2.y,
-            d, a,
-        }
-    }
+//         Self {
+//             x1: p1.x,
+//             x2: p2.x,
+//             y1: p1.y,
+//             y2: p2.y,
+//             d, a,
+//         }
+//     }
 
-    pub fn get_for_remaining(&self, remaining: usize) -> (Mat3<f32>, Mat3<f32>) {
-        (
-            self.get_remaining(remaining),
-            self.get_remaining((remaining + 1).min(self.d - 1)),
-        )
-    }
+//     pub fn get_for_remaining(&self, remaining: usize) -> (Mat3<f32>, Mat3<f32>) {
+//         (
+//             self.get_remaining(remaining),
+//             self.get_remaining((remaining + 1).min(self.d - 1)),
+//         )
+//     }
 
-    fn get_remaining(&self, remaining: usize) -> Mat3<f32> {
-        let x = (self.x1 * remaining as f32 + (self.d - remaining) as f32 * self.x2) / self.d as f32;
-        // let x = self.x1 + (remaining as f32 / self.d as f32) * (self.x2 - self.x1);
-        let y = (self.y1 * remaining as f32 + (self.d - remaining) as f32 * self.y2) / self.d as f32;
+//     fn get_remaining(&self, remaining: usize) -> Mat3<f32> {
+//         let x = (self.x1 * remaining as f32 + (self.d - remaining) as f32 * self.x2) / self.d as f32;
+//         // let x = self.x1 + (remaining as f32 / self.d as f32) * (self.x2 - self.x1);
+//         let y = (self.y1 * remaining as f32 + (self.d - remaining) as f32 * self.y2) / self.d as f32;
 
-        // let y = self.y1 + (remaining as f32 / self.d as f32) * (self.y2 - self.y1);
-        Mat3::new(
-            0.3, 0.0, 0.0,
-            0.0, 0.3, 0.0,
-            x, y, 0.3,
-        ) * Mat3::rotate_z(self.a)
-    }
-}
+//         // let y = self.y1 + (remaining as f32 / self.d as f32) * (self.y2 - self.y1);
+//         Mat3::new(
+//             0.3, 0.0, 0.0,
+//             0.0, 0.3, 0.0,
+//             x, y, 0.3,
+//         ) * Mat3::rotate_z(self.a)
+//     }
+// }
 
 
 #[wasm_bindgen]
@@ -154,13 +153,9 @@ impl Game {
         utils::set_panic_hook();
 
         // First line is fucked but we just filter out things that cannot parse
-        let mut states: Vec<types::State> = file.split("\n").filter_map(|line|
+        let states: Vec<types::State> = file.split("\n").filter_map(|line|
             serde_json::from_str(line).ok()
         ).collect();
-        states.push(types::State {
-            planets: states.last().unwrap().planets.clone(),
-            expeditions: Vec::new()
-        });
 
         let mut planet_map = HashMap::new();
 
@@ -204,11 +199,13 @@ impl Game {
         self.states.len()
     }
 
-    pub fn update_turn(&mut self, turn: usize) {
+    pub fn update_turn(&mut self, turn: usize) -> usize {
         self.turn = turn.min(self.states.len() -1);
 
         self.update_planet_colours();
-        self.update_ship_locations()
+        self.update_ship_locations();
+
+        self.turn
     }
 
     fn update_planet_colours(&mut self) {
@@ -241,12 +238,6 @@ impl Game {
             utils::COLORS[s.owner as usize % utils::COLORS.len()].into()
         }).collect();
     }
-
-    // pub fn add_location(&mut self, x: f32, y: f32, angle: f32) {
-    //     self.current_turn.push(
-    //         Location { x, y, angle}
-    //     );
-    // }
 
     pub fn get_max_ships(&self) -> usize {
         self.states.iter().map(|s| s.expeditions.len()).max().unwrap()
