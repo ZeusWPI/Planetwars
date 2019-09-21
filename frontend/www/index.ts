@@ -195,8 +195,6 @@ class GameInstance {
         this.shader.uniform(GL, "u_viewbox", new Uniform4f(this.resizer.get_viewbox()));
         this.shader.uniform(GL, "u_resolution", new Uniform2f(RESOLUTION));
 
-        this.shader.uniform(GL, "u_animated", new Uniform1i(+this.playing));
-
         this.renderer.render(GL);
     }
 
@@ -215,7 +213,6 @@ class GameInstance {
     }
 
     handleKey(event: KeyboardEvent) {
-        console.log(event.keyCode);
         // Space
         if (event.keyCode == 32) {
             if (this.playing) {
@@ -251,14 +248,17 @@ class GameInstance {
 }
 
 var game_instance: GameInstance;
+var meshes;
 
-export async function set_instance(game: Game) {
-    const meshes = await Promise.all(
-        ["ship.svg", "earth.svg", "mars.svg", "venus.svg"].map(
-            (name) => "static/res/assets/" + name
-        ).map(url_to_mesh)
-    );
-    game_instance = new GameInstance(game, meshes.slice(1), meshes[0]);
+export async function set_instance(source: string) {
+    if (!meshes) {
+        meshes = await Promise.all(
+            ["ship.svg", "earth.svg", "mars.svg", "venus.svg"].map(
+                (name) => "static/res/assets/" + name
+            ).map(url_to_mesh)
+        );
+    }
+    game_instance = new GameInstance(Game.new(source), meshes.slice(1), meshes[0]);
 }
 
 SLIDER.oninput = function() {
@@ -272,8 +272,7 @@ FILESELECTOR.onchange = function(){
     var reader = new FileReader();
 
     reader.onload = function() {
-        console.log(reader.result);
-      set_instance(Game.new(<string> reader.result));
+        set_instance(<string> reader.result);
     }
 
     reader.readAsText(file);

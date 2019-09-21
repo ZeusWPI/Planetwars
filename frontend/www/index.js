@@ -11,5 +11,5 @@ const game_location = LOCATION + "static/games/game.json";
 fetch(game_location)
     .then((r) => r.text())
     .then((response) => {
-        set_instance(Game.new(response));
+        set_instance(response);
     }).catch(console.error);
