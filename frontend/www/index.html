@@ -6,19 +6,82 @@
     <link rel="stylesheet" type="text/css" href="static/res/style.css">
   </head>
   <body>
-    <div id="loader" class="loading">
-      <canvas id="c" width=1550 height=700></canvas>
+    <input type="file" id="fileselect" style="display: none">
+    <div id=wrapper>
+
+      <div id="main" class="loading">
+        <canvas id="c"></canvas>
+
+        <div id="addbutton" class="button"></div>
+
+        <div id="meta">
+          <div>
+            <span>Ms per frame:&nbsp;</span>
+            <input type="number" id="speed" value="500">
+          </div>
+          <div class="slidecontainer">
+            <input type="range" min="0" max="1" value="1" class="slider" id="turnSlider">
+          </div>
+        </div>
+      </div>
+
+      <div id=options>
+        <div class="option">
+          Option one
+        </div>
+        <div class="option">
+            Option two
+        </div>
+        <div class="option">
+          Option three
+        </div>
+        <div class="option">
+          Option three
+        </div>
+        <div class="option">
+          Option three
+        </div>
+        <div class="option">
+          Option three
+        </div>
+        <div class="option">
+          Option three
+        </div>
+        <div class="option">
+          Option three
+        </div>
+        <div class="option">
+          Option three
+        </div>
+        <div class="option">
+          Option three
+        </div><div class="option">
+          Option three
+        </div>
+        <div class="option">
+          Option three
+        </div>
+        <div class="option">
+            Option three
+          </div>
+          <div class="option">
+            Option three
+          </div>
+          <div class="option">
+            Option three
+          </div>
+          <div class="option">
+            Option three
+          </div><div class="option">
+            Option three
+          </div>
+          <div class="option">
+            Option three
+          </div>
+      </div>
+
     </div>
 
-    <div class="slidecontainer">
-      <input type="range" min="0" max="1" value="1" class="slider" id="turnSlider">
-    </div>
-
-    <input type="file" id="fileselect">
-    <div>
-      <span>Ms per frame:&nbsp;</span>
-      <input type="number" id="speed" value="500">
-    </div>
 
     <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
     <script src="./bootstrap.js"></script>

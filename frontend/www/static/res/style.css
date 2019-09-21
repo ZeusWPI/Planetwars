@@ -1,5 +1,58 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
 body {
   background-color: #333;
+}
+
+body, html {
+  height: 99%;
+}
+
+#wrapper {
+  max-height: 100vh;
+  min-height: 100vh;
+
+  width: 100%;
+  height: 100vh;
+}
+
+#main {
+  height: calc(100% - 200px);
+  width: 100%;
+  position: relative;
+}
+
+#meta{
+  padding: 10px 2%;
+  color: white;
+  position: absolute;
+  bottom: 0;
+  width: 96%;
+}
+
+#options {
+  background-color: #444;
+  overflow-y: hidden;
+  overflow-x: scroll;
+  white-space: nowrap;
+  height: 200px;
+  min-height: 200px !important;
+  max-height: 200px !important;
+}
+
+.option {
+  display: inline-block;
+  color: white;
+  text-align: center;
+  width: 200px;
+  height: 100%;
+}
+
+.option:hover {
+  background-color: #777;
 }
 
 .loading {
@@ -22,9 +75,49 @@ body {
         animation: slide-top 0.5s ease-out infinite alternate ;
  }
 
+ #speed {
+   width: 100px;
+ }
+
  #c {
      position: relative;
      background-color: black;
+     width: 100%;
+     height: 100%;
+ }
+
+ .button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 40px;
+  height: 40px;
+ }
+
+ .button:before, .button:after {
+  content: "";
+  position: absolute;
+  background-color: grey;
+ }
+
+ .button:hover:before, .button:hover:after {
+  background-color: white;
+ }
+
+ .button:before {
+  top: 0;
+  left: 50%;
+  width: 6px;
+  height: 100%;
+  margin-left: -3px;
+ }
+
+ .button:after {
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  margin-top: -3px;
  }
 
 /* ----------------------------------------------
@@ -67,40 +160,68 @@ body {
  * ----------------------------------------
  */
  .slidecontainer {
+  margin-top: 10px;
   width: 100%; /* Width of the outside container */
 }
 
-/* The slider itself */
 .slider {
-  -webkit-appearance: none;  /* Override default CSS styles */
-  appearance: none;
-  width: 100%; /* Full-width */
-  height: 25px; /* Specified height */
-  background: #d3d3d3; /* Grey background */
-  outline: none; /* Remove outline */
-  opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
-  -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+  -webkit-appearance: none;
+  width: 100%;
+  height: 15px;
+  border-radius: 5px;
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
   transition: opacity .2s;
 }
 
-/* Mouse-over effects */
-.slider:hover {
-  opacity: 1; /* Fully shown on mouse-over */
-}
-
-/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
 .slider::-webkit-slider-thumb {
-  -webkit-appearance: none; /* Override default look */
+  -webkit-appearance: none;
   appearance: none;
-  width: 25px; /* Set a specific slider handle width */
-  height: 25px; /* Slider handle height */
-  background: #4CAF50; /* Green background */
-  cursor: pointer; /* Cursor on hover */
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #ff7000;
+  cursor: pointer;
 }
 
 .slider::-moz-range-thumb {
-  width: 25px; /* Set a specific slider handle width */
-  height: 25px; /* Slider handle height */
-  background: #4CAF50; /* Green background */
-  cursor: pointer; /* Cursor on hover */
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #ff7000;
+  cursor: pointer;
+}
+
+
+::-webkit-scrollbar-track
+{
+  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  border-radius: 10px;
+
+  background-color: #444;
+  border-radius: 10px;
+
+}
+
+::-webkit-scrollbar
+{
+	width: 10px;
+	background-color: #444;
+}
+
+::-webkit-scrollbar-thumb
+{
+  border-radius: 10px;
+	background-color: #F90;
+	background-image: -webkit-linear-gradient(45deg,
+	                                          rgba(255, 255, 255, .2) 25%,
+											  transparent 25%,
+											  transparent 50%,
+											  rgba(255, 255, 255, .2) 50%,
+											  rgba(255, 255, 255, .2) 75%,
+											  transparent 75%,
+											  transparent)
 }

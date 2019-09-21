@@ -16,11 +16,16 @@ function i32v(ptr: number, size: number): Int32Array {
 }
 
 const COUNTER = new FPSCounter();
-const LOADER = document.getElementById("loader");
+const LOADER = document.getElementById("main");
 
 const SLIDER = <HTMLInputElement>document.getElementById("turnSlider");
 const FILESELECTOR = <HTMLInputElement> document.getElementById("fileselect");
 const SPEED = <HTMLInputElement> document.getElementById("speed");
+
+document.getElementById("addbutton").onclick = function() {
+    FILESELECTOR.click();
+}
+
 function set_loading(loading: boolean) {
     if (loading) {
         if (!LOADER.classList.contains("loading")) {
@@ -53,8 +58,6 @@ var SHADERFACOTRY: ShaderFactory;
 ShaderFactory.create_factory(
     LOCATION + "static/shaders/frag/simple.glsl", LOCATION + "static/shaders/vert/simple.glsl"
 ).then((e) => SHADERFACOTRY = e);
-
-
 
 class GameInstance {
     resizer: Resizer;
@@ -260,6 +263,9 @@ export async function set_instance(source: string) {
             ).map(url_to_mesh)
         );
     }
+
+    CANVAS.width = CANVAS.getBoundingClientRect().width;
+    CANVAS.height = CANVAS.getBoundingClientRect().height;
     game_instance = new GameInstance(Game.new(source), meshes.slice(1), meshes[0]);
 }
 
@@ -271,6 +277,7 @@ SLIDER.oninput = function() {
 
 FILESELECTOR.onchange = function(){
     const file = FILESELECTOR.files[0];
+    if(!file) { return; }
     var reader = new FileReader();
 
     reader.onload = function() {
