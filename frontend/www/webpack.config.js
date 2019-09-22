@@ -18,7 +18,6 @@ module.exports = {
   },
   output: {
     path: path.join(__dirname, 'dist'),
-    publicPath: '/',
     filename: 'bootstrap.js'
   },
   plugins: [
