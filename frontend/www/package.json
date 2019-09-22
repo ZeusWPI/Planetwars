@@ -2,11 +2,12 @@
   "name": "create-wasm-app",
   "version": "0.1.0",
   "description": "create an app to consume rust-generated wasm packages",
-  "main": "dist/index.js",
+  "main": "./bootstrap.js",
   "types": "dist/index.d.ts",
   "scripts": {
+    "develop": "webpack --mode development --watch",
     "build": "webpack --config webpack.config.js",
-    "start": "webpack-dev-server"
+    "start": "webpack-dev-server --content-base dist/"
   },
   "repository": {
     "type": "git",

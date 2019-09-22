@@ -17,8 +17,9 @@ module.exports = {
     extensions: [ '.tsx', '.ts', '.js', '.wasm' ]
   },
   output: {
-    filename: 'bootstrap.js',
-    path: path.resolve(__dirname, 'dist')
+    path: path.join(__dirname, 'dist'),
+    publicPath: '/',
+    filename: 'bootstrap.js'
   },
   plugins: [
     new CopyWebpackPlugin(['index.html'])

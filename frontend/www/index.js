@@ -1,5 +1,3 @@
-import { Game } from "planetwars";
-import { Shader } from "./webgl/shader"
 
 import { set_instance } from './index.ts'
 import { } from './games.ts' // IMPORT GAMES PLEASE, thank you webpack <3
