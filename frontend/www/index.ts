@@ -47,8 +47,7 @@ const GL = CANVAS.getContext("webgl");
 
 var ms_per_frame = 500;
 
-resizeCanvasToDisplaySize(<HTMLCanvasElement>GL.canvas);
-GL.viewport(0, 0, GL.canvas.width, GL.canvas.height);
+resizeCanvasToDisplaySize(CANVAS);
 
 GL.clearColor(0, 0, 0, 0);
 GL.clear(GL.COLOR_BUFFER_BIT);
@@ -273,16 +272,15 @@ export async function set_instance(source: string) {
         );
     }
 
-    CANVAS.width = CANVAS.getBoundingClientRect().width;
-    CANVAS.height = CANVAS.getBoundingClientRect().height;
+    resizeCanvasToDisplaySize(CANVAS);
+
     game_instance = new GameInstance(Game.new(source), meshes.slice(1), meshes[0]);
 
     set_loading(false);
 }
 
 window.addEventListener('resize', function() {
-    CANVAS.width = CANVAS.getBoundingClientRect().width;
-    CANVAS.height = CANVAS.getBoundingClientRect().height;
+    resizeCanvasToDisplaySize(CANVAS);
 
     if (game_instance) {
         game_instance.on_resize();
