@@ -81,8 +81,8 @@ export class Resizer {
                 // width should be larger
                 this.viewbox[2] = height_percentage * el.width;
             } else {
-                this.viewbox[3] = width_percentage * el.height;
                 // height should be larger
+                this.viewbox[3] = width_percentage * el.height;
             }
 
             this.viewbox[0] -= (this.viewbox[2] - or_width) / 2;
@@ -147,23 +147,29 @@ export class Resizer {
         if (this.hoovering) {
             const delta = e.deltaY > 0 ? 0.1 * this.viewbox[2] : -0.1 * this.viewbox[2];
             const dx =  delta * this.scaleX;
-
-            this.viewbox[2] += dx;
-            this.viewbox[0] -= dx / 2;
-            this.viewbox[2] = Math.min(this.viewbox[2], this.orig_viewbox[2]);
-
             const dy = delta * this.scaleY;
-            this.viewbox[3] += dy;
-            this.viewbox[1] -= dy / 2;
-            this.viewbox[3] = Math.min(this.viewbox[3], this.orig_viewbox[3]);
 
-            this._clip_viewbox();
+            const mouse_dx = this.mouse_pos[0] / this.el_box[0];
+            const mouse_dy = this.mouse_pos[1] / this.el_box[1];
+
+            this._zoom([dx, dy], [mouse_dx, mouse_dy]);
         }
+    }
+
+    _zoom(deltas: number[], center: number[]) {
+      this.viewbox[2] += deltas[0];
+      this.viewbox[0] -= deltas[0] * center[0];
+      this.viewbox[2] = Math.min(this.viewbox[2], this.orig_viewbox[2]);
+
+      this.viewbox[3] += deltas[1];
+      this.viewbox[1] -= deltas[1] * center[1];
+      this.viewbox[3] = Math.min(this.viewbox[3], this.orig_viewbox[3]);
+
+      this._clip_viewbox();
     }
 
     get_viewbox(): number[] {
       return this.viewbox;
-        // return [this.viewbox[0] / this.orig_viewbox[0], this.viewbox[1] / this.orig_viewbox[1], this.viewbox[2] / this.orig_viewbox[2], this.viewbox[3] / this.orig_viewbox[3],];
     }
 
     get_mouse_pos(): number[] {
