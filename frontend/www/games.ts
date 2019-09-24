@@ -34,8 +34,12 @@ function create_option(location: string, name: string, turns: string, players: s
     if (players) {
         ps += "<p>Players</p>";
 
-        for (let player of players.split(' ')) {
-            ps += `<p>${eval(player)}</p>`;
+        for (let [index, player] of players.split('"').entries()) {
+            if (index % 2 == 0) {
+                continue;
+            }
+            console.log(player);
+            ps += `<p>${player}</p>`;
         }
     }
 

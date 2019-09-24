@@ -60,10 +60,16 @@ ShaderFactory.create_factory(
     LOCATION + "static/shaders/frag/simple.glsl", LOCATION + "static/shaders/vert/simple.glsl"
 ).then((e) => SHADERFACOTRY = e);
 
+var VOR_SHADER_FACTORY: ShaderFactory;
+ShaderFactory.create_factory(
+    LOCATION + "static/shaders/frag/vor.glsl", LOCATION + "static/shaders/vert/vor.glsl"
+).then((e) => VOR_SHADER_FACTORY = e);
+
 class GameInstance {
     resizer: Resizer;
     game: Game;
     shader: Shader;
+    vor_shader: Shader;
     renderer: Renderer;
     planet_count: number;
 
@@ -80,9 +86,30 @@ class GameInstance {
         this.game = game;
         this.planet_count = this.game.get_planet_count();
         this.shader = SHADERFACOTRY.create_shader(GL, {"MAX_CIRCLES": ''+this.planet_count});
+        this.vor_shader = VOR_SHADER_FACTORY.create_shader(GL, {"PLANETS": ''+this.planet_count});
         this.resizer = new Resizer(CANVAS, [...f32v(game.get_viewbox(), 4)], true);
         this.renderer = new Renderer();
         this.game.update_turn(0);
+
+        const indexBuffer = new IndexBuffer(GL, [
+            0, 1, 2,
+            1, 2, 3,
+        ]);
+
+        const positionBuffer = new VertexBuffer(GL, [
+            -1, -1,
+            -1, 1,
+            1, -1,
+            1, 1,
+        ]);
+
+        const layout = new VertexBufferLayout();
+        layout.push(GL.FLOAT, 2, 4, "a_pos");
+
+        const vao = new VertexArray();
+        vao.addBuffer(positionBuffer, layout);
+
+        this.renderer.addToDraw(indexBuffer, vao, this.vor_shader);
 
         // Setup key handling
         document.addEventListener('keydown', this.handleKey.bind(this));
@@ -137,6 +164,8 @@ class GameInstance {
             );
         }
 
+        this.vor_shader.uniform(GL, "u_planets", new Uniform3fv(planets));
+
         // Set slider correctly
         SLIDER.max = this.turn_count - 1 + '';
     }
@@ -147,11 +176,14 @@ class GameInstance {
 
     _update_state() {
         const colours = f32v(this.game.get_planet_colors(), this.planet_count * 6);
+
+        this.vor_shader.uniform(GL, "u_planet_colours", new Uniform3fv(colours));
+
         for(let i=0; i < this.planet_count; i++){
             const u = new Uniform3f(colours[i*6], colours[i*6 + 1], colours[i*6 + 2]);
-            this.renderer.updateUniform(i, (us) => us["u_color"] = u);
+            this.renderer.updateUniform(i+1, (us) => us["u_color"] = u);
             const u2 = new Uniform3f(colours[i*6 + 3], colours[i*6 + 4], colours[i*6 + 5]);
-            this.renderer.updateUniform(i, (us) => us["u_color_next"] = u2);
+            this.renderer.updateUniform(i+1, (us) => us["u_color_next"] = u2);
         }
 
         const ships = f32v(this.game.get_ship_locations(), this.game.get_ship_count() * 9 * 2);
@@ -189,6 +221,8 @@ class GameInstance {
             this.last_time = time;
 
             this.shader.uniform(GL, "u_viewbox", new Uniform4f(this.resizer.get_viewbox()));
+            this.vor_shader.uniform(GL, "u_viewbox", new Uniform4f(this.resizer.get_viewbox()));
+
             this.renderer.render(GL);
             return;
         }
@@ -201,6 +235,9 @@ class GameInstance {
         GL.bindFramebuffer(GL.FRAMEBUFFER, null);
         GL.viewport(0, 0, GL.canvas.width, GL.canvas.height);
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
+
+        this.vor_shader.uniform(GL, "u_viewbox", new Uniform4f(this.resizer.get_viewbox()));
+        this.vor_shader.uniform(GL, "u_resolution", new Uniform2f(RESOLUTION));
 
         this.shader.uniform(GL, "u_time", new Uniform1f((time - this.last_time) / ms_per_frame));
         this.shader.uniform(GL, "u_mouse", new Uniform2f(this.resizer.get_mouse_pos()));
