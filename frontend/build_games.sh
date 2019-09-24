@@ -7,8 +7,8 @@ do
 
     echo
     echo "[$var]"
-    echo "name=$(basename -- $var | sed 's/\..*//')"
-    echo "turns=$(wc -l $var | sed 's/ .*//')"
-    echo "players=$(grep players $var | sed 's/"players"://' | tr -d "{}[]'" | tr ',' ' ')"
+    echo "name=$(basename -- "$var" | sed 's/\..*//')"
+    echo "turns=$(wc -l "$var" | sed 's/ .*//')"
+    echo "players=$(grep players "$var" | sed 's/"players"://' | tr -d "{}[]'" | tr ',' ' ')"
 
 done

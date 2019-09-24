@@ -45,7 +45,7 @@ const RESOLUTION = [CANVAS.width, CANVAS.height];
 
 const GL = CANVAS.getContext("webgl");
 
-var ms_per_frame = 500;
+var ms_per_frame = 100;
 
 resizeCanvasToDisplaySize(CANVAS);
 
