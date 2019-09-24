@@ -15,6 +15,12 @@ function i32v(ptr: number, size: number): Int32Array {
     return new Int32Array(memory.buffer, ptr, size);
 }
 
+export function set_game_name(name: string) {
+    GAMENAME.innerHTML = name;
+}
+
+const GAMENAME = document.getElementById("name");
+
 const TURNCOUNTER = document.getElementById("turnCounter");
 
 const COUNTER = new FPSCounter();

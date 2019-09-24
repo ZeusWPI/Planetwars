@@ -29,6 +29,13 @@ p {
   position: relative;
 }
 
+#name {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  color: white;
+}
+
 #meta{
   padding: 10px 2%;
   color: white;
