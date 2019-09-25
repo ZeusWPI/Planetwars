@@ -3,8 +3,10 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 extern crate octoon_math;
+extern crate voronoi;
 
-use octoon_math::{Mat3, Vec3};
+use octoon_math::{Mat3, Vec3, Vec2};
+use voronoi::{Point, voronoi, make_polygons};
 
 mod utils;
 mod types;
@@ -130,6 +132,35 @@ impl Circle {
 //     }
 // }
 
+fn create_voronoi(planets: &Vec<types::Planet>, bbox: f32) -> (Vec<Vec2<f32>>, Vec<usize>) {
+    let mut verts: Vec<Vec2<f32>> = planets.iter().map(|p| Vec2::new(p.x, p.y)).collect();
+    let mut ids = Vec::new();
+
+    let vor_points = planets.iter().map(|p| Point::new(p.x as f64, p.y as f64)).collect();
+
+    let vor = voronoi(vor_points, bbox as f64);
+    let vor = make_polygons(&vor);
+
+    for poly in vor.iter() {
+        // Get planet index for planet that is inside this poligon
+        let idx = 0;
+
+        let mut prev = ids.len() + poly.len() - 1;
+        for p in poly.iter() {
+
+            let now = verts.len();
+            verts.push(Vec2::new(p.x.0 as f32, p.y.0 as f32));
+
+            ids.push(idx);
+            ids.push(now);
+            ids.push(prev);
+            prev = now;
+        }
+    }
+
+    (verts, ids)
+}
+
 
 #[wasm_bindgen]
 pub struct Game {
@@ -146,6 +177,10 @@ pub struct Game {
     ship_locations: Vec<[f32;9]>,
     ship_colours: Vec<Vec3<f32>>,
     current_planet_colours: Vec<Vec3<f32>>,
+
+    voronoi_vertices: Vec<Vec2<f32>>,
+    voronoi_colors: Vec<Vec3<f32>>,
+    voronoi_indices: Vec<usize>,
 }
 
 #[wasm_bindgen]
@@ -166,10 +201,16 @@ impl Game {
                 planet_map.insert((p1.name.clone(), p2.name.clone()), Circle::new(&p1, &p2));
             }
         }
+        let view_box = utils::caclulate_viewbox(&states[0].planets);
+
+
+        let (voronoi_vertices, voronoi_indices) = create_voronoi(&states[0].planets, view_box[2].max(view_box[3]));
+
+        let voronoi_colors = voronoi_indices.iter().map(|_| Vec3::new(0.0, 0.0, 0.0)).collect(); // Init these colours on black
 
         Self {
             planets: utils::get_planets(&states[0].planets, 2.0),
-            view_box: utils::caclulate_viewbox(&states[0].planets),
+            view_box,
 
             planet_map,
             turn: 0,
@@ -177,6 +218,10 @@ impl Game {
             ship_locations: Vec::new(),
             ship_colours: Vec::new(),
             current_planet_colours: Vec::new(),
+
+            voronoi_vertices,
+            voronoi_indices,
+            voronoi_colors,
         }
     }
 
@@ -204,9 +249,16 @@ impl Game {
         self.turn = turn.min(self.states.len() -1);
 
         self.update_planet_colours();
+        self.update_voronoi_colors();
         self.update_ship_locations();
 
         self.turn
+    }
+
+    fn update_voronoi_colors(&mut self) {
+        for (i, p) in self.states[self.turn].planets.iter().enumerate() {
+            self.voronoi_colors[i] = utils::COLORS[p.owner.unwrap_or(0) as usize % utils::COLORS.len()].into()
+        }
     }
 
     fn update_planet_colours(&mut self) {
@@ -254,6 +306,26 @@ impl Game {
 
     pub fn get_ship_colours(&self) -> *const Vec3<f32> {
         self.ship_colours.as_ptr()
+    }
+
+    pub fn get_voronoi_vert_count(&self) -> usize {
+        self.voronoi_vertices.len()
+    }
+
+    pub fn get_voronoi_verts(&self) -> *const Vec2<f32> {
+        self.voronoi_vertices.as_ptr()
+    }
+
+    pub fn get_voronoi_colours(&self) -> *const Vec3<f32> {
+        self.voronoi_colors.as_ptr()
+    }
+
+    pub fn get_voronoi_ind_count(&self) -> usize {
+        self.voronoi_indices.len()
+    }
+
+    pub fn get_voronoi_inds(&self) -> *const usize {
+        self.voronoi_indices.as_ptr()
     }
 }
 
