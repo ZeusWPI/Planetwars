@@ -25,7 +25,8 @@
     "extract-svg-path": "^2.1.0",
     "load-svg": "^1.0.0",
     "planetwars": "file:../pkg",
-    "svg-mesh-3d": "^1.1.0"
+    "svg-mesh-3d": "^1.1.0",
+    "ts-heap": "^1.1.3"
   },
   "author": "Arthur Vercruysse <arthur.vercruysse@outlook.com>",
   "license": "(MIT OR Apache-2.0)",

@@ -361,4 +361,19 @@ function step(time: number) {
 }
 set_loading(true);
 
-requestAnimationFrame(step);
+// requestAnimationFrame(step);
+
+
+import { voronoi, Point } from './voronoi'
+function test() {
+    const points = [
+        new Point(5,5),
+        new Point(1, 8),
+        new Point(8,8),
+        new Point(10,2),
+    ];
+
+    console.log(voronoi(points));
+}
+
+test();
