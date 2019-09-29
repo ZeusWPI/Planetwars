@@ -1,5 +1,5 @@
 import { Heap } from 'ts-heap'
-import { handle } from './games';
+import { HalfEdge, Face, Vertex } from './dcel';
 
 interface WithPriority {
     get_priority(): number;
@@ -8,21 +8,27 @@ interface WithPriority {
 export class Point {
     x: number;
     y: number;
+    face?: Face;
 
-    constructor(x: number, y: number) {
+    constructor(x: number, y: number, face? :Face) {
         this.x = x;
         this.y = y;
+        this.face = face;
     }
 
     equals(other: Point): boolean {
         return Math.abs(this.x - other.x) + Math.abs(this.y - other.y) < 0.00001;
+    }
+
+    toString(): string {
+        return `{x: ${this.x}, y: ${this.y}}`;
     }
 }
 
 class CircleEvent implements WithPriority {
     y: number;
     alive: boolean = true;
-    center: Point;
+    center: Vertex;
     leaf: Leaf;
 
     from: Point[];
@@ -34,9 +40,9 @@ class CircleEvent implements WithPriority {
         const c = (s1.x ** 2 + s1.y ** 2) * (s2.x - s3.x) + (s2.x ** 2 + s2.y ** 2)*(s3.x - s1.x) + (s3.x ** 2 + s3.y ** 2) * (s1.x - s2.x);
         const d = (s1.x ** 2 + s1.y ** 2) * (s3.x*s2.y - s2.x*s3.y) + (s2.x ** 2 + s2.y ** 2)*(s1.x*s3.y - s3.x*s1.y) + (s3.x ** 2 + s3.y ** 2) * (s2.x*s1.y - s1.x*s2.y);
 
-        const center = new Point(-b / (2. * a), -c / (2. * a));
+        const center = new Vertex(-b / (2. * a), -c / (2. * a));
         const r = Math.sqrt((b ** 2 + c ** 2 - 4. * a * d) / (4. * a ** 2));
-        const y = center.y - r;
+        const y = center.coords[1] - r;
 
         const out = new CircleEvent();
         out.y = y;
@@ -53,15 +59,18 @@ class CircleEvent implements WithPriority {
     }
 
     print() {
-        console.log(`Circle event at ${this.y} ${JSON.stringify(this.center)}, ${JSON.stringify(this.leaf.point)} from ${JSON.stringify(this.from)}`);
+        console.log(`Circle event at ${this.y} ${JSON.stringify(this.center)}, ${this.leaf.point.toString()} from ${JSON.stringify(this.from.map((e) => e.toString()))}`);
     }
 }
 
 class SiteEvent implements WithPriority{
+    face: Face;
     point: Point;
 
     constructor(point: Point) {
+        this.face = new Face(point);
         this.point = point;
+        this.point.face = this.face;
     }
 
     get_priority(): number {
@@ -69,7 +78,7 @@ class SiteEvent implements WithPriority{
     }
 
     print() {
-        console.log(`Site event ${JSON.stringify(this.point)}`);
+        console.log(`Site event ${this.point.toString()}`);
     }
 }
 
@@ -77,13 +86,17 @@ function calc_x(left: Point, right: Point, y: number): number {
     const [a1, b1, c1] = from_focus_vertex(left, y);
     const [a2, b2, c2] = from_focus_vertex(right, y);
 
+    if (Math.abs(a1 - a2) < 0.0001) {
+        return (left.x + right.x) / 2.;
+    }
+
     const da = a1 - a2;
     const db = b1 - b2;
     const dc = c1 - c2;
 
     const d = db * db - 4. * da * dc;
 
-    if (d < 0.) {
+    if (d <= 0.) {
         throw new Error(`D is less then 0 ${d}`);
     }
 
@@ -120,9 +133,12 @@ class Leaf {
     right: Leaf | undefined;
     parent: Parent;
 
+    half_edge: HalfEdge;
+
     constructor(point: Point, parent: Parent) {
         this.point = point;
         this.parent = parent;
+        this.half_edge = new HalfEdge(undefined, undefined);
     }
 
     false_alarm() {
@@ -148,6 +164,74 @@ class Leaf {
 
     split(point: Point, events: Queue) {
         this.false_alarm();
+
+        if (this.point.y == point.y) {
+            const middle = new Leaf(point, undefined);
+            const parent = this.parent;
+
+            if (this.point.x > point.x) {
+                const br = new Breakpoint([point, middle], [this.point, this], this.parent);
+
+                if (this.left) this.left.right = middle;
+                this.left = middle;
+                middle.right = this;
+
+                if (parent instanceof Breakpoint) {
+                    parent.set_me(this, br);
+                } else {
+                    parent.root = br;
+                }
+
+                const maybe_left = middle.check_circles(point.y, events);
+
+                if (maybe_left && maybe_left.center.coords[0] < middle.point.x) {
+                    console.log(`Adding circle`);
+                    maybe_left.print();
+                    middle.event = maybe_left;
+                    events.add(maybe_left);
+                }
+
+                const maybe_right = this.check_circles(point.y, events);
+                if (maybe_right && maybe_right.center.coords[0] >= middle.point.x) {
+                    console.log(`Adding circle`);
+                    maybe_right.print();
+                    this.event = maybe_right;
+                    events.add(maybe_right);
+                }
+
+            } else {
+                const br = new Breakpoint([this.point, this], [point, middle], this.parent);
+
+                if (this.right) this.right.left = middle;
+                this.right = middle;
+                middle.left = this;
+
+                if (parent instanceof Breakpoint) {
+                    parent.set_me(this, br);
+                } else {
+                    parent.root = br;
+                }
+
+                const maybe_left = this.check_circles(point.y, events);
+
+                if (maybe_left && maybe_left.center.coords[0] < middle.point.x) {
+                    console.log(`Adding circle`);
+                    maybe_left.print();
+                    this.event = maybe_left;
+                    events.add(maybe_left);
+                }
+
+                const maybe_right = middle.check_circles(point.y, events);
+                if (maybe_right && maybe_right.center.coords[0] >= middle.point.x) {
+                    console.log(`Adding circle`);
+                    maybe_right.print();
+                    middle.event = maybe_right;
+                    events.add(maybe_right);
+                }
+            }
+
+            return;
+        }
 
         const left = new Leaf(this.point, undefined);
         left.left = this.left;
@@ -175,17 +259,16 @@ class Leaf {
         }
 
         const maybe_left = left.check_circles(point.y, events);
-
-        if (maybe_left && maybe_left.center.x < middle.point.x) {
-            console.log(`Adding circle event left ${JSON.stringify(maybe_left.leaf.point)}`);
+        if (maybe_left && maybe_left.center.coords[0] < middle.point.x) {
+            console.log(`Adding circle`);
             maybe_left.print();
             left.event = maybe_left;
             events.add(maybe_left);
         }
 
         const maybe_right = right.check_circles(point.y, events);
-        if (maybe_right && maybe_right.center.x >= middle.point.x) {
-            console.log(`Adding circle event right`);
+        if (maybe_right && maybe_right.center.coords[0] >= middle.point.x) {
+            console.log(`Adding circle`);
             maybe_right.print();
             right.event = maybe_right;
             events.add(maybe_right);
@@ -205,16 +288,16 @@ class Leaf {
         }
     }
 
-    delete() {
+    delete(vertex: Vertex) {
         if (this.parent instanceof Breakpoint) {
-            this.parent.remove_me(this.point);
+            this.parent.remove_me(this.point, vertex);
         } else {
             console.error("Shouldnt be here");
         }
     }
 
     print(indent: string) {
-        console.log(`${indent}Leaf from ${JSON.stringify(this.point)}`);
+        console.log(`${indent}Leaf from ${this.point.toString()} vertex: ${this.half_edge.to_string()}`);
     }
 }
 
@@ -222,6 +305,7 @@ class Breakpoint {
     left: [Point, Node];
     right: [Point, Node];
     parent: Parent;
+    half_edge: HalfEdge;
 
     constructor(left: [Point, Node], right: [Point, Node], parent: Parent) {
         this.left = left;
@@ -229,26 +313,31 @@ class Breakpoint {
         this.left[1].parent = this;
         this.right[1].parent = this;
         this.parent = parent;
+
+        this.half_edge = new HalfEdge(undefined, left[0].face, right[0].face);
     }
 
-    remove_me(point: Point) {
+    remove_me(point: Point, vertex: Vertex) {
+        const edge = this.half_edge.insert(vertex);
         const other = this.get_other(point);
-
         if (this.parent instanceof Breakpoint) {
-            console.log("Parent is still breakpoint");
             this.parent.set_me(this, other);
+            this.parent.set_edge(edge);
         } else {
-            console.log("Parent is root");
             this.parent.root = other;
         }
+
+    }
+
+    set_edge(edge: HalfEdge) {
+        this.left[1].half_edge = edge;
+        this.right[1].half_edge = edge.split(edge.origin);
     }
 
     set_me(old_me: Node, new_me: Node) {
         if (this.left[1] == old_me) {
-            console.log("Setting other left");
             this.left[1] = new_me;
         } else {
-            console.log("Setting other right");
             this.right[1] = new_me;
         }
     }
@@ -257,17 +346,13 @@ class Breakpoint {
         const { x, y } = point;
         const test_x = calc_x(this.left[0], this.right[0], y);
 
-        console.log(`${test_x} >= ${x}`);
-
         if (test_x >= x) {
-            console.log("Going left");
             if (this.left[1] instanceof Leaf) {
                 return this.left[1];
             } else {
                 return this.left[1].get(point);
             }
         } else {
-            console.log("Going right");
             if (this.right[1] instanceof Leaf) {
                 return this.right[1];
             } else {
@@ -278,15 +363,14 @@ class Breakpoint {
 
     get_other(point: Point): Node {
         if (this.left[0].equals(point)) {
-            console.log("Other is right");
             return this.right[1];
         } else {
-            console.log("Other is left");
             return this.left[1];
         }
     }
 
     print(indent: string) {
+        console.log(`${indent}vertex: ${this.half_edge.to_string()}`);
         console.log(`${indent}left`);
         this.left[1].print(indent + '  ');
         console.log(`${indent}right`);
@@ -318,6 +402,8 @@ export function voronoi(points: Point[]): Point[] {
     const out = [];
     const state = new State;
     const queue = new Heap<WithPriority>(cmp_event);
+
+
     for (let point of points) {
         queue.add(new SiteEvent(point));
     }
@@ -347,7 +433,6 @@ export function voronoi(points: Point[]): Point[] {
 function handle_site_event(event: SiteEvent, queue: Queue, state: State, out: Point[]) {
     if (state.root) {
         const leaf = get_from_node(state.root, event.point);
-        console.log(`Splitting leaf from ${JSON.stringify(leaf.point)}`);
         leaf.split(event.point, queue);
 
     } else {
@@ -355,16 +440,16 @@ function handle_site_event(event: SiteEvent, queue: Queue, state: State, out: Po
     }
 }
 
-function handle_circle_event(event: CircleEvent, queue: Queue, state: State, out: Point[]) {
+function handle_circle_event(event: CircleEvent, queue: Queue, state: State, out: [number, number][]) {
     if (!event.alive) return;
 
-    event.leaf.delete();
+    event.leaf.delete(event.center);
     const right = event.leaf.right;
     const left = event.leaf.left;
 
     if (right) {
         right.false_alarm();
-        if (right.right) right.right.false_alarm();
+        // if (right.right) right.right.false_alarm();
 
         right.left = left;
         const maybe_right = right.check_circles(event.y, queue);
@@ -378,7 +463,7 @@ function handle_circle_event(event: CircleEvent, queue: Queue, state: State, out
 
     if (left) {
         left.false_alarm();
-        if (left.left) left.left.false_alarm();
+        // if (left.left) left.left.false_alarm();
         left.right = right;
         const maybe_left = left.check_circles(event.y, queue);
 
@@ -390,7 +475,7 @@ function handle_circle_event(event: CircleEvent, queue: Queue, state: State, out
         }
     }
 
-    out.push(event.center);
+    out.push(event.center.coords);
 }
 
 function print_leaves(start: Leaf) {
@@ -407,5 +492,5 @@ function print_leaves(start: Leaf) {
         points.push(current.point);
     }
 
-    console.log(JSON.stringify(points));
+    console.log(JSON.stringify(points.map((p) => p.toString())));
 }

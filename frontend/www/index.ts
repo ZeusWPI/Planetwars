@@ -367,13 +367,17 @@ set_loading(true);
 import { voronoi, Point } from './voronoi'
 function test() {
     const points = [
-        new Point(5,5),
-        new Point(1, 8),
-        new Point(8,8),
-        new Point(10,2),
+        new Point(14, 6),
+        new Point(13, 11),
+        new Point(8, 7.5),
+        new Point(7, 4),
+        new Point(4, 11),
     ];
 
     console.log(voronoi(points));
 }
+
+import { test as dcelt_test } from './dcel';
+// dcelt_test();
 
 test();
