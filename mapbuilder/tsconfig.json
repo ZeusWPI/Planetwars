@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+      "lib": ["es2017", "es7", "es6", "dom"],
+      "outDir": "./dist/",
+      "noImplicitAny": false,
+      "module": "commonjs",
+      "target": "es6",
+      "jsx": "react"
+    },
+    "exclude": [
+      "node_modules",
+      "dist"
+    ]
+  }

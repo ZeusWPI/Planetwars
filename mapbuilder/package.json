@@ -1,0 +1,32 @@
+{
+  "name": "planetwars-mapbuilder",
+  "version": "0.1.0",
+  "description": "create an app to consume rust-generated wasm packages",
+  "main": "./bootstrap.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "develop": "webpack --mode development --watch",
+    "build": "webpack --config webpack.config.js",
+    "start": "webpack-dev-server --content-base dist/"
+  },
+  "keywords": [
+    "planetwars",
+    "mozaic"
+  ],
+  "dependencies": {},
+  "author": "Arthur Vercruysse <arthur.vercruysse@outlook.com>",
+  "license": "(MIT OR Apache-2.0)",
+  "bugs": {
+    "url": "https://github.com/ajuvercr/Planetwars/issues"
+  },
+  "homepage": "https://github.com/ajuvercr/Planetwars#Readme",
+  "devDependencies": {
+    "webpack": "^4.29.3",
+    "ts-loader": "^6.0.2",
+    "static-eval": ">=2.0.0",
+    "typescript": "^3.5.2",
+    "webpack-cli": "^3.1.0",
+    "webpack-dev-server": "^3.1.5",
+    "copy-webpack-plugin": "^5.0.0"
+  }
+}
