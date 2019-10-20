@@ -7,7 +7,7 @@
   "scripts": {
     "develop": "webpack --mode development --watch",
     "build": "webpack --config webpack.config.js",
-    "start": "webpack-dev-server --content-base dist/"
+    "start": "webpack-dev-server"
   },
   "keywords": [
     "planetwars",
@@ -21,12 +21,16 @@
   },
   "homepage": "https://github.com/ajuvercr/Planetwars#Readme",
   "devDependencies": {
-    "webpack": "^4.29.3",
-    "ts-loader": "^6.0.2",
+    "copy-webpack-plugin": "^5.0.0",
+    "css-loader": "^3.2.0",
+    "node-sass": "^4.12.0",
+    "sass-loader": "^8.0.0",
     "static-eval": ">=2.0.0",
+    "style-loader": "^1.0.0",
+    "ts-loader": "^6.0.2",
     "typescript": "^3.5.2",
+    "webpack": "^4.29.3",
     "webpack-cli": "^3.1.0",
-    "webpack-dev-server": "^3.1.5",
-    "copy-webpack-plugin": "^5.0.0"
+    "webpack-dev-server": "^3.1.5"
   }
 }
