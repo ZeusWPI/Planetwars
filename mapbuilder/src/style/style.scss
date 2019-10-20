@@ -28,10 +28,12 @@ $darkgrey: darken($grey, 20);
     overflow-x: hidden;
     padding-top: 60px;
     transition: 0.5s;
-    a {
+    a,
+    input,
+    p {
         padding: 8px 8px 8px 32px;
         text-decoration: none;
-        font-size: 25px;
+        font-size: 20px;
         color: white;
         display: block;
         transition: 0.3s;
@@ -44,6 +46,52 @@ $darkgrey: darken($grey, 20);
         top: 0;
         left: 0;
         font-size: 36px;
+    }
+}
+
+.section {
+    border: 2px solid $orange;
+    border-radius: 8px;
+    position: relative;
+    padding: 10px;
+    margin: 10px;
+    .title {
+        font-size: 24px;
+        color: $orange;
+        padding: 0 5px;
+        position: absolute;
+        top: -13px;
+        left: 8px;
+        display: inline-block;
+        background-color: $grey;
+    }
+    hr {
+        border: 1px dashed $lightgrey;
+    }
+}
+
+.prop {
+    margin: 10px;
+    color: white;
+    .item {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        label {
+            width: 40%;
+        }
+        input {
+            font-size: 15px;
+            margin-top: 2px;
+            color: $orange;
+            padding: 5px 10px;
+            width: 40%;
+            background-color: $lightgrey;
+        }
+    }
+    .item+.item {
+        margin-top: 10px;
     }
 }
 
