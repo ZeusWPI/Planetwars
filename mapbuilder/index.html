@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <title>Planetwars Mapbuilder</title>
-    <link rel="stylesheet" type="text/css" href="./static/res/style.css">
+    <!-- <link rel="stylesheet" type="text/css" href="./static/res/style.css"> -->
     <link rel="shortcut icon" type="image/x-icon" href="./favicon.ico" />
 </head>
 
@@ -18,9 +18,11 @@
         <a href="#">Contact</a>
     </div>
 
+    <div id="canvasWrapper" class="wrapper">
+        <canvas id="canvas" class="canvas"></canvas>
+    </div>
+
     <button class="openbtn" onclick="toggleNav()">&#9776;</button>
-    <h2>Collapsed Sidepanel</h2>
-    <p>Content...</p>
 </body>
 
 
@@ -36,6 +38,7 @@
         nav_open = !nav_open;
     }
 </script>
+
 <script src="dist/bundle.js"></script>
 
 </html>

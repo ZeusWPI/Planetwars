@@ -1,58 +1,51 @@
-/* The sidepanel menu */
+$grey: #333;
+$orange: #ff5f00;
+$lightgrey: lighten($grey, 20);
+$darkgrey: darken($grey, 20);
+
+/* Remove defaults */
+
+* {
+    padding: 0;
+    margin: 0;
+    border: none;
+    box-sizing: border-box;
+}
+
+
+/* Side panel styling */
 
 .sidepanel {
-    height: 100vh;
-    /* Specify a height */
-    width: 0;
     /* 0 width - change this with JavaScript */
+    height: 100vh;
+    width: 0;
+    /* sizing */
     position: fixed;
-    /* Stay in place */
     z-index: 1;
-    /* Stay on top */
     top: 0;
     right: 0;
-    background-color: #111;
-    /* Black*/
+    background-color: $grey;
     overflow-x: hidden;
-    overflow-y: scroll;
-    /* Disable horizontal scroll */
     padding-top: 60px;
-    /* Place content 60px from the top */
     transition: 0.5s;
-    /* 0.5 second transition effect to slide in the sidepanel */
+    a {
+        padding: 8px 8px 8px 32px;
+        text-decoration: none;
+        font-size: 25px;
+        color: white;
+        display: block;
+        transition: 0.3s;
+    }
+    a:hover {
+        color: $orange;
+    }
+    .closebtn {
+        position: absolute;
+        top: 0;
+        left: 0;
+        font-size: 36px;
+    }
 }
-
-
-/* The sidepanel links */
-
-.sidepanel a {
-    padding: 8px 8px 8px 32px;
-    text-decoration: none;
-    font-size: 25px;
-    color: #818181;
-    display: block;
-    transition: 0.3s;
-}
-
-
-/* When you mouse over the navigation links, change their color */
-
-.sidepanel a:hover {
-    color: #f1f1f1;
-}
-
-
-/* Position and style the close button (top right corner) */
-
-.sidepanel .closebtn {
-    position: absolute;
-    top: 0;
-    left: 0;
-    font-size: 36px;
-}
-
-
-/* Style the button that is used to open the sidepanel */
 
 .openbtn {
     position: absolute;
@@ -60,12 +53,30 @@
     top: 5px;
     font-size: 20px;
     cursor: pointer;
-    background-color: #111;
+    background-color: $lightgrey;
     color: white;
     padding: 10px 15px;
     border: none;
+    &:hover {
+        background-color: $orange;
+        color: darken($color: $grey, $amount: 10);
+    }
+    &:focus {
+        outline: none;
+    }
 }
 
-.openbtn:hover {
-    background-color: #444;
+
+/* Main body styling */
+
+.wrapper {
+    background-color: darken($color: $grey, $amount: 20);
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.canvas {
+    width: 100%;
+    height: 100%;
 }

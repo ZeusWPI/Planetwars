@@ -1,7 +1,7 @@
 module.exports = {
     mode: "development",
     watch: true,
-    entry: "./src/index.ts",
+    entry: ["./src/index.ts", "./src/style/style.scss"],
     output: {
         filename: "bundle.js",
         path: __dirname + "/dist"
