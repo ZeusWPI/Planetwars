@@ -12,8 +12,30 @@ $darkgrey: darken($grey, 20);
     box-sizing: border-box;
 }
 
+#openbtn {
+    right: 5px;
+    top: 5px;
+}
+
 
 /* Side panel styling */
+
+.openbtn {
+    position: absolute;
+    font-size: 20px;
+    cursor: pointer;
+    background-color: $lightgrey;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    &:hover {
+        background-color: $orange;
+        color: darken($color: $grey, $amount: 10);
+    }
+    &:focus {
+        outline: none;
+    }
+}
 
 .sidepanel {
     /* 0 width - change this with JavaScript */
@@ -65,8 +87,30 @@ $darkgrey: darken($grey, 20);
         display: inline-block;
         background-color: $grey;
     }
+    #addbtn {
+        width: 90%;
+        margin: 0 5%;
+    }
     hr {
+        margin: 10px 0;
         border: 1px dashed $lightgrey;
+    }
+}
+
+.btn {
+    border-radius: 8px;
+    color: $orange;
+    background-color: $lightgrey;
+    transition: 0.35s;
+    font-size: 20px;
+    padding: 5px;
+    font-weight: bolder;
+    &:hover {
+        background-color: $orange;
+        color: darken($color: $grey, $amount: 10);
+    }
+    &:focus {
+        outline: none;
     }
 }
 
@@ -93,24 +137,20 @@ $darkgrey: darken($grey, 20);
     .item+.item {
         margin-top: 10px;
     }
-}
-
-.openbtn {
-    position: absolute;
-    right: 5px;
-    top: 5px;
-    font-size: 20px;
-    cursor: pointer;
-    background-color: $lightgrey;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    &:hover {
-        background-color: $orange;
-        color: darken($color: $grey, $amount: 10);
-    }
-    &:focus {
-        outline: none;
+    .delete {
+        border-radius: 30px;
+        margin: 10px 0 0 calc(100% - 35px);
+        width: 30px;
+        height: 30px;
+        font-size: 25px;
+        position: relative;
+        &::before {
+            content: "\00d7";
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
     }
 }
 

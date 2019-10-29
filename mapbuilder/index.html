@@ -15,35 +15,9 @@
 
         <div class="section">
             <span class="title">Grid</span>
-            <div class="prop gridline">
-                <div class="item">
-                    <label for="mwidth" class="input">Line width</label>
-                    <input type="number" id="mwidth" value="4">
-                </div>
-                <div class="item">
-                    <label for="mwidth" class="input">Seperation</label>
-                    <input type="number" id="mwidth" value="100">
-                </div>
-                <div class="item">
-                    <label for="mwidth" class="input">Color</label>
-                    <input type="text" id="mwidth" value="#333">
-                </div>
+            <div id="gridConfig">
             </div>
-            <hr>
-            <div class="prop gridline">
-                <div class="item">
-                    <label for="mwidth" class="input">Line width</label>
-                    <input type="number" id="mwidth" value="2">
-                </div>
-                <div class="item">
-                    <label for="mwidth" class="input">Seperation</label>
-                    <input type="number" id="mwidth" value="20">
-                </div>
-                <div class="item">
-                    <label for="mwidth" class="input">Color</label>
-                    <input type="text" id="mwidth" value="#333">
-                </div>
-            </div>
+            <button class="btn" id="addbtn">&#43;</button>
         </div>
 
     </div>
@@ -52,7 +26,7 @@
         <canvas id="canvas" class="canvas"></canvas>
     </div>
 
-    <button class="openbtn" onclick="toggleNav()">&#9776;</button>
+    <button id="openbtn" class="openbtn" onclick="toggleNav()">&#9776;</button>
 </body>
 
 

@@ -1,3 +1,4 @@
+import {init_grid} from "./grid"
 
 let gridlineEls:any;
 let gridlineNeedsUpdate = true;
@@ -89,3 +90,4 @@ function draw_grid(
 }
 
 setTimeout(main, 200);
+init_grid();
