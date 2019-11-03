@@ -15,10 +15,11 @@ use mozaic::core_capnp::{initialize, terminate_stream, identify, actor_joined};
 use mozaic::messaging::reactor::*;
 use mozaic::messaging::types::*;
 use mozaic::errors::*;
-use mozaic::client_capnp::{client_message, host_message, client_kicked};
-use mozaic::mozaic_cmd_capnp::{bot_input, bot_return};
-use mozaic::server::runtime::{Broker, BrokerHandle};
-use mozaic::server;
+use mozaic::base_capnp::{client_message, host_message};
+use mozaic::connection_capnp::client_kicked;
+use mozaic::cmd_capnp::{bot_input, bot_return};
+use mozaic::runtime::{Broker, BrokerHandle};
+use mozaic::runtime;
 use mozaic::modules::{BotReactor};
 
 use std::env;
@@ -44,7 +45,7 @@ fn main() {
         };
         broker.spawn(self_id.clone(), reactor.params(), "main").display();
 
-        tokio::spawn(server::connect_to_server(broker, self_id, &addr));
+        tokio::spawn(runtime::connect_to_server(broker, self_id, &addr));
         Ok(())
     }));
 }

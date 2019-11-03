@@ -28,7 +28,7 @@ fn main() {
     };
 }
 
-use mozaic::server::runtime::{Broker};
+use mozaic::runtime::{Broker};
 use rand::Rng;
 use errors::Consumable;
 use mozaic::modules::ConnectionManager;
