@@ -1,8 +1,8 @@
-extern crate mozaic;
-extern crate tokio;
-extern crate futures;
 extern crate capnp;
+extern crate futures;
+extern crate mozaic;
 extern crate rand;
+extern crate tokio;
 
 extern crate serde;
 #[macro_use]
@@ -11,26 +11,30 @@ extern crate serde_json;
 
 use rand::Rng;
 
-use mozaic::core_capnp::{initialize, terminate_stream, identify, actor_joined};
+use mozaic::base_capnp::{client_message, host_message};
+use mozaic::cmd_capnp::{bot_input, bot_return};
+use mozaic::connection_capnp::client_kicked;
+use mozaic::core_capnp::{actor_joined, identify, initialize, terminate_stream};
+use mozaic::errors::*;
 use mozaic::messaging::reactor::*;
 use mozaic::messaging::types::*;
-use mozaic::errors::*;
-use mozaic::base_capnp::{client_message, host_message};
-use mozaic::connection_capnp::client_kicked;
-use mozaic::cmd_capnp::{bot_input, bot_return};
-use mozaic::runtime::{Broker, BrokerHandle};
+use mozaic::modules::BotReactor;
 use mozaic::runtime;
-use mozaic::modules::{BotReactor};
+use mozaic::runtime::{Broker, BrokerHandle};
 
 use std::env;
 use std::str;
+use std::process;
 
 mod types;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
     let id = args.get(1).unwrap().parse().unwrap();
-    let client_args = args.get(2..).expect("How do you expect me to spawn your bot?").to_vec();
+    let client_args = args
+        .get(2..)
+        .expect("How do you expect me to spawn your bot?")
+        .to_vec();
 
     let addr = "127.0.0.1:9142".parse().unwrap();
     let self_id: ReactorId = rand::thread_rng().gen();
@@ -43,7 +47,9 @@ fn main() {
             broker: broker.clone(),
             args: client_args,
         };
-        broker.spawn(self_id.clone(), reactor.params(), "main").display();
+        broker
+            .spawn(self_id.clone(), reactor.params(), "main")
+            .display();
 
         tokio::spawn(runtime::connect_to_server(broker, self_id, &addr));
         Ok(())
@@ -74,8 +80,7 @@ impl ClientReactor {
         &mut self,
         handle: &mut ReactorHandle<C>,
         _: initialize::Reader,
-    ) -> Result<()>
-    {
+    ) -> Result<()> {
         // open link with runtime, for communicating with chat GUI
         let runtime_link = RuntimeLink::params(handle.id().clone());
         handle.open_link(runtime_link)?;
@@ -92,13 +97,12 @@ impl ClientReactor {
         &mut self,
         handle: &mut ReactorHandle<C>,
         r: actor_joined::Reader,
-    ) -> Result<()>
-    {
+    ) -> Result<()> {
         let id = r.get_id()?;
 
         if let Some(server) = &self.server {
             handle.open_link(HostLink::params(ReactorId::from(id)))?;
-            self.broker.register_as(id.into(), server.clone());
+            self.broker.register_as(id.into(), server.clone(), "Server");
 
             // Fake bot msg
             let mut chat_message = MsgBuffer::<bot_return::Owned>::new();
@@ -106,9 +110,7 @@ impl ClientReactor {
                 b.set_message(b"");
             });
             handle.send_internal(chat_message)?;
-
         } else {
-
             handle.open_link(ServerLink::params(id.into()))?;
             self.server = Some(id.into());
 
@@ -117,10 +119,15 @@ impl ClientReactor {
                 b.set_key(self.id);
             });
             handle.send_internal(identify).display();
-
         }
 
         Ok(())
+    }
+}
+
+impl Drop for ClientReactor {
+    fn drop(&mut self) {
+        println!("Client reactor dropped");
     }
 }
 
@@ -130,19 +137,18 @@ impl ServerLink {
     fn params<C: Ctx>(foreign_id: ReactorId) -> LinkParams<Self, C> {
         let mut params = LinkParams::new(foreign_id, Self);
 
-        params.external_handler( terminate_stream::Owned, CtxHandler::new(Self::close_handler) );
-        params.external_handler( actor_joined::Owned, CtxHandler::new(actor_joined::e_to_i) );
+        params.external_handler(
+            terminate_stream::Owned,
+            CtxHandler::new(Self::close_handler),
+        );
+        params.external_handler(actor_joined::Owned, CtxHandler::new(actor_joined::e_to_i));
 
-        params.internal_handler( identify::Owned, CtxHandler::new(Self::identify) );
+        params.internal_handler(identify::Owned, CtxHandler::new(Self::identify));
 
         return params;
     }
 
-    fn identify<C: Ctx>(
-        &mut self,
-        handle: &mut LinkHandle<C>,
-        id: identify::Reader,
-    ) -> Result<()> {
+    fn identify<C: Ctx>(&mut self, handle: &mut LinkHandle<C>, id: identify::Reader) -> Result<()> {
         let id = id.get_key();
 
         let mut chat_message = MsgBuffer::<identify::Owned>::new();
@@ -158,8 +164,7 @@ impl ServerLink {
         &mut self,
         handle: &mut LinkHandle<C>,
         _: terminate_stream::Reader,
-    ) -> Result<()>
-    {
+    ) -> Result<()> {
         // also close our end of the stream
         handle.close_link()?;
         return Ok(());
@@ -176,15 +181,9 @@ impl HostLink {
             CtxHandler::new(Self::receive_host_message),
         );
 
-        params.internal_handler(
-            bot_return::Owned,
-            CtxHandler::new(Self::send_chat_message),
-        );
+        params.internal_handler(bot_return::Owned, CtxHandler::new(Self::send_chat_message));
 
-        params.external_handler(
-            client_kicked::Owned,
-            CtxHandler::new(Self::client_kicked),
-        );
+        params.external_handler(client_kicked::Owned, CtxHandler::new(client_kicked::e_to_i));
 
         return params;
     }
@@ -195,8 +194,7 @@ impl HostLink {
         &mut self,
         handle: &mut LinkHandle<C>,
         send_message: bot_return::Reader,
-    ) -> Result<()>
-    {
+    ) -> Result<()> {
         let message = send_message.get_message()?;
 
         println!("Our bot sent");
@@ -212,29 +210,13 @@ impl HostLink {
         return Ok(());
     }
 
-    // pick up a 'send_message' event from the reactor, and put it to effect
-    // by constructing the chat message and sending it to the chat server.
-    fn client_kicked<C: Ctx>(
-        &mut self,
-        handle: &mut LinkHandle<C>,
-        _: client_kicked::Reader,
-    ) -> Result<()>
-    {
-        // Disconnect
-
-        handle.close_link()?;
-
-        return Ok(());
-    }
-
     // receive a chat message from the chat server, and broadcast it on the
     // reactor.
     fn receive_host_message<C: Ctx>(
         &mut self,
         handle: &mut LinkHandle<C>,
         host_message: host_message::Reader,
-    ) -> Result<()>
-    {
+    ) -> Result<()> {
         let message = host_message.get_data()?;
 
         let message: types::ServerMessage = serde_json::from_slice(message).unwrap();
@@ -249,10 +231,11 @@ impl HostLink {
                     b.set_input(&serde_json::to_vec(&state).unwrap());
                 });
                 handle.send_internal(bot_msg).display();
-            },
+            }
             types::ServerMessage::FinalState(state) => {
                 println!("Game finished with");
                 println!("{:?}", state);
+                process::exit(0);
             }
             types::ServerMessage::PlayerAction(action) => {
                 println!("Out bot did");
@@ -271,8 +254,20 @@ impl BotLink {
 
         params.external_handler(bot_return::Owned, CtxHandler::new(bot_return::e_to_i));
         params.internal_handler(bot_input::Owned, CtxHandler::new(bot_input::i_to_e));
-
+        params.internal_handler(client_kicked::Owned, CtxHandler::new(Self::close));
         return params;
+    }
+
+        // pick up a 'send_message' event from the reactor, and put it to effect
+    // by constructing the chat message and sending it to the chat server.
+    fn close<C: Ctx>(
+        &mut self,
+        handle: &mut LinkHandle<C>,
+        _: client_kicked::Reader,
+    ) -> Result<()> {
+        handle.close_link()?;
+
+        return Ok(());
     }
 }
 
@@ -281,11 +276,20 @@ impl RuntimeLink {
     fn params<C: Ctx>(foreign_id: ReactorId) -> LinkParams<Self, C> {
         let mut params = LinkParams::new(foreign_id, Self);
 
-        params.external_handler(
-            actor_joined::Owned,
-            CtxHandler::new(actor_joined::e_to_i),
-        );
-
+        params.external_handler(actor_joined::Owned, CtxHandler::new(actor_joined::e_to_i));
+        params.internal_handler(client_kicked::Owned, CtxHandler::new(Self::close));
         return params;
+    }
+
+        // pick up a 'send_message' event from the reactor, and put it to effect
+    // by constructing the chat message and sending it to the chat server.
+    fn close<C: Ctx>(
+        &mut self,
+        handle: &mut LinkHandle<C>,
+        _: client_kicked::Reader,
+    ) -> Result<()> {
+        handle.close_link()?;
+
+        return Ok(());
     }
 }

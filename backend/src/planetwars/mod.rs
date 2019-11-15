@@ -53,6 +53,7 @@ impl PlanetWarsGame {
             );
 
             if !player.alive || self.state.is_finished() {
+                println!("Kicking player {}", player.id);
                 updates.push(game::Update::Kick((player.id as u64).into()));
             }
         }
