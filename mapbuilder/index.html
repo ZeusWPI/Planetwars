@@ -1,48 +1,22 @@
-<!DOCTYPE html>
-<html>
-
 <head>
-    <meta charset="utf-8">
-    <title>Planetwars Mapbuilder</title>
-    <!-- <link rel="stylesheet" type="text/css" href="./static/res/style.css"> -->
-    <link rel="shortcut icon" type="image/x-icon" href="./favicon.ico" />
-</head>
-
+    <link rel="stylesheet" type="text/css" href="style.css">
+<head>
 <body>
-
-    <div id="mySidepanel" class="sidepanel">
-        <a href="javascript:void(0)" class="closebtn" onclick="toggleNav()">&times;</a>
-
-        <div class="section">
-            <span class="title">Grid</span>
-            <div id="gridConfig">
-            </div>
-            <button class="btn" id="addbtn">&#43;</button>
+    <div class="grid"></div>
+    <div class="controls">
+        <h2>controls</h2>
+        <div class="colourButtonWrapper">
+            <label class="colourButtonContainer"><input checked name="colourButton" class="colourButton" type="radio" value="gray"><span class="colourButtonCheckmark colourButton_gray"></span></label>
         </div>
-
+        <label>how many squares (this will remove your map)</label>
+        <input class="amountOfSquares" type="number" min="10" max="50" value="20"></input>
+        <label for="giveParameters">give parameters</label>
+        <textarea id="parametersToGive" rows="10" cols="50">planetPopulation = 100</textarea>
+        <label for="readParameters">read parameters</label>
+        <textarea id="parametersFrom" rows="10" cols="50" disabled></textarea>
+        <button class="toggleExperimental hidden">experimental</button>
+        <a class="downloadJSON"></a>
     </div>
-
-    <div id="canvasWrapper" class="wrapper">
-        <canvas id="canvas" class="canvas"></canvas>
-    </div>
-
-    <button id="openbtn" class="openbtn" onclick="toggleNav()">&#9776;</button>
-</body>
-
-
-<script>
-    var nav_open = false;
-    /* Set the width of the sidebar to 250px (show it) */
-    function toggleNav() {
-        if (nav_open) {
-            document.getElementById("mySidepanel").style.width = "0";
-        } else {
-            document.getElementById("mySidepanel").style.width = "350px";
-        }
-        nav_open = !nav_open;
-    }
-</script>
-
-<script src="dist/bundle.js"></script>
-
-</html>
+    <script src="script.js"></script>
+<body>
+    

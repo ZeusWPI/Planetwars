@@ -1,0 +1,210 @@
+html {
+    height: 100%;
+    width: 100%
+}
+
+body {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    background: black;
+    color: cyan;
+    line-height: 1.5rem;
+    overflow:hidden;
+    align-items: center;
+}
+.hidden {
+    display: none;
+}
+.experimental {
+    height: 150%;
+    width: 150%;
+}
+
+.grid {
+    width: 120vh;
+    height: 95vh;
+    display: flex;
+    flex-wrap: wrap;
+}
+.controls {
+    padding-left: 3rem;
+    height: 100%;
+    display: flex;
+    flex-direction:column;
+}
+.experimental .grid {
+    width: 100%;
+    height: 100%;
+    border: 10rem solid gray;
+}
+.experimental .controlls {
+    position: fixed;
+}
+.row {
+    width: 100%;
+    height: 4.75%;
+    display:flex;
+    flex-wrap: wrap;
+}
+.row:nth-child(even){
+    position: relative;
+    margin-left: 2.5%;
+    margin-right: -2.5%;
+}
+.row:nth-child(even) .square:nth-child(even) {
+    opacity: 0.9;
+}
+
+.row:nth-child(even) .square:nth-child(odd) {
+    opacity: 0.8;
+}
+
+.row:nth-child(odd) .square:nth-child(even) {
+    opacity: 0.7;
+}
+.row:nth-child(odd) .square:nth-child(odd) {
+    opacity: 1;
+}
+.square {
+    clip-path: polygon(
+        50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%
+    );
+    background: #444466;
+    width: calc(4.75% - 2px);
+    height: 130%;
+}
+
+.square:hover {
+    filter:brightness(80%);
+}
+
+.row>.square.planet-red {
+    background-color: red;
+}
+
+.row .planet-blue {
+    background-color: blue;
+}
+
+/* Customize the label (the container) */
+.colourButtonContainer {
+  position: relative;
+  padding-left: 35px;
+}
+
+/* Hide the browser's default radio button */
+.colourButtonContainer input {
+  opacity: 0;
+  height: 0;
+  width: 0;
+  margin: 1rem 0rem;
+}
+
+/* Create a custom radio button */
+.colourButtonCheckmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 25px;
+  width: 25px;
+}
+.colourButton_gray{
+    background-color: gray;
+}
+.colourButton_blue{
+    background-color: blue;
+}
+.colourButton_cyan{
+    background-color: cyan;
+}
+.colourButton_green{
+    background-color: green;
+}
+.colourButton_yellow{
+    background-color: yellow;
+}
+.colourButton_orange{
+    background-color: orange;
+}
+.colourButton_red{
+    background-color: red;
+}
+.colourButton_pink{
+    background-color: pink;
+}
+.colourButton_purple{
+    background-color: purple;
+}
+
+.planet_gray{
+    background-color: gray;
+}
+.planet_blue{
+    background-color: blue;
+}
+.planet_cyan{
+    background-color: cyan;
+}
+.planet_green{
+    background-color: green;
+}
+.planet_yellow{
+    background-color: yellow;
+}
+.planet_orange{
+    background-color: orange;
+}
+.planet_red{
+    background-color: red;
+}
+.planet_pink{
+    background-color: pink;
+}
+.planet_purple{
+    background-color: purple;
+}
+
+/* On mouse-over, add a grey background color */
+.colourButtonContainer:hover input ~ .colourButtonCheckmark {
+  opacity: 0.7;
+}
+
+/* When the radio button is checked, add a blue background */
+.colourButtonContainer input:checked ~ .colourButtonCheckmark {
+  border: 1px solid blue;
+}
+
+/* Create the indicator (the dot/circle - hidden when not checked) */
+.colourButtonCheckmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+/* Show the indicator (dot/circle) when checked */
+.colourButtonContainer input:checked ~ .colourButtonCheckmark:after {
+  display: block;
+}
+
+/* Style the indicator (dot/circle) */
+.colourButtonContainer .colourButtonCheckmark:after {
+  top: 9px;
+  left: 9px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: white;
+}
+label {
+    font-size: 1.2rem;
+    padding-top: 1rem;
+}
+input, textarea {
+    border: 1px solid darkcyan;
+    color: darkcyan;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    background: black;
+    font-size: 0.8rem;
+}
