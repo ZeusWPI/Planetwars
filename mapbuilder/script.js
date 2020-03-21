@@ -152,6 +152,7 @@
     }
 
     const createColourButtons = () => {
+        const colourSecectors = [];
         COLOURS.forEach((colour, i) => {
             $colourButtonWrapper = document.querySelector(".colourButtonWrapper");
             $button = document.createElement("input");
@@ -160,6 +161,9 @@
             $button.classList.add("colourButton");
             $button.type = "radio";
             $button.value = i;
+
+            colourSecectors.push($button);
+
             $checkmark = document.createElement("span");
             $checkmark.classList.add("colourButtonCheckmark");
             $checkmark.classList.add("colourButton_"+colour);
@@ -169,6 +173,14 @@
             $container.append($checkmark);
             $colourButtonWrapper.append($container);
         })
+
+        document.addEventListener("keyup", (e) => {
+            var key = event.key || event.keyCode;
+            try {
+                colourSecectors[parseInt(key) - 1].checked = true;
+            } catch (_) {
+            }
+        });
     }
 
     const handleChangeAmountOfSquares = e => {
