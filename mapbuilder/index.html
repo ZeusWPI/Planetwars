@@ -4,19 +4,41 @@
 <body>
     <div class="grid"></div>
     <div class="controls">
-        <h2>controls</h2>
-        <div class="colourButtonWrapper">
-            <label class="colourButtonContainer"><input checked name="colourButton" class="colourButton" type="radio" value="gray"><span class="colourButtonCheckmark colourButton_gray"></span></label>
-        </div>
-        <label>how many squares (this will remove your map)</label>
+        <h2>Controls</h2>
+        <div class="colourButtonWrapper"></div>
+        <label>How many squares (this will remove your map)</label>
         <input class="amountOfSquares" type="number" min="10" max="50" value="20"></input>
-        <label for="giveParameters">give parameters</label>
-        <textarea id="parametersToGive" rows="10" cols="50">planetPopulation = 100</textarea>
-        <label for="readParameters">read parameters</label>
-        <textarea id="parametersFrom" rows="10" cols="50" disabled></textarea>
-        <button class="toggleExperimental hidden">experimental</button>
-        <a class="downloadJSON"></a>
+
+        <label for="currentName">Planet parameters</label>
+        <div class="input_container">
+            <label for="currentName">Name:</label>
+            <input id="currentName" type="text" placeholder="name"></input>
+        </div>
+        <div class="input_container">
+            <label for="currentShipCount">Ship count:</label>
+            <input id="currentShipCount" type="number" value="20"></input>
+        </div>
+
+        <label>Hovered planet parameters</label>
+        <div class="input_container">
+            <label for="name">Name:</label>
+            <input id="name" type="text" disabled></input>
+        </div>
+        <div class="input_container">
+            <label class="small_label" for="shipCount">Ship count:</label>
+            <input id="shipCount" type="number" disabled></input>
+        </div>
+        <div class="input_container">
+            <label class="small_label" for="owner">Owner:</label>
+            <input id="owner" type="number" disabled></input>
+        </div>
+
+        <div class="buttons">
+            <button class="confirm">Use Map</button>
+            <button class="clear">Clear Map</button>
+        </div>
+
+        <textarea id="mapOutput" class="output hidden"></textarea>
     </div>
     <script src="script.js"></script>
 <body>
-    
