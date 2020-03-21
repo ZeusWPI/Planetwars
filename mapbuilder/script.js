@@ -30,10 +30,10 @@
                     planets.push(
                         {
                             "name": parameters[i][j]["name"],
-                            "ship_count": parameters[i][j]["shipCount"],
+                            "ship_count": parseInt(parameters[i][j]["shipCount"]),
                             "owner": parameters[i][j]["colour"],
-                            "x": j,
-                            "y": i
+                            "x": parseInt(j),
+                            "y": parseInt(i)
                         }
                     );
                 }
@@ -56,7 +56,7 @@
     }
 
     const handleConfirmButton = () => {
-        fields["mapOutput"].style.display = "block";
+        fields["mapOutput"].classList.remove("hidden");
         fields["mapOutput"].value = JSON.stringify(constructMap(),null,2);
         console.log(constructMap());
     }
