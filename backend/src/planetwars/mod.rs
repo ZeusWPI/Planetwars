@@ -1,5 +1,5 @@
-
 use mozaic::modules::game;
+use mozaic::modules::types::{Data, HostMsg, PlayerMsg};
 
 use serde_json;
 
@@ -9,38 +9,52 @@ use std::fs::File;
 use std::io::Write;
 
 mod pw_config;
-mod pw_serializer;
-mod pw_rules;
 mod pw_protocol;
-use pw_protocol::{ self as proto, CommandError };
-use pw_rules::Dispatch;
+mod pw_rules;
+mod pw_serializer;
 pub use pw_config::Config;
+use pw_protocol::{self as proto, CommandError};
+use pw_rules::Dispatch;
 
 pub struct PlanetWarsGame {
     state: pw_rules::PlanetWars,
     planet_map: HashMap<String, usize>,
-    log_file: File
+    log_file: File,
 }
 
 impl PlanetWarsGame {
-
     pub fn new(state: pw_rules::PlanetWars, location: &str) -> Self {
-        let planet_map = state.planets.iter().map(|p| (p.name.clone(), p.id)).collect();
+        let planet_map = state
+            .planets
+            .iter()
+            .map(|p| (p.name.clone(), p.id))
+            .collect();
         let file = File::create(location).unwrap();
 
         Self {
-            state, planet_map,
+            state,
+            planet_map,
             log_file: file,
         }
     }
 
-    fn dispatch_state(&mut self, were_alive: Vec<usize>, updates: &mut Vec<game::Update>, ) {
+    fn dispatch_state(&mut self, were_alive: Vec<usize>, updates: &mut Vec<HostMsg>) {
         let state = pw_serializer::serialize(&self.state);
-        write!(self.log_file, "{}\n", serde_json::to_string(&state).unwrap()).unwrap();
+        write!(
+            self.log_file,
+            "{}\n",
+            serde_json::to_string(&state).unwrap()
+        )
+        .unwrap();
 
         // println!("{}", serde_json::to_string(&state).unwrap());
 
-        for player in self.state.players.iter().filter(|p| were_alive.contains(&p.id)) {
+        for player in self
+            .state
+            .players
+            .iter()
+            .filter(|p| were_alive.contains(&p.id))
+        {
             let state = pw_serializer::serialize_rotated(&self.state, player.id);
             let state = if player.alive && !self.state.is_finished() {
                 proto::ServerMessage::GameState(state)
@@ -48,64 +62,80 @@ impl PlanetWarsGame {
                 proto::ServerMessage::FinalState(state)
             };
 
-            updates.push(
-                game::Update::Player((player.id as u64).into(), serde_json::to_vec(&state).unwrap())
-            );
+            updates.push(HostMsg::Data(
+                Data {
+                    value: serde_json::to_string(&state).unwrap(),
+                },
+                Some(player.id as u64),
+            ));
 
             if !player.alive || self.state.is_finished() {
                 println!("Kicking player {}", player.id);
-                updates.push(game::Update::Kick((player.id as u64).into()));
+                updates.push(HostMsg::Kick(player.id as u64));
             }
         }
     }
 
-    fn execute_commands<'a>(&mut self, turns: Vec<game::PlayerTurn<'a>>, updates: &mut Vec<game::Update>) {
-        for (player_id, command) in turns.into_iter() {
-            let player_num: usize = (*player_id).try_into().unwrap();
-            let action = proto::ServerMessage::PlayerAction(self.execute_action(player_num, command));
-            let serialized_action = serde_json::to_vec(&action).unwrap();
-            updates.push(game::Update::Player(player_id, serialized_action));
+    fn execute_commands<'a>(&mut self, turns: Vec<PlayerMsg>, updates: &mut Vec<HostMsg>) {
+        for PlayerMsg { id, data } in turns.into_iter() {
+            let player_num: usize = (id).try_into().unwrap();
+            let action = proto::ServerMessage::PlayerAction(self.execute_action(player_num, data));
+            let serialized_action = serde_json::to_string(&action).unwrap();
+            updates.push(HostMsg::Data(
+                Data {
+                    value: serialized_action,
+                },
+                Some(id),
+            ));
         }
     }
 
-    fn execute_action<'a>(&mut self, player_num: usize, turn: game::Turn<'a>) -> proto::PlayerAction {
+    fn execute_action<'a>(&mut self, player_num: usize, turn: Option<Data>) -> proto::PlayerAction {
         let turn = match turn {
-            game::Turn::Timeout => return proto::PlayerAction::Timeout,
-            game::Turn::Action(bytes) => bytes,
+            None => return proto::PlayerAction::Timeout,
+            Some(turn) => turn.value,
         };
 
-        let action: proto::Action = match serde_json::from_slice(&turn) {
+        let action: proto::Action = match serde_json::from_str(&turn) {
             Err(err) => return proto::PlayerAction::ParseError(err.to_string()),
             Ok(action) => action,
         };
 
-        let commands = action.commands.into_iter().map(|command| {
-            match self.check_valid_command(player_num, &command) {
-                Ok(dispatch) => {
-                    self.state.dispatch(&dispatch);
-                    proto::PlayerCommand {
-                        command,
-                        error: None,
+        let commands = action
+            .commands
+            .into_iter()
+            .map(
+                |command| match self.check_valid_command(player_num, &command) {
+                    Ok(dispatch) => {
+                        self.state.dispatch(&dispatch);
+                        proto::PlayerCommand {
+                            command,
+                            error: None,
+                        }
                     }
-                },
-                Err(error) => {
-                    proto::PlayerCommand {
+                    Err(error) => proto::PlayerCommand {
                         command,
                         error: Some(error),
-                    }
-                }
-            }
-        }).collect();
+                    },
+                },
+            )
+            .collect();
 
         return proto::PlayerAction::Commands(commands);
     }
 
-    fn check_valid_command(&self, player_num: usize, mv: &proto::Command) -> Result<Dispatch, CommandError> {
-        let origin_id = *self.planet_map
+    fn check_valid_command(
+        &self,
+        player_num: usize,
+        mv: &proto::Command,
+    ) -> Result<Dispatch, CommandError> {
+        let origin_id = *self
+            .planet_map
             .get(&mv.origin)
             .ok_or(CommandError::OriginDoesNotExist)?;
 
-        let target_id = *self.planet_map
+        let target_id = *self
+            .planet_map
             .get(&mv.destination)
             .ok_or(CommandError::DestinationDoesNotExist)?;
 
@@ -129,8 +159,14 @@ impl PlanetWarsGame {
     }
 }
 
-impl game::GameController for PlanetWarsGame {
-    fn step<'a>(&mut self, turns: Vec<game::PlayerTurn<'a>>) -> Vec<game::Update> {
+impl game::Controller for PlanetWarsGame {
+    fn start(&mut self) -> Vec<HostMsg> {
+        let mut updates = Vec::new();
+        self.dispatch_state(self.state.living_players(), &mut updates);
+        updates
+    }
+
+    fn step(&mut self, turns: Vec<PlayerMsg>) -> Vec<HostMsg> {
         let mut updates = Vec::new();
 
         let alive = self.state.living_players();
@@ -142,5 +178,9 @@ impl game::GameController for PlanetWarsGame {
         self.dispatch_state(alive, &mut updates);
 
         updates
+    }
+
+    fn is_done(&mut self) -> bool {
+        self.state.is_finished()
     }
 }

@@ -1,6 +1,6 @@
 use std::fs::File;
-use std::io::Read;
 use std::io;
+use std::io::Read;
 
 use serde_json;
 
@@ -17,7 +17,10 @@ impl Config {
     pub fn create_game(&self, clients: usize) -> PlanetWars {
         let planets = self.load_map(clients);
         let players = (0..clients)
-            .map(|client_id| Player { id: client_id, alive: true })
+            .map(|client_id| Player {
+                id: client_id,
+                alive: true,
+            })
             .collect();
 
         PlanetWars {
@@ -33,7 +36,8 @@ impl Config {
     fn load_map(&self, num_players: usize) -> Vec<Planet> {
         let map = self.read_map().expect("[PLANET_WARS] reading map failed");
 
-        return map.planets
+        return map
+            .planets
             .into_iter()
             .enumerate()
             .map(|(num, planet)| {
@@ -62,7 +66,8 @@ impl Config {
                     y: planet.y,
                     fleets: fleets,
                 };
-            }).collect();
+            })
+            .collect();
     }
 
     fn read_map(&self) -> io::Result<Map> {

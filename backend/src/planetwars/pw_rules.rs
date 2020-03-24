@@ -1,4 +1,3 @@
-
 /// The planet wars game rules.
 pub struct PlanetWars {
     pub players: Vec<Player>,
@@ -49,15 +48,11 @@ pub struct Dispatch {
 }
 
 impl PlanetWars {
-
     pub fn dispatch(&mut self, dispatch: &Dispatch) {
-        let distance = self.planets[dispatch.origin].distance(
-            &self.planets[dispatch.target]
-        );
+        let distance = self.planets[dispatch.origin].distance(&self.planets[dispatch.target]);
 
         let origin = &mut self.planets[dispatch.origin];
         origin.fleets[0].ship_count -= dispatch.ship_count;
-
 
         let expedition = Expedition {
             id: self.expedition_num,
@@ -136,16 +131,12 @@ impl PlanetWars {
     }
 
     pub fn living_players(&self) -> Vec<usize> {
-        self.players.iter().filter_map(|p| {
-            if p.alive {
-                Some(p.id)
-            } else {
-                None
-            }
-        }).collect()
+        self.players
+            .iter()
+            .filter_map(|p| if p.alive { Some(p.id) } else { None })
+            .collect()
     }
 }
-
 
 impl Planet {
     pub fn owner(&self) -> Option<usize> {
@@ -176,7 +167,8 @@ impl Planet {
         // winner.ship_count -= second_largest.ship_count, but this does not
         // allow for simple customizations (such as changing combat balance).
 
-        self.fleets.sort_by(|a, b| a.ship_count.cmp(&b.ship_count).reverse());
+        self.fleets
+            .sort_by(|a, b| a.ship_count.cmp(&b.ship_count).reverse());
         while self.fleets.len() > 1 {
             let fleet = self.fleets.pop().unwrap();
             // destroy some ships

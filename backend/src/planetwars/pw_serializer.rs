@@ -1,6 +1,5 @@
-
-use super::pw_rules::{PlanetWars, Planet, Expedition};
 use super::pw_protocol as proto;
+use super::pw_rules::{Expedition, Planet, PlanetWars};
 
 /// Serialize given gamestate
 pub fn serialize(state: &PlanetWars) -> proto::State {
@@ -28,12 +27,14 @@ impl<'a> Serializer<'a> {
 
     fn serialize_state(&self) -> proto::State {
         proto::State {
-            planets: self.state
+            planets: self
+                .state
                 .planets
                 .iter()
                 .map(|planet| self.serialize_planet(planet))
                 .collect(),
-            expeditions: self.state
+            expeditions: self
+                .state
                 .expeditions
                 .iter()
                 .map(|exp| self.serialize_expedition(exp))

@@ -8,9 +8,11 @@ edition = "2018"
 
 [dependencies]
 mozaic = { git = "https://github.com/ZeusWPI/MOZAICP" }
-tokio = "0.1.22"
 rand = { version = "0.6.5", default-features = true }
-futures = "0.1.28"
+
+async-std = { version = "1.5.0", features = ["attributes"] }
+futures = { version = "0.3.1", features = ["executor", "thread-pool"] }
+
 serde = "1.0.100"
 serde_derive = "1.0.100"
 serde_json = "1.0"
