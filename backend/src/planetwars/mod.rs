@@ -12,7 +12,7 @@ mod pw_config;
 mod pw_protocol;
 mod pw_rules;
 mod pw_serializer;
-pub use pw_config::Config;
+pub use pw_config::{Config, Map};
 use pw_protocol::{self as proto, CommandError};
 use pw_rules::Dispatch;
 

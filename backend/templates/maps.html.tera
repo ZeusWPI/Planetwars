@@ -1,0 +1,3 @@
+{% for m in maps %}
+<p class="map" onclick="handle_map_click('{{m.url | safe }}')"> {{ m.name }} </p>
+{% endfor %}
