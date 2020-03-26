@@ -64,7 +64,7 @@ async fn maps_get() -> Result<Template, String> {
     let maps = get_maps().await?;
 
     let context = Context { name: "Arthur".into(), maps: Some(maps) };
-    Ok(Template::render("index", &context))
+    Ok(Template::render("lobby", &context))
 }
 
 #[get("/maps/<file>")]

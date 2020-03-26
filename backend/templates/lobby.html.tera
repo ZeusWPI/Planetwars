@@ -1,0 +1,34 @@
+{% extends "base" %}
+
+{% block content %}
+    <div class="main">
+        <div class="lobby"></div>
+        <div class="creator">
+            <h1>Start new game</h1>
+            <div class="input_container">
+                <label for="name">Name:</label>
+                <input id="name" type="text"></input>
+            </div>
+            <label>Select Map</label>
+            <div class="map_select">
+                {% include "maps" %}
+            </div>
+            <div class="input_container number">
+                <label for="turns">Max turns:</label>
+                <input id="turns" type="number" value=200></input>
+            </div>
+            <div class="input_container number">
+                <label for="nop">Number of players:</label>
+                <input id="nop" type="number" value=2></input>
+            </div>
+            <button>
+                Start
+            </button>
+            <div id="map_holder">
+
+            </div>
+        </div>
+    </div>
+
+    <script src="script/maps.js"></script>
+{% endblock %}

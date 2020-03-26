@@ -7,10 +7,5 @@
   </head>
   <body>
     {% block content %}{% endblock content %}
-
-    <div style="width: 50%" id="map_holder">
-    </div>
-
-    <script src="script/script.js"></script>
   </body>
 </html>
