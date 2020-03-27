@@ -1,5 +1,5 @@
 const ids = {};
-["map_holder"].forEach(id => ids[id] = document.getElementById(id));
+["map_holder", "name", "turns", "nop"].forEach(id => ids[id] = document.getElementById(id));
 
 var last_map;
 
@@ -11,4 +11,8 @@ async function handle_map_click(url, event) {
     event.target.classList.add("selected");
     const c = await fetch(url);
     ids["map_holder"].innerHTML = await c.text();
+}
+
+async function start_game() {
+
 }

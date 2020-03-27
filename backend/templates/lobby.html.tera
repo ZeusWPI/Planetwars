@@ -21,7 +21,7 @@
                 <label for="nop">Number of players:</label>
                 <input id="nop" type="number" value=2></input>
             </div>
-            <button>
+            <button onclick="start_game()">
                 Start
             </button>
             <div id="map_holder">

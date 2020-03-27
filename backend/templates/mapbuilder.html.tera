@@ -1,0 +1,57 @@
+{% extends "base" %}
+
+{% block content %}
+
+<link rel="stylesheet" type="text/css" href="style/mapbuilder.css">
+
+<div class="grid"></div>
+<div class="controls">
+    {# <h2>Controls</h2> #}
+    <div class="boxed">
+        <label>How many squares (this will remove your map)</label>
+        <input class="amountOfSquares" type="number" min="10" max="50" value="20"></input>
+        <div class="colourButtonWrapper"></div>
+    </div>
+
+    <div class="boxed">
+        <label for="currentName">Setting parameters</label>
+        <div class="input_container">
+            <label for="currentName">Name:</label>
+            <input id="currentName" type="text" placeholder="name"></input>
+        </div>
+        <div class="input_container">
+            <label for="currentShipCount">Ship count:</label>
+            <input id="currentShipCount" type="number" value=20></input>
+        </div>
+    </div>
+
+    <div class="boxed">
+        <label>Hovered planet parameters</label>
+        <div class="input_container">
+            <label for="name">Name:</label>
+            <input id="name" type="text" disabled></input>
+        </div>
+        <div class="input_container">
+            <label class="small_label" for="shipCount">Ship count:</label>
+            <input id="shipCount" type="number" disabled></input>
+        </div>
+        <div class="input_container">
+            <label class="small_label" for="owner">Owner:</label>
+            <input id="owner" type="number" disabled></input>
+        </div>
+    </div>
+
+    <div class="boxed">
+        <label>Name for map</label>
+        <input id="mapName" type="text" placeholder="name"></input>
+        <div class="buttons">
+            <button class="confirm">Send Map</button>
+            <button class="clear">Clear Map</button>
+        </div>
+    </div>
+
+    <p id="error_field" class="hidden">
+    </p>
+</div>
+<script src="script/mapbuilder.js"></script>
+{% endblock %}

@@ -40,7 +40,6 @@ use rocket_contrib::templates::{Template, Engines};
 use rocket_contrib::templates::tera::{self, Value};
 
 use std::collections::HashMap;
-use std::cmp::Ordering::Equal;
 
 const COLOURS: [&'static str; 9] = ["grey", "blue", "cyan", "green", "yellow", "orange", "red", "pink", "purple"];
 
