@@ -64,6 +64,18 @@ async fn builder_get() -> Result<Template, String> {
     Ok(Template::render("mapbuilder", &context))
 }
 
+#[get("/frontend/index.html")]
+async fn visualizer_get() -> Result<Template, String> {
+    let context = Context::new("Visualizer", None);
+    Ok(Template::render("visualizer", &context))
+}
+
+#[get("/visualizer")]
+async fn visualizer_get_bis() -> Result<Template, String> {
+    let context = Context::new("Visualizer", None);
+    Ok(Template::render("visualizer", &context))
+}
+
 #[get("/maps/<file>")]
 async fn map_get(file: String) -> Result<Template, String> {
     let mut content = String::new();
@@ -74,5 +86,5 @@ async fn map_get(file: String) -> Result<Template, String> {
 }
 
 pub fn fuel(routes: &mut Vec<Route>) {
-    routes.extend(routes![files, index, map_post, map_get, maps_get, builder_get]);
+    routes.extend(routes![files, index, map_post, map_get, maps_get, builder_get, visualizer_get, visualizer_get_bis]);
 }

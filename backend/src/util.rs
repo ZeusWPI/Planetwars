@@ -1,7 +1,7 @@
 use async_std::prelude::*;
 use async_std::fs;
 
-static NAV: [(&'static str, &'static str); 3] = [("/", "Home"), ("/lobby", "Lobby"), ("/mapbuilder", "Map Builder")];
+static NAV: [(&'static str, &'static str); 4] = [("/", "Home"), ("/lobby", "Lobby"), ("/mapbuilder", "Map Builder"), ("/frontend/index.html", "Visualizer")];
 
 #[derive(Serialize)]
 pub struct Map {
