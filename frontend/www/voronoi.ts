@@ -331,7 +331,7 @@ class Breakpoint {
 
     set_edge(edge: HalfEdge) {
         this.left[1].half_edge = edge;
-        this.right[1].half_edge = edge.split(edge.origin);
+        // this.right[1].half_edge = edge.split(edge.origin);
     }
 
     set_me(old_me: Node, new_me: Node) {

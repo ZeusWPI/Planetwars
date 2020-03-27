@@ -361,23 +361,23 @@ function step(time: number) {
 }
 set_loading(true);
 
-// requestAnimationFrame(step);
+requestAnimationFrame(step);
 
 
-import { voronoi, Point } from './voronoi'
-function test() {
-    const points = [
-        new Point(14, 6),
-        new Point(13, 11),
-        new Point(8, 7.5),
-        new Point(7, 4),
-        new Point(4, 11),
-    ];
+// import { voronoi, Point } from './voronoi'
+// function test() {
+//     const points = [
+//         new Point(14, 6),
+//         new Point(13, 11),
+//         new Point(8, 7.5),
+//         new Point(7, 4),
+//         new Point(4, 11),
+//     ];
 
-    console.log(voronoi(points));
-}
+//     console.log(voronoi(points));
+// }
 
-import { test as dcelt_test } from './dcel';
-// dcelt_test();
+// import { test as dcelt_test } from './dcel';
+// // dcelt_test();
 
-test();
+// test();
