@@ -10,7 +10,11 @@ const game_location = LOCATION + "static/games/mod.ini";
 fetch(game_location)
     .then((r) => r.text())
     .then((response) => {
-        parse_ini(response);
+        if (OPTIONS) {
+            parse_ini(response);
+        } else {
+            console.log("Options is not defined, tera?");
+        }
     }).catch(console.error);
 
 export function handle(location, name: string) {
@@ -29,7 +33,8 @@ function create_option(location: string, name: string, turns: string, players: s
     const div = document.createElement("div");
     div.className = "option";
     div.onclick = (_) => handle(location, name);
-
+    console.log("hello there");
+    console.log(`"${location}, "${name}"`);
     let ps = "";
 
     if (players) {

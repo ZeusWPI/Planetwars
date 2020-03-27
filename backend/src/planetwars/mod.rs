@@ -19,22 +19,28 @@ use pw_rules::Dispatch;
 pub struct PlanetWarsGame {
     state: pw_rules::PlanetWars,
     planet_map: HashMap<String, usize>,
+    log_file_loc: String,
     log_file: File,
+    turns: u64,
+    name: String,
 }
 
 impl PlanetWarsGame {
-    pub fn new(state: pw_rules::PlanetWars, location: &str) -> Self {
+    pub fn new(state: pw_rules::PlanetWars, location: &str, name: &str) -> Self {
         let planet_map = state
             .planets
             .iter()
             .map(|p| (p.name.clone(), p.id))
             .collect();
-        let file = File::create(location).unwrap();
+        let file = File::create(format!("static/games/{}", location)).unwrap();
 
         Self {
             state,
             planet_map,
+            log_file_loc: location.to_string(),
             log_file: file,
+            turns: 0,
+            name: name.to_string(),
         }
     }
 
@@ -159,6 +165,8 @@ impl PlanetWarsGame {
     }
 }
 
+use std::fs::OpenOptions;
+use ini::Ini;
 impl game::Controller for PlanetWarsGame {
     fn start(&mut self) -> Vec<HostMsg> {
         let mut updates = Vec::new();
@@ -167,6 +175,8 @@ impl game::Controller for PlanetWarsGame {
     }
 
     fn step(&mut self, turns: Vec<PlayerMsg>) -> Vec<HostMsg> {
+        self.turns += 1;
+
         let mut updates = Vec::new();
 
         let alive = self.state.living_players();
@@ -181,6 +191,20 @@ impl game::Controller for PlanetWarsGame {
     }
 
     fn is_done(&mut self) -> bool {
-        self.state.is_finished()
+        if self.state.is_finished() {
+
+            let mut f = match OpenOptions::new().append(true).open("games.ini") { Err(_) => return true, Ok(f) => f };
+
+            let mut conf = Ini::new();
+            conf.with_section(Some(self.log_file_loc.clone()))
+                .set("name", &self.name)
+                .set("turns", format!("{}", self.turns));
+
+            conf.write_to(&mut f).unwrap();
+
+            true
+        } else {
+            false
+        }
     }
 }

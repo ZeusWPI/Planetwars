@@ -1,7 +1,7 @@
 
 use serde::{Deserialize};
 
-use rocket::Route;
+use rocket::{Route, State};
 use rocket::response::NamedFile;
 
 use rocket_contrib::templates::Template;
@@ -80,6 +80,58 @@ async fn map_get(file: String) -> Result<Template, String> {
     Ok(Template::render("map_partial", &serde_json::from_str::<serde_json::Value>(&content).unwrap()))
 }
 
+#[derive(Deserialize, Debug)]
+struct GameReq {
+    nop: u64,
+    max_turns: u64,
+    map: String,
+    name: String,
+}
+
+#[post("/lobby", data="<game_req>")]
+async fn game_post(game_req: Json<GameReq>, tp: State<'_, ThreadPool>, gm: State<'_, game::Manager>) -> Result<String, String> {
+    let game = build_builder(tp.clone(), game_req.nop, game_req.max_turns, &game_req.map, &game_req.name);
+    let game_id = gm.start_game(game).await;
+    Ok(format!("{:?}", gm.get_state(game_id.unwrap()).await))
+}
+
 pub fn fuel(routes: &mut Vec<Route>) {
-    routes.extend(routes![files, index, map_post, map_get, maps_get, builder_get, visualizer_get]);
+    routes.extend(routes![files, index, map_post, map_get, maps_get, builder_get, visualizer_get, game_post]);
+}
+
+
+use crate::planetwars;
+use mozaic::modules::types::*;
+use mozaic::modules::{game, StepLock};
+use futures::executor::ThreadPool;
+
+use rand::prelude::*;
+fn generate_string_id() -> String {
+    rand::thread_rng()
+        .sample_iter(&rand::distributions::Alphanumeric)
+        .take(15)
+        .collect::<String>() + ".json"
+}
+
+fn build_builder(
+    pool: ThreadPool,
+    number_of_clients: u64,
+    max_turns: u64,
+    map: &str,
+    name: &str,
+) -> game::Builder<planetwars::PlanetWarsGame> {
+    let config = planetwars::Config {
+        map_file: map.to_string(),
+        max_turns: max_turns,
+    };
+
+    let game =
+        planetwars::PlanetWarsGame::new(config.create_game(number_of_clients as usize), &generate_string_id(), name);
+
+    let players: Vec<PlayerId> = (0..number_of_clients).collect();
+
+    game::Builder::new(players.clone(), game).with_step_lock(
+        StepLock::new(players.clone(), pool.clone())
+            .with_timeout(std::time::Duration::from_secs(1)),
+    )
 }

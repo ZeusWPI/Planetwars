@@ -39,7 +39,7 @@ p {
     width: 96%;
 }
 
-#options {
+.options {
     background-color: #444;
     overflow-y: hidden;
     overflow-x: scroll;
