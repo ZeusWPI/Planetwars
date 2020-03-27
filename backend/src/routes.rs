@@ -23,7 +23,7 @@ async fn files(file: PathBuf) -> Option<NamedFile> {
 #[get("/")]
 async fn index() -> Template {
     // let context = context();
-    let context = Context::new("Home", None);
+    let context = Context::new("Home");
     // context.insert("name".to_string(), "Arthur".to_string());
     Template::render("index", &context)
 }
@@ -54,25 +54,20 @@ async fn map_post(map_req: Json<MapReq>) -> Result<String, String> {
 #[get("/lobby")]
 async fn maps_get() -> Result<Template, String> {
     let maps = get_maps().await?;
-    let context = Context::new("Lobby", Some(maps));
+    let context = Context::new_with("Lobby", ContextT::Maps(maps));
     Ok(Template::render("lobby", &context))
 }
 
 #[get("/mapbuilder")]
 async fn builder_get() -> Result<Template, String> {
-    let context = Context::new("Map Builder", None);
+    let context = Context::new("Map Builder");
     Ok(Template::render("mapbuilder", &context))
 }
 
-#[get("/frontend/index.html")]
-async fn visualizer_get() -> Result<Template, String> {
-    let context = Context::new("Visualizer", None);
-    Ok(Template::render("visualizer", &context))
-}
-
 #[get("/visualizer")]
-async fn visualizer_get_bis() -> Result<Template, String> {
-    let context = Context::new("Visualizer", None);
+async fn visualizer_get() -> Result<Template, String> {
+    let game_options = get_games().await?;
+    let context = Context::new_with("Visualizer", ContextT::Games(game_options));
     Ok(Template::render("visualizer", &context))
 }
 
@@ -86,5 +81,5 @@ async fn map_get(file: String) -> Result<Template, String> {
 }
 
 pub fn fuel(routes: &mut Vec<Route>) {
-    routes.extend(routes![files, index, map_post, map_get, maps_get, builder_get, visualizer_get, visualizer_get_bis]);
+    routes.extend(routes![files, index, map_post, map_get, maps_get, builder_get, visualizer_get]);
 }

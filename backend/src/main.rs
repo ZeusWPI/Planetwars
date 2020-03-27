@@ -18,6 +18,8 @@ extern crate tracing_subscriber;
 extern crate rocket;
 extern crate rocket_contrib;
 
+extern crate ini;
+
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 use std::net::SocketAddr;
