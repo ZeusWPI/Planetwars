@@ -2,18 +2,14 @@
 // asynchronously. This `bootstrap.js` file does the single async import, so
 // that no one else needs to worry about it again.
 // Import index.js that executes index.ts
-var h = (a, b) => {}
+var h = (_a, _b) => { }
 
 export function handle(loc, e) {
-    console.log("handle");
     h(loc, e);
 }
 
-import ("./index.js")
-.then(e => {
-        console.log(e.handle);
+import("./index.js")
+    .then(e => {
         h = e.handle;
     })
     .catch(e => console.error("Error importing `index.js`:", e));
-
-window.setTimeout(() => handle("static/games/spiral2.json", "spiral2"), 3000);
