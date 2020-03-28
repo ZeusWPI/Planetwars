@@ -35,6 +35,7 @@ use mozaic::modules::*;
 mod planetwars;
 mod routes;
 mod util;
+use util::Games;
 
 use rocket_contrib::templates::{Template, Engines};
 use rocket_contrib::templates::tera::{self, Value};
@@ -90,6 +91,7 @@ async fn main() {
     rocket::ignite()
         .manage(gm)
         .manage(pool)
+        .manage(Games::new())
         .attach(tera)
         .mount("/", routes)
         .launch()

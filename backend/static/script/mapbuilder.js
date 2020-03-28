@@ -34,13 +34,17 @@
                     }
                     // const real_j = j % 2 == 1 ? j + 0.5 : j;
                     // const real_j = j % 2 == 1 ? j + 0.5 : j;
-                    planets.push({
+                    const planet = {
                         "name": parameters[i][j]["name"],
                         "ship_count": parseInt(parameters[i][j]["shipCount"]),
-                        "owner": parameters[i][j]["colour"],
                         "x": r_j,
                         "y": r_i
-                    });
+                    };
+
+                    if (parameters[i][j]["colour"] !== 0) {
+                        planet["owner"] = parameters[i][j]["colour"];
+                    }
+                    planets.push(planet);
                 }
             }
         }

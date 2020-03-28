@@ -10,6 +10,15 @@ pub struct Map {
 }
 
 #[derive(Serialize)]
+pub struct GameState {
+    name: String,
+    finished: bool,
+    turns: Option<u64>,
+    players: Vec<String>,
+}
+
+/// Visualiser game option
+#[derive(Serialize)]
 pub struct GameOption {
     name: String,
     location: String,
@@ -33,35 +42,42 @@ struct Link {
 }
 
 #[derive(Serialize)]
+pub struct Lobby {
+    pub games: Vec<GameState>,
+    pub maps: Vec<Map>,
+}
+
+#[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ContextT {
-    Maps(Vec<Map>),
     Games(Vec<GameOption>),
 }
 
 #[derive(Serialize)]
-pub struct Context {
+pub struct Context<T> {
     pub name: String,
     nav: Vec<Link>,
 
     #[serde(flatten)]
-    pub inner: Option<ContextT>,
+    pub t: Option<T>
 }
 
-impl Context {
-    pub fn new_with(active: &str, inner: ContextT) -> Self {
+impl<T> Context<T> {
+    pub fn new_with(active: &str, t: T) -> Self {
         let nav = NAV.iter().map(|(href, name)| Link { name: name.to_string(), href: href.to_string(), active: *name == active }).collect();
 
         Context {
-            nav, name: String::from(""), inner: Some(inner)
+            nav, name: String::from(""), t: Some(t)
         }
     }
+}
 
+impl Context<()> {
     pub fn new(active: &str) -> Self {
         let nav = NAV.iter().map(|(href, name)| Link { name: name.to_string(), href: href.to_string(), active: *name == active }).collect();
 
         Context {
-            nav, name: String::from(""), inner: None,
+            nav, name: String::from(""), t: None,
         }
     }
 }
@@ -96,4 +112,62 @@ pub async fn get_games() -> Result<Vec<GameOption>, String> {
     }
 
     Ok(games)
+}
+
+
+use mozaic::modules::game;
+use mozaic::util::request::Connect;
+use futures::future::{join_all, FutureExt};
+pub async fn get_states(game_ids: &Vec<(String, u64)>, manager: &game::Manager) -> Result<Vec<GameState>, String> {
+    let mut states = Vec::new();
+    let gss = join_all(game_ids.iter().cloned().map(|(name, id)| manager.get_state(id).map(move |f| (f, name)))).await;
+
+    for (gs, name) in gss {
+        if let Some(state) = gs {
+            states.push(
+                GameState {
+                    name,
+                    turns: None,
+                    players: state.iter().map(|conn| match conn {
+                        Connect::Waiting(_, key) => format!("Waiting {}", key),
+                        _ => String::from("Some connected player"),
+                    }).collect(),
+                    finished: false,
+                }
+            )
+        } else {
+            states.push(
+                GameState {
+                    name,
+                    turns: None,
+                    players: Vec::new(),
+                    finished: true,
+                }
+            )
+        }
+    }
+
+    Ok(states)
+}
+
+use std::sync::{Arc, Mutex};
+
+pub struct Games {
+    inner: Arc<Mutex<Vec<(String, u64)>>>,
+}
+
+impl Games {
+    pub fn new() -> Self {
+        Self {
+            inner: Arc::new(Mutex::new(Vec::new()))
+        }
+    }
+
+    pub fn add_game(&self, name: String, id: u64) {
+        self.inner.lock().unwrap().push((name, id));
+    }
+
+    pub fn get_games(&self) -> Vec<(String, u64)> {
+        self.inner.lock().unwrap().clone()
+    }
 }

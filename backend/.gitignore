@@ -1,3 +1,6 @@
 target/
 Cargo.lock
 games/
+maps/
+trace.log
+games.ini

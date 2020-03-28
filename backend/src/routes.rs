@@ -52,9 +52,10 @@ async fn map_post(map_req: Json<MapReq>) -> Result<String, String> {
 }
 
 #[get("/lobby")]
-async fn maps_get() -> Result<Template, String> {
+async fn lobby_get(gm: State<'_, game::Manager>, state: State<'_, Games>) -> Result<Template, String> {
     let maps = get_maps().await?;
-    let context = Context::new_with("Lobby", ContextT::Maps(maps));
+    let games = get_states(&state.get_games(), &gm).await?;
+    let context = Context::new_with("Lobby", Lobby { games, maps });
     Ok(Template::render("lobby", &context))
 }
 
@@ -89,14 +90,15 @@ struct GameReq {
 }
 
 #[post("/lobby", data="<game_req>")]
-async fn game_post(game_req: Json<GameReq>, tp: State<'_, ThreadPool>, gm: State<'_, game::Manager>) -> Result<String, String> {
+async fn game_post(game_req: Json<GameReq>, tp: State<'_, ThreadPool>, gm: State<'_, game::Manager>, state: State<'_, Games>) -> Result<String, String> {
     let game = build_builder(tp.clone(), game_req.nop, game_req.max_turns, &game_req.map, &game_req.name);
-    let game_id = gm.start_game(game).await;
-    Ok(format!("{:?}", gm.get_state(game_id.unwrap()).await))
+    let game_id = gm.start_game(game).await.unwrap();
+    state.add_game(game_req.name.clone(), game_id);
+    Ok(format!("{:?}", gm.get_state(game_id).await))
 }
 
 pub fn fuel(routes: &mut Vec<Route>) {
-    routes.extend(routes![files, index, map_post, map_get, maps_get, builder_get, visualizer_get, game_post]);
+    routes.extend(routes![files, index, map_post, map_get, lobby_get, builder_get, visualizer_get, game_post]);
 }
 
 

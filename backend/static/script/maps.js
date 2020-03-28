@@ -29,7 +29,7 @@ async function start_game() {
 
     xhr.onreadystatechange = async function() {
         console.log(this);
-        console.log(await this.text());
+        // console.log(await this.text());
 
         // TODO: make response visible
     };
