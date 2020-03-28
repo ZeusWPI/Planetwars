@@ -130,14 +130,18 @@ pub async fn get_states(game_ids: &Vec<(String, u64)>, manager: &game::Manager) 
 
     for (gs, name) in gss {
         if let Some(state) = gs {
+            let mut players: Vec<String> = state.iter().map(|conn| match conn {
+                Connect::Waiting(_, key) => format!("Waiting {}", key),
+                _ => String::from("Some connected player")
+            }).collect();
+
+            players.sort();
+
             states.push(
                 GameState {
                     name,
                     turns: None,
-                    players: state.iter().map(|conn| match conn {
-                        Connect::Waiting(_, key) => format!("Waiting {}", key),
-                        _ => String::from("Some connected player"),
-                    }).collect(),
+                    players: players,
                     finished: false,
                 }
             )
@@ -152,6 +156,8 @@ pub async fn get_states(game_ids: &Vec<(String, u64)>, manager: &game::Manager) 
             )
         }
     }
+
+    states.sort_by_key(|a| a.name.clone());
 
     Ok(states)
 }

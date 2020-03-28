@@ -81,6 +81,15 @@ async fn map_get(file: String) -> Result<Template, String> {
     Ok(Template::render("map_partial", &serde_json::from_str::<serde_json::Value>(&content).unwrap()))
 }
 
+#[get("/partial/state")]
+async fn state_get(gm: State<'_, game::Manager>, state: State<'_, Games>) -> Result<Template, String> {
+    let games = get_states(&state.get_games(), &gm).await?;
+    let context = Context::new_with("Lobby", Lobby { games, maps: Vec::new() });
+
+    Ok(Template::render("state_partial", &context))
+}
+
+
 #[derive(Deserialize, Debug)]
 struct GameReq {
     nop: u64,
@@ -98,7 +107,7 @@ async fn game_post(game_req: Json<GameReq>, tp: State<'_, ThreadPool>, gm: State
 }
 
 pub fn fuel(routes: &mut Vec<Route>) {
-    routes.extend(routes![files, index, map_post, map_get, lobby_get, builder_get, visualizer_get, game_post]);
+    routes.extend(routes![files, index, map_post, map_get, lobby_get, builder_get, visualizer_get, game_post, state_get]);
 }
 
 

@@ -1,5 +1,5 @@
 const ids = {};
-["map_holder", "name", "turns", "nop"].forEach(id => ids[id] = document.getElementById(id));
+["map_holder", "name", "turns", "nop", "lobby"].forEach(id => ids[id] = document.getElementById(id));
 
 var last_map;
 var last_url;
@@ -15,6 +15,11 @@ async function handle_map_click(url, event) {
     ids["map_holder"].innerHTML = await c.text();
 }
 
+async function refresh_state() {
+    const c = await fetch("/partial/state");
+    ids["lobby"].innerHTML = await c.text();
+}
+
 async function start_game() {
     const obj = {
         "nop": parseInt(ids["nop"].value),
@@ -23,17 +28,25 @@ async function start_game() {
         "max_turns": parseInt(ids["turns"].value),
     };
 
-    console.log(obj);
-
     const xhr = new XMLHttpRequest();
 
     xhr.onreadystatechange = async function() {
         console.log(this);
-        // console.log(await this.text());
-
         // TODO: make response visible
     };
 
     xhr.open("POST", "/lobby");
     xhr.send(JSON.stringify(obj));
+
+    setTimeout(
+        () => refresh_state(),
+        200
+    );
 }
+
+window.onload = () => refresh_state();
+
+setInterval(
+    () => refresh_state(),
+    1000
+);

@@ -2,21 +2,7 @@
 
 {% block content %}
     <div class="main">
-        <div class="lobby">
-            {% for state in games %}
-            <div class="game_state">
-                <div class="info">
-                    <p>{{state.name}}</p>
-                    {% if state.finished %}<p>Finished</p> {% endif %}
-                    {% if state.turns %}<p>Turns: {{ state.turns }} </p> {% endif %}
-                </div>
-                <div class="players">
-                    {% for player in state.players %}
-                    <p>{{ player }}</p>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endfor %}
+        <div id="lobby" class="lobby">
         </div>
         <div class="creator">
             <h1>Start new game</h1>
