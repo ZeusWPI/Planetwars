@@ -65,6 +65,12 @@ async fn builder_get() -> Result<Template, String> {
     Ok(Template::render("mapbuilder", &context))
 }
 
+#[get("/debug")]
+async fn debug_get() -> Result<Template, String> {
+    let context = Context::new("Debug Station");
+    Ok(Template::render("debug", &context))
+}
+
 #[get("/visualizer")]
 async fn visualizer_get() -> Result<Template, String> {
     let game_options = get_games().await?;
@@ -107,7 +113,7 @@ async fn game_post(game_req: Json<GameReq>, tp: State<'_, ThreadPool>, gm: State
 }
 
 pub fn fuel(routes: &mut Vec<Route>) {
-    routes.extend(routes![files, index, map_post, map_get, lobby_get, builder_get, visualizer_get, game_post, state_get]);
+    routes.extend(routes![files, index, map_post, map_get, lobby_get, builder_get, visualizer_get, game_post, state_get, debug_get]);
 }
 
 

@@ -1,0 +1,102 @@
+{% extends "base" %}
+
+{% block content %}
+<script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+<style type="text/css">
+    body {
+        font: 10pt arial;
+        background-color: #222;
+
+    }
+
+
+    #mynetwork {
+        border: 1px solid lightgray;
+        background-color: #3a3a3a;
+    }
+</style>
+
+<div style="width: 80vw; height: 80vh; margin: auto;" id="mynetwork"></div>
+
+<script>
+    var data = new vis.DataSet();
+
+    var nodes = new vis.DataSet();
+    var edges = new vis.DataSet();
+
+    var colour_cache = {};
+
+    function getColor() {
+        return "hsl(" + 360 * Math.random() + ',' +
+            (100 * Math.random()) + '%,' +
+            (60 + 20 * Math.random()) + '%)';
+    }
+
+    function set_color(nodes) {
+        nodes = Array.isArray(nodes) ? nodes : [nodes];
+        for (let n of nodes) {
+            if (colour_cache[n.label] == undefined) {
+                colour_cache[n.label] = getColor();
+            }
+            n.color = colour_cache[n.label];
+        }
+    }
+
+    function handle_event(event) {
+        if (event.type === "Init") {
+            nodes.clear();
+            edges.clear();
+            set_color(event.nodes);
+
+            nodes.add(event.nodes);
+
+            setTimeout(
+                () => {
+                    edges.add(event.edges);
+                }, 200
+            )
+        } else {
+            const at = event.data_type === "Node" ? nodes : edges;
+
+
+            if (event.type === "Add") {
+                if (event.data_type === "Node") {
+                    set_color(event.data);
+                }
+                at.add(event.data);
+            } else {
+                at.remove(event.id);
+            }
+        }
+    }
+
+    function draw() {
+        const container = document.getElementById('mynetwork');
+
+        const data = {
+            nodes: nodes,
+            edges: edges
+        };
+        const options = {
+            physics: {
+                stabilization: {
+                    enabled: true,
+                    iterations: 10, // maximum number of iteration to stabilize
+                    updateInterval: 10,
+                    fit: true
+                },
+            }
+        };
+
+        const network = new vis.Network(container, data, options);
+
+        var ws = new WebSocket('ws://127.0.0.1:3012');
+        ws.onmessage = function (event) {
+            handle_event(JSON.parse(event.data));
+        };
+    }
+
+    window.onload = () => draw();
+</script>
+{% endblock %}
