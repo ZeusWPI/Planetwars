@@ -193,7 +193,7 @@ impl game::Controller for PlanetWarsGame {
     fn is_done(&mut self) -> bool {
         if self.state.is_finished() {
 
-            let mut f = match OpenOptions::new().append(true).open("games.ini") { Err(_) => return true, Ok(f) => f };
+            let mut f = match OpenOptions::new().create(true).append(true).open("games.ini") { Err(_) => return true, Ok(f) => f };
 
             let mut conf = Ini::new();
             conf.with_section(Some(self.log_file_loc.clone()))

@@ -99,7 +99,13 @@ use ini::Ini;
 pub async fn get_games() -> Result<Vec<GameOption>, String> {
     let mut games = Vec::new();
 
-    let content = fs::read_to_string("games.ini").await.map_err(|_| "IO error".to_string())?;
+    let content = match fs::read_to_string("games.ini").await {
+        Ok(v) => v,
+        Err(_) => {
+            fs::File::create("games.ini").await.map_err(|_| "IO Error".to_string())?;
+            String::new()
+        }
+    };
 
     let i = Ini::load_from_str(&content).map_err(|_| "Corrupt ini file".to_string())?;
 
