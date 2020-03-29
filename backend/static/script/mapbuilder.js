@@ -37,8 +37,8 @@
                     const planet = {
                         "name": parameters[i][j]["name"],
                         "ship_count": parseInt(parameters[i][j]["shipCount"]),
-                        "x": r_j,
-                        "y": r_i
+                        "x": r_j * 2.5,
+                        "y": r_i * 2.5
                     };
 
                     if (parameters[i][j]["colour"] !== 0) {

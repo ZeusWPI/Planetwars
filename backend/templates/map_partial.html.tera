@@ -1,7 +1,7 @@
 
 <svg preserveAspectRatio="none" viewBox="{{ planets | calc_viewbox}}" xmlns="http://www.w3.org/2000/svg" fill="grey">
 {% for planet in planets -%}
-    <circle cx="{{ planet.x }}" cy="{{ planet.y }}" r="0.5" fill="{% if planet.owner %}{{planet.owner | get_colour}}{% else %}grey{%endif%}"/>
+    <circle cx="{{ planet.x }}" cy="{{ planet.y }}" r="1" fill="{% if planet.owner %}{{planet.owner | get_colour}}{% else %}grey{%endif%}"/>
     {# <text x="{{planet.x}}" y="{{planet.y + 2}}" class="small" dominant-baseline="middle" text-anchor="middle">{{planet.name}}</text> #}
 {% endfor -%}
 </svg>
