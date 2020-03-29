@@ -91,8 +91,8 @@
 
         const network = new vis.Network(container, data, options);
 
-
-        var ws = new WebSocket(`${window.location.protocol.startsWith("https") ? 'wss' : 'ws'}://${window.location.hostname}:3012`);
+        const secure = window.location.protocol.startsWith("https");
+        var ws = new WebSocket(`${secure ? 'wss' : 'ws'}://${window.location.hostname}${secure ? "/websocket" : ":3012"}`);
         ws.onmessage = function (event) {
             handle_event(JSON.parse(event.data));
         };
