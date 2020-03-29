@@ -1,4 +1,3 @@
 #!/bin/bash
 
-rm bot*.txt
-cargo run $1 python3 simple.py
+python bot.py -p 9142 -i $1 python simple.py

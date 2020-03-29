@@ -45,6 +45,7 @@ def main():
     threading.Thread(target=lambda: handle_input(it, sock), daemon=True).start()
 
     line = f.readline()
+    content = "Nothing"
     while line:
         content = json.loads(line)
         if content["type"] == "game_state":
