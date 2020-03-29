@@ -4,9 +4,13 @@
 
 <link rel="stylesheet" type="text/css" href="style/mapbuilder.css">
 
-<div class="grid"></div>
+<div class="grid_wrapper"><div class="grid"></div></div>
 <div class="controls">
-    {# <h2>Controls</h2> #}
+    <div class="boxed">
+        <label>Name for map</label>
+        <input id="mapName" type="text" placeholder="Map Name"></input>
+    </div>
+
     <div class="boxed">
         <label>How many squares</label>
         <input class="amountOfSquares" type="number" min="10" max="50" value="20"></input>
@@ -17,7 +21,7 @@
         <label for="currentName">Setting parameters</label>
         <div class="input_container">
             <label for="currentName">Name:</label>
-            <input id="currentName" type="text" placeholder="name"></input>
+            <input id="currentName" type="text" placeholder="Planet Name"></input>
         </div>
         <div class="input_container">
             <label for="currentShipCount">Ship count:</label>
@@ -41,13 +45,9 @@
         </div>
     </div>
 
-    <div class="boxed">
-        <label>Name for map</label>
-        <input id="mapName" type="text" placeholder="name"></input>
-        <div class="buttons">
-            <button class="confirm">Send Map</button>
-            <button class="clear">Clear Map</button>
-        </div>
+    <div class="buttons">
+        <button class="confirm">Send Map</button>
+        <button class="clear">Clear Map</button>
     </div>
 
     <p id="error_field" class="hidden">
