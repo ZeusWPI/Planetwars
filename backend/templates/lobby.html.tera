@@ -31,5 +31,5 @@
         </div>
     </div>
 
-    <script src="script/maps.js"></script>
+    <script src="script/lobby.js"></script>
 {% endblock %}
