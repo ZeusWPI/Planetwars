@@ -1,5 +1,5 @@
 [package]
-name = "plantwars"
+name = "planetwars"
 version = "0.1.0"
 authors = ["ajuvercr <arthur.vercruysse@ugent.be>"]
 edition = "2018"

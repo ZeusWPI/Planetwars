@@ -1,5 +1,5 @@
 import { Game } from "planetwars";
-import { memory } from "planetwars/plantwars_bg";
+import { memory } from "planetwars/planetwars_bg";
 import { Resizer, resizeCanvasToDisplaySize, FPSCounter, url_to_mesh, Mesh } from "./webgl/util";
 import { Shader, Uniform4f, Uniform2fv, Uniform3fv, Uniform1i, Uniform1f, Uniform2f, ShaderFactory, Uniform3f, UniformMatrix3fv } from './webgl/shader';
 import { Renderer } from "./webgl/renderer";
