@@ -20,7 +20,7 @@
             The lobby is the central hub, here you can find active and finished games. When a game is active you can find a key to enter, more on this later.
         </p>
         <p>
-            In the lobby you can also create games, you should specify the name of your game, so you can later view it in the Visaulizer. Specify a map, maximum number of turns and the number of players.
+            In the lobby you can also create games, you should specify the name of your game, so you can later view it in the Visualizer. Specify a map, maximum number of turns and the number of players.
         </p>
         <p>
             Yes the lobby is ugly, yes, part of the html is refreshed every second. It's opensource, <a target="_blank" href="https://github.com/ZeusWPI/Planetwars">please fix</a> <span class="heart"></span>.
