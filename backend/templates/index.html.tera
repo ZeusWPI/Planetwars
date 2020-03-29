@@ -50,6 +50,16 @@
     </div>
 
     <div>
+        <h3>How to play?</h3>
+        <p>Build a bot! All information about the planetwars game, <a target="_blank" href="https://docs.google.com/presentation/d/1ZwFlXGm7WZ4urTFxXdyoEz7n19PjwkO4Z-iVYLWCDmg/edit#slide=id.p">Please visit.</a> You can find an example bot <a href="bot/simple.py">here</a>.</p>
+        <p>Optionally, you can create your own custom with the mapbuilder</p>
+        <p>Start a game instance in the lobby, don't forget to name it, watching the visualization afterwars is the only way to know who won atm.</p>
+        <p>Start up your bot and connect to the game instance. In the lobby you will see keys corresponding to players in the game. You can use <a href="bot/runner.py">the botrunner</a> to run your bot, with the command <span style="font-style: italic;">python runner.py --host mozaic.zeus.gent -p 9142 -i {your key} {The command to start you bot}</span>.
+        <p>Invite friends!</p>
+        <p>Bash your friends because you have the superior bot, according to the visualizer</p>
+    </div>
+
+    <div>
         <h3>Contribute!</h3>
         <p>There is a lot that can still be done. Difficulty ranging from easy, like creating favicon, to very challenging, like add blockly client back from BottleBats.</p>
         <p>This project ranges from shitty frontend code, to exotic shader language, and back to beautiful* rust. If you would like to help, but are confused due to the lack of documentation, or anything else, hit me up @silvius on <a href="mattermost.zeus.gent">mattermost</a> or anywhere else.</p>

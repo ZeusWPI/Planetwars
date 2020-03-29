@@ -39,7 +39,7 @@
 }
 
 body {
-    height: 100vh;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -60,6 +60,7 @@ body {
 .info {
     max-width: 80%;
     width: 1000px;
+    margin: 70px auto;
 }
 
 .info a {
@@ -78,11 +79,15 @@ body {
     color: antiquewhite;
 }
 
-.info div h3, .info div h1 {
+.info div h3 {
     color: #ff7f00;
     margin-bottom: 10px;
 }
 
+.info div h1 {
+    color: #ff7f00;
+    margin-bottom: 20px;
+}
 .info div p {
     /* color: #ff7f00; */
     margin: 5px 0;
