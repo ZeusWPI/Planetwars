@@ -5,7 +5,7 @@ use serde_json;
 
 use std::collections::HashMap;
 use std::convert::TryInto;
-use std::fs::File;
+use std::fs::{File, create_dir};
 use std::io::Write;
 
 mod pw_config;
@@ -33,6 +33,11 @@ impl PlanetWarsGame {
             .iter()
             .map(|p| (p.name.clone(), p.id))
             .collect();
+
+        if let Err(_) = create_dir("static/games") {
+            println!("'static/games' already exists");
+        }
+
         let file = File::create(format!("static/games/{}", location)).unwrap();
 
         Self {
