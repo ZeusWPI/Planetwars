@@ -67,5 +67,11 @@
     </div>
 </div>
 
+<style>
+    body {
+        height: unset;
+        min-height: 100vh;
+    }
+</style>
 
 {% endblock %}
