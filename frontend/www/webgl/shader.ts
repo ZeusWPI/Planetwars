@@ -312,3 +312,14 @@ export class UniformMatrix3fv implements Uniform {
     gl.uniformMatrix3fv(location, false, this.data);
   }
 }
+
+export class UniformBool implements Uniform {
+  data: boolean;
+  constructor(data: boolean) {
+    this.data = data;
+  }
+
+  setUniform(gl: WebGLRenderingContext, location: WebGLUniformLocation) {
+    gl.uniform1i(location, this.data ? 1 : 0);
+  }
+}

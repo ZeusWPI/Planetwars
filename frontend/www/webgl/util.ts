@@ -35,18 +35,29 @@ export function resizeCanvasToDisplaySize(
 export class FPSCounter {
   last: number;
   count: number;
+  _delta: number;
+  _prev: number
   constructor() {
     this.last = 0;
     this.count = 0;
+    this._delta = 0;
+    this._prev = 0;
   }
 
   frame(now: number) {
     this.count += 1;
+    this._delta = now - this._prev;
+    this._prev = now;
+
     if (now - this.last > 1000) {
       this.last = now;
       console.log(this.count + " fps");
       this.count = 0;
     }
+  }
+
+  delta(now: number): number {
+    return this._delta;
   }
 }
 

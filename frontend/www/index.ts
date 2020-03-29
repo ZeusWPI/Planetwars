@@ -1,7 +1,7 @@
 import { Game } from "planetwars";
 import { memory } from "planetwars/planetwars_bg";
 import { Resizer, resizeCanvasToDisplaySize, FPSCounter, url_to_mesh, Mesh } from "./webgl/util";
-import { Shader, Uniform4f, Uniform2fv, Uniform3fv, Uniform1i, Uniform1f, Uniform2f, ShaderFactory, Uniform3f, UniformMatrix3fv } from './webgl/shader';
+import { Shader, Uniform4f, Uniform2fv, Uniform3fv, Uniform1i, Uniform1f, Uniform2f, ShaderFactory, Uniform3f, UniformMatrix3fv, UniformBool } from './webgl/shader';
 import { Renderer } from "./webgl/renderer";
 import { VertexBuffer, IndexBuffer } from "./webgl/buffer";
 import { VertexBufferLayout, VertexArray } from "./webgl/vertexBufferLayout";
@@ -79,6 +79,8 @@ class GameInstance {
     renderer: Renderer;
     planet_count: number;
 
+    vor_counter = 3;
+    use_vor = true;
     playing = true;    // 0 is paused, 1 is playing but not rerendered, 2 is playing and rerendered
     time_stopped_delta = 0;
     last_time = 0;
@@ -223,6 +225,16 @@ class GameInstance {
     render(time: number) {
         COUNTER.frame(time);
 
+        if (COUNTER.delta(time) < 30) {
+            this.vor_counter = Math.min(3, this.vor_counter + 1);
+        } else {
+            this.vor_counter = Math.max(-3, this.vor_counter - 1);
+        }
+
+        if (this.vor_counter < -2) {
+            this.use_vor = false;
+        }
+
         if (!this.playing) {
             this.last_time = time;
 
@@ -244,11 +256,13 @@ class GameInstance {
 
         this.vor_shader.uniform(GL, "u_viewbox", new Uniform4f(this.resizer.get_viewbox()));
         this.vor_shader.uniform(GL, "u_resolution", new Uniform2f(RESOLUTION));
+        this.vor_shader.uniform(GL, "u_vor", new UniformBool(this.use_vor));
 
         this.shader.uniform(GL, "u_time", new Uniform1f((time - this.last_time) / ms_per_frame));
         this.shader.uniform(GL, "u_mouse", new Uniform2f(this.resizer.get_mouse_pos()));
         this.shader.uniform(GL, "u_viewbox", new Uniform4f(this.resizer.get_viewbox()));
         this.shader.uniform(GL, "u_resolution", new Uniform2f(RESOLUTION));
+        this.shader.uniform(GL, "u_vor", new UniformBool(true));
 
         this.renderer.render(GL);
     }

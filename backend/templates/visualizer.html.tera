@@ -31,18 +31,11 @@
         <p>{{game.name}}</p>
         <p>Turns: {{game.turns}}</p>
     </div>
-    {# {% else %}
-    <div class="option">
-        No options available
-    </div> #}
     {% endfor %}
     </div>
 </div>
 
 
 <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
-<script>
-    console.log(window);
-</script>
 <script src="frontend/bootstrap.js"></script>
 {% endblock %}
