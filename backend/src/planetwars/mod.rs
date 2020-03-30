@@ -5,7 +5,7 @@ use serde_json;
 
 use std::collections::HashMap;
 use std::convert::TryInto;
-use std::fs::{File, create_dir};
+use std::fs::{create_dir, File};
 use std::io::Write;
 
 mod pw_config;
@@ -60,8 +60,6 @@ impl PlanetWarsGame {
         )
         .unwrap();
 
-        // println!("{}", serde_json::to_string(&state).unwrap());
-
         for player in self
             .state
             .players
@@ -83,7 +81,6 @@ impl PlanetWarsGame {
             ));
 
             if !player.alive || self.state.is_finished() {
-                println!("Kicking player {}", player.id);
                 updates.push(HostMsg::Kick(player.id as u64));
             }
         }
@@ -172,8 +169,8 @@ impl PlanetWarsGame {
     }
 }
 
-use std::fs::OpenOptions;
 use ini::Ini;
+use std::fs::OpenOptions;
 impl game::Controller for PlanetWarsGame {
     fn start(&mut self) -> Vec<HostMsg> {
         let mut updates = Vec::new();
@@ -200,14 +197,19 @@ impl game::Controller for PlanetWarsGame {
     fn is_done(&mut self) -> bool {
         if self.state.is_finished() {
             if !self.logged {
-
-
-                let mut f = match OpenOptions::new().create(true).append(true).open("games.ini") { Err(_) => return true, Ok(f) => f };
+                let mut f = match OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open("games.ini")
+                {
+                    Err(_) => return true,
+                    Ok(f) => f,
+                };
 
                 let mut conf = Ini::new();
                 conf.with_section(Some(self.log_file_loc.clone()))
-                .set("name", &self.name)
-                .set("turns", format!("{}", self.turns));
+                    .set("name", &self.name)
+                    .set("turns", format!("{}", self.turns));
 
                 conf.write_to(&mut f).unwrap();
 

@@ -19,6 +19,8 @@ body {
     display: flex;
     flex-direction: column;
     align-self: flex-start;
+    overflow-y: scroll;
+    height: 100%;;
 }
 
 .input_container {

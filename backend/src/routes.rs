@@ -104,12 +104,28 @@ struct GameReq {
     name: String,
 }
 
+#[derive(Serialize)]
+struct GameRes {
+    players: Vec<u64>,
+}
+
+use mozaic::util::request::Connect;
 #[post("/lobby", data="<game_req>")]
-async fn game_post(game_req: Json<GameReq>, tp: State<'_, ThreadPool>, gm: State<'_, game::Manager>, state: State<'_, Games>) -> Result<String, String> {
+async fn game_post(game_req: Json<GameReq>, tp: State<'_, ThreadPool>, gm: State<'_, game::Manager>, state: State<'_, Games>) -> Result<Json<GameRes>, String> {
     let game = build_builder(tp.clone(), game_req.nop, game_req.max_turns, &game_req.map, &game_req.name);
     let game_id = gm.start_game(game).await.unwrap();
     state.add_game(game_req.name.clone(), game_id);
-    Ok(format!("{:?}", gm.get_state(game_id).await))
+
+    if let Some(conns) = gm.get_state(game_id).await {
+        let players: Vec<u64> = conns.iter().map(|conn| match conn {
+            Connect::Waiting(_, key) => *key,
+            _ => 0,
+        }).collect();
+
+        Ok(Json(GameRes { players }))
+    } else {
+        Err(String::from("Fuck the world"))
+    }
 }
 
 pub fn fuel(routes: &mut Vec<Route>) {

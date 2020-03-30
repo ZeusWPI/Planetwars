@@ -1,4 +1,5 @@
 /// The planet wars game rules.
+#[derive(Debug)]
 pub struct PlanetWars {
     pub players: Vec<Player>,
     pub planets: Vec<Planet>,
