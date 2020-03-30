@@ -15,9 +15,10 @@ def execute(cmd):
         raise subprocess.CalledProcessError(return_code, cmd)
 
 def connect(host, port, id):
+    print(host, port)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host, port))
-    s.sendall(f"{id}\n".encode("utf8"))
+    s.sendall(f"{id.strip()}\n".encode("utf8"))
     return s
 
 def handle_input(it, socket):
@@ -51,6 +52,10 @@ def main():
         if content["type"] == "game_state":
             stdin.write(json.dumps(content["content"])+"\n")
             stdin.flush()
+        if content["type"] == "player_action":
+            if content["content"]["type"] == "parse_error":
+                sys.stderr.write(content["content"]["value"] + '\n')
+                sys.stderr.flush()
         line = f.readline()
 
     print(content)
