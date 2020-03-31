@@ -45,8 +45,3 @@ async function start_game() {
 }
 
 window.onload = () => refresh_state();
-
-setInterval(
-    () => refresh_state(),
-    1000
-);
