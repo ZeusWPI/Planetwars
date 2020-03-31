@@ -38,6 +38,7 @@ body {
 }
 
 .lobby_wrapper {
+    flex-grow: 1;
     position: relative;;
 }
 
