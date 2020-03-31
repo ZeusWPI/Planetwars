@@ -2,17 +2,12 @@ import sys, json, random
 
 def move(command):
     record = { 'moves': [command] }
-    print(json.dumps(record))
+    json.dump(record, sys.stdout)
     sys.stdout.flush()
 
-f_name = f"bot{random.randint(0, 10)}.txt"
-f = open(f_name,"w+")
-f.write("start")
-f.flush()
 for line in sys.stdin:
-    f.write(line)
-    f.flush()
     state = json.loads(line)
+
     # find planet with most ships
     my_planets = [p for p in state['planets'] if p['owner'] == 1]
     other_planets = [p for p in state['planets'] if p['owner'] != 1]
