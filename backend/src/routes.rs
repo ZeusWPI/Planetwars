@@ -72,10 +72,10 @@ async fn debug_get() -> Result<Template, String> {
 }
 
 #[get("/visualizer")]
-async fn visualizer_get() -> Result<Template, String> {
-    let game_options = get_games().await?;
+async fn visualizer_get() -> Template {
+    let game_options = get_games().await;
     let context = Context::new_with("Visualizer", ContextT::Games(game_options));
-    Ok(Template::render("visualizer", &context))
+    Template::render("visualizer", &context)
 }
 
 #[get("/maps/<file>")]

@@ -2,6 +2,7 @@
 
 {% block content %}
 <link rel="stylesheet" type="text/css" href="/style/visualizer.css">
+<link rel="stylesheet" type="text/css" href="/style/state.css">
 
 <input type="file" id="fileselect" style="display: none">
 <div id=wrapper>
@@ -26,10 +27,16 @@
     </div>
 
     <div class="options">
-    {% for game in games %}
-    <div class="option" onclick="visualizer.handle('/games/{{ game.location}}', '{{ game.name }}')">
-        <p>{{game.name}}</p>
-        <p>Turns: {{game.turns}}</p>
+    {% for state in games %}
+    <div class="option" onclick="visualizer.handle('/games/{{ state.file }}', '{{ state.name }}')">
+        <p>{{state.name}} ({{ state.map }}) <span style="float: right;">{{state.turns}} turns</span></p>
+        <div class="content">
+            <div class="players">
+                {% for player in state.players %}
+                    <p class="{% if player[1] %}winner{% endif %}">{{ player[0] }}</p>
+                {% endfor %}
+            </div>
+        </div>
     </div>
     {% endfor %}
     </div>
