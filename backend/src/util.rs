@@ -9,6 +9,10 @@ static NAV: [(&'static str, &'static str); 5] = [
     ("/debug", "Debug Station"),
 ];
 
+pub static COLOURS: [&'static str; 9] = [
+    "gray", "blue", "cyan", "green", "yellow", "orange", "red", "pink", "purple",
+];
+
 #[derive(Serialize)]
 pub struct Map {
     name: String,
@@ -91,7 +95,9 @@ impl Ord for GameState {
 }
 
 impl From<FinishedState> for GameState {
-    fn from(state: FinishedState) -> Self {
+    fn from(mut state: FinishedState) -> Self {
+        state.players.sort_by_key(|x| x.0);
+
         GameState::Finished {
             map: String::new(),
             players: state
@@ -136,11 +142,11 @@ pub struct Lobby {
     pub maps: Vec<Map>,
 }
 
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub enum ContextT {
-    Games(Vec<GameState>),
-}
+// #[derive(Serialize)]
+// #[serde(rename_all = "camelCase")]
+// pub enum ContextT {
+//     Games(Vec<GameState>),
+// }
 
 #[derive(Serialize)]
 pub struct Context<T> {
@@ -213,11 +219,15 @@ pub async fn get_games() -> Vec<GameState> {
     match fs::File::open("games.ini").await {
         Ok(file) => {
             let mut file = BufReader::new(file);
-            file.lines().filter_map(move |maybe| async {
-                maybe
-                    .ok()
-                    .and_then(|line| serde_json::from_str::<FinishedState>(&line).ok())
-            }).map(|state| state.into()).collect().await
+            file.lines()
+                .filter_map(move |maybe| async {
+                    maybe
+                        .ok()
+                        .and_then(|line| serde_json::from_str::<FinishedState>(&line).ok())
+                })
+                .map(|state| state.into())
+                .collect()
+                .await
         }
         Err(_) => Vec::new(),
     }

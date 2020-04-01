@@ -74,7 +74,7 @@ async fn debug_get() -> Result<Template, String> {
 #[get("/visualizer")]
 async fn visualizer_get() -> Template {
     let game_options = get_games().await;
-    let context = Context::new_with("Visualizer", ContextT::Games(game_options));
+    let context = Context::new_with("Visualizer", json!({"games": game_options, "colours": COLOURS}));
     Template::render("visualizer", &context)
 }
 

@@ -1,6 +1,7 @@
 {% extends "base" %}
 
 {% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <link rel="stylesheet" type="text/css" href="/style/visualizer.css">
 <link rel="stylesheet" type="text/css" href="/style/state.css">
 
@@ -24,20 +25,21 @@
                 <input type="range" min="0" max="1" value="1" class="slider" id="turnSlider">
             </div>
         </div>
+        <div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
     </div>
 
     <div class="options">
     {% for state in games %}
-    <div class="option" onclick="visualizer.handle('/games/{{ state.file }}', '{{ state.name }}')">
-        <p>{{state.name}} ({{ state.map }}) <span style="float: right;">{{state.turns}} turns</span></p>
-        <div class="content">
-            <div class="players">
-                {% for player in state.players %}
-                    <p class="{% if player[1] %}winner{% endif %}">{{ player[0] }}</p>
-                {% endfor %}
+        <div class="option" onclick="visualizer.handle('/games/{{ state.file }}', '{{ state.name }}')">
+            <p>{{state.name}} ({{ state.map }}) <span style="float: right;">{{state.turns}} turns</span></p>
+            <div>
+                <div class="players">
+                    {% for player in state.players %}
+                        <p style="color: {{colours[loop.index]}}" class="{% if player[1] %}winner{% endif %}">{{ player[0] }}</p>
+                    {% endfor %}
+                </div>
             </div>
         </div>
-    </div>
     {% endfor %}
     </div>
 </div>
