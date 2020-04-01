@@ -37,13 +37,12 @@ mod planetwars;
 mod routes;
 mod util;
 use util::Games;
+use util::COLOURS;
 
 use rocket_contrib::templates::{Template, Engines};
 use rocket_contrib::templates::tera::{self, Value};
 
 use std::collections::HashMap;
-
-const COLOURS: [&'static str; 9] = ["grey", "blue", "cyan", "green", "yellow", "orange", "red", "pink", "purple"];
 
 fn calc_viewbox(value: Value, _: HashMap<String, Value>) -> tera::Result<Value> {
     let mut min_x = std::f64::MAX;
@@ -79,7 +78,6 @@ async fn main() {
     pool.spawn_ok(fut.map(|_| ()));
     let gm = create_game_manager("0.0.0.0:9142", pool.clone()).await;
 
-
     let mut routes = Vec::new();
     routes::fuel(&mut routes);
 
@@ -87,7 +85,6 @@ async fn main() {
         engines.tera.register_filter("calc_viewbox", calc_viewbox);
         engines.tera.register_filter("get_colour", get_colour);
     });
-
 
     rocket::ignite()
         .manage(gm)

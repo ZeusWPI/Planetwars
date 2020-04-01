@@ -94,37 +94,21 @@ impl Ord for GameState {
     }
 }
 
+use std::path::PathBuf;
 impl From<FinishedState> for GameState {
     fn from(mut state: FinishedState) -> Self {
         state.players.sort_by_key(|x| x.0);
 
         GameState::Finished {
-            map: String::new(),
             players: state
-                .players
-                .iter()
-                .map(|(id, name)| (name.clone(), state.winners.contains(&id)))
-                .collect(),
+            .players
+            .iter()
+            .map(|(id, name)| (name.clone(), state.winners.contains(&id)))
+            .collect(),
+            map: PathBuf::from(state.map).file_stem().and_then(|x| x.to_str()).unwrap().to_string(),
             name: state.name,
             turns: state.turns,
             file: state.file,
-        }
-    }
-}
-
-/// Visualiser game option
-#[derive(Serialize)]
-pub struct GameOption {
-    name: String,
-    location: String,
-    turns: u64,
-}
-impl GameOption {
-    pub fn new(name: &str, location: &str, turns: u64) -> Self {
-        Self {
-            name: name.to_string(),
-            location: location.to_string(),
-            turns,
         }
     }
 }
@@ -218,7 +202,7 @@ use futures::stream::StreamExt;
 pub async fn get_games() -> Vec<GameState> {
     match fs::File::open("games.ini").await {
         Ok(file) => {
-            let mut file = BufReader::new(file);
+            let file = BufReader::new(file);
             file.lines()
                 .filter_map(move |maybe| async {
                     maybe

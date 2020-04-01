@@ -165,7 +165,7 @@ fn build_builder(
     };
 
     let game =
-        planetwars::PlanetWarsGame::new(config.create_game(number_of_clients as usize), &generate_string_id(), name);
+        planetwars::PlanetWarsGame::new(config.create_game(number_of_clients as usize), &generate_string_id(), name, map);
 
     let players: Vec<PlayerId> = (0..number_of_clients).collect();
 

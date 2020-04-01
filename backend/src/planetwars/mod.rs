@@ -23,10 +23,11 @@ pub struct PlanetWarsGame {
     log_file: File,
     turns: u64,
     name: String,
+    map: String,
 }
 
 impl PlanetWarsGame {
-    pub fn new(state: pw_rules::PlanetWars, location: &str, name: &str) -> Self {
+    pub fn new(state: pw_rules::PlanetWars, location: &str, name: &str, map: &str) -> Self {
         let planet_map = state
             .planets
             .iter()
@@ -46,6 +47,7 @@ impl PlanetWarsGame {
             log_file: file,
             turns: 0,
             name: name.to_string(),
+            map: map.to_string(),
         }
     }
 
@@ -197,8 +199,9 @@ impl game::Controller for PlanetWarsGame {
             Some(json!({
                 "winners": self.state.living_players(),
                 "turns": self.state.turn_num,
-                "name": self.name.clone(),
-                "file": self.log_file_loc.clone(),
+                "name": self.name,
+                "map": self.map,
+                "file": self.log_file_loc,
             }))
         } else {
             None
@@ -212,5 +215,6 @@ pub struct FinishedState {
     pub turns: u64,
     pub name: String,
     pub file: String,
+    pub map: String,
     pub players: Vec<(u64, String)>,
 }
