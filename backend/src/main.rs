@@ -3,6 +3,7 @@
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+#[macro_use]
 extern crate serde_json;
 
 extern crate async_std;
@@ -76,7 +77,7 @@ async fn main() {
 
     let pool = ThreadPool::new().unwrap();
     pool.spawn_ok(fut.map(|_| ()));
-    let gm = create_game_manager("0.0.0.0:9142", pool.clone());
+    let gm = create_game_manager("0.0.0.0:9142", pool.clone()).await;
 
 
     let mut routes = Vec::new();
@@ -98,12 +99,12 @@ async fn main() {
         .unwrap();
 }
 
-fn create_game_manager(tcp: &str, pool: ThreadPool) -> game::Manager {
+async fn create_game_manager(tcp: &str, pool: ThreadPool) -> game::Manager {
     let addr = tcp.parse::<SocketAddr>().unwrap();
     let (gmb, handle) = game::Manager::builder(pool.clone());
     pool.spawn_ok(handle.map(|_| ()));
     let ep = TcpEndpoint::new(addr, pool.clone());
 
     let gmb = gmb.add_endpoint(ep, "TCP endpoint");
-    gmb.build()
+    gmb.build("games.ini", pool).await.unwrap()
 }

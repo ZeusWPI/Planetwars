@@ -9,12 +9,67 @@ pub struct Map {
     url: String,
 }
 
-#[derive(Serialize)]
-pub struct GameState {
-    name: String,
-    finished: bool,
-    turns: Option<u64>,
-    players: Vec<String>,
+#[derive(Serialize, Eq, PartialEq)]
+pub struct PlayerStatus {
+    waiting: bool,
+    connected: bool,
+    reconnecting: bool,
+    value: String,
+}
+impl From<Connect> for PlayerStatus {
+    fn from(value: Connect) -> Self {
+        match value {
+            Connect::Connected(_, name) => PlayerStatus { waiting: false, connected: true, reconnecting: false, value: name },
+            Connect::Reconnecting(_, name) => PlayerStatus { waiting: false, connected: true, reconnecting: true, value: name },
+            Connect::Waiting(_, key) => PlayerStatus { waiting: true, connected: false, reconnecting: false, value: format!("Key: {}", key) },
+            _ => panic!("No playerstatus possible from Connect::Request"),
+        }
+    }
+}
+
+#[derive(Serialize, Eq, PartialEq)]
+#[serde(tag = "type")]
+pub enum GameState {
+    Finished {
+        name: String,
+        map: String,
+        players: Vec<(String, bool)>,
+        turns: u64,
+    },
+    Playing {
+        name: String,
+        map: String,
+        players: Vec<PlayerStatus>,
+        connected: usize,
+        total: usize,
+    }
+}
+
+use std::cmp::Ordering;
+
+impl PartialOrd for GameState {
+    fn partial_cmp(&self, other: &GameState) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for GameState {
+    fn cmp(&self, other: &GameState) -> Ordering {
+        match self {
+            GameState::Finished { name, .. } => {
+                match other {
+                    GameState::Finished { name: _name, .. } => name.cmp(_name),
+                    _ => Ordering::Greater,
+                }
+            },
+            GameState::Playing { name, .. } => {
+                match other {
+                    GameState::Playing { name: _name, .. } => name.cmp(_name),
+                    _ => Ordering::Less,
+                }
+            }
+        }
+    }
 }
 
 /// Visualiser game option
@@ -120,6 +175,7 @@ pub async fn get_games() -> Result<Vec<GameOption>, String> {
     Ok(games)
 }
 
+use crate::planetwars::FinishedState;
 
 use mozaic::modules::game;
 use mozaic::util::request::Connect;
@@ -130,34 +186,33 @@ pub async fn get_states(game_ids: &Vec<(String, u64)>, manager: &game::Manager) 
 
     for (gs, name) in gss {
         if let Some(state) = gs {
-            let mut players: Vec<String> = state.iter().map(|conn| match conn {
-                Connect::Waiting(_, key) => format!("Waiting {}", key),
-                _ => String::from("Some connected player")
-            }).collect();
-
-            players.sort();
-
-            states.push(
-                GameState {
-                    name,
-                    turns: None,
-                    players: players,
-                    finished: false,
+            match state {
+                Ok(conns) => {
+                    let players: Vec<PlayerStatus> = conns.iter().cloned().map(|x| x.into()).collect();
+                    let connected = players.iter().filter(|x| x.connected).count();
+                    states.push(
+                        GameState::Playing { name: name, total: players.len(), players, connected, map: String::new(), }
+                    );
+                },
+                Err(value) => {
+                    let state: FinishedState = serde_json::from_value(value).expect("Shit failed");
+                    states.push(
+                        GameState::Finished {
+                            map: String::new(),
+                            players: state.players.iter().map(|(id, name)| (name.clone(), state.winners.contains(&id))).collect(),
+                            name: state.name,
+                            turns: state.turns,
+                        }
+                    );
                 }
-            )
-        } else {
-            states.push(
-                GameState {
-                    name,
-                    turns: None,
-                    players: Vec::new(),
-                    finished: true,
-                }
-            )
+            }
         }
     }
 
-    states.sort_by_key(|a| a.name.clone());
+    states.sort();
+    println!(
+        "{}", serde_json::to_string_pretty(&states).unwrap(),
+    );
 
     Ok(states)
 }

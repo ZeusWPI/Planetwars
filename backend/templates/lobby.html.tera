@@ -1,11 +1,14 @@
 {% extends "base" %}
 
 {% block content %}
+    <link rel="stylesheet" href="/style/collapsable.css">
+    <link rel="stylesheet" href="/style/state.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
     <div class="main">
         <div class="lobby_wrapper">
             <div class="refresh" onclick="refresh_state()"></div>
-            <div id="lobby" class="lobby">
-            </div>
+            <div id="lobby" class="lobby"></div>
         </div>
         <div class="creator">
             <h1>Start new game</h1>

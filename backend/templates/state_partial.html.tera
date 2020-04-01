@@ -1,14 +1,26 @@
 {% for state in games %}
-<div class="game_state">
-    <div class="info">
-        <p>{{state.name}}</p>
-        {% if state.finished %}<p>Finished</p> {% endif %}
-        {% if state.turns %}<p>Turns: {{ state.turns }} </p> {% endif %}
+<section class="accordion">
+    <input type="checkbox" name="collapse" id="handle_{{loop.index}}">
+    <h2 class="handle">
+        <label for="handle_{{loop.index}}">
+            <span>{{state.name}} ({{state.map}})</span>
+            <span style="float: right">{% if state.type == "Finished" %}Done{% else %}{{ state.connected }}/{{state.total}}{% endif %}</span>
+        </label>
+    </h2>
+    <div class="content">
+    {% if state.type == "Playing" %}
+        <div class="players">
+            {% for player in state.players %}
+                <p class="{% if player.waiting %}waiting {% endif %}{% if player.connected %}connected {% endif %}{% if player.reconnecting %}reconnecting {% endif %}">{{ player.value }}</p>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="players">
+            {% for player in state.players %}
+                <p class="{% if player[1] %}winner{% endif %}">{{ player[0] }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
     </div>
-    <div class="players">
-        {% for player in state.players %}
-        <p>{{ player }}</p>
-        {% endfor %}
-    </div>
-</div>
+</section>
 {% endfor %}

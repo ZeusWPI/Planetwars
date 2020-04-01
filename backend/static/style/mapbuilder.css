@@ -15,8 +15,9 @@
 }
 
 .grid {
-    width: 120vh;
-    height: 95vh;
+    width: 85vh;
+    height: 85vh;
+    margin: auto;
     display: flex;
     flex-wrap: wrap;
 }

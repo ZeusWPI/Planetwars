@@ -20,12 +20,12 @@ body {
     right: 25px;
     width: 40px;
     height: 40px;
-
     background-color: #ff7f00;
     mask-image: url("refresh.svg");
     -webkit-mask-image: url("refresh.svg");
     animation: spin 2s linear infinite;
     animation-play-state: paused;
+    z-index: 5;
 }
 
 .refresh:hover {
@@ -34,12 +34,15 @@ body {
 }
 
 @keyframes spin {
-    100% {transform: rotate(1turn); }
+    100% {
+        transform: rotate(1turn);
+    }
 }
 
 .lobby_wrapper {
     flex-grow: 1;
-    position: relative;;
+    position: relative;
+    ;
 }
 
 .lobby {
@@ -48,7 +51,7 @@ body {
     flex-wrap: wrap;
     align-self: flex-start;
     overflow-y: scroll;
-    height: 100%;
+    justify-content: center;
 }
 
 .input_container {

@@ -23,7 +23,6 @@ pub struct PlanetWarsGame {
     log_file: File,
     turns: u64,
     name: String,
-    logged: bool,
 }
 
 impl PlanetWarsGame {
@@ -47,7 +46,6 @@ impl PlanetWarsGame {
             log_file: file,
             turns: 0,
             name: name.to_string(),
-            logged: false,
         }
     }
 
@@ -169,8 +167,8 @@ impl PlanetWarsGame {
     }
 }
 
-use ini::Ini;
-use std::fs::OpenOptions;
+use serde_json::Value;
+
 impl game::Controller for PlanetWarsGame {
     fn start(&mut self) -> Vec<HostMsg> {
         let mut updates = Vec::new();
@@ -194,31 +192,25 @@ impl game::Controller for PlanetWarsGame {
         updates
     }
 
-    fn is_done(&mut self) -> bool {
+    fn is_done(&mut self) -> Option<Value> {
         if self.state.is_finished() {
-            if !self.logged {
-                let mut f = match OpenOptions::new()
-                    .create(true)
-                    .append(true)
-                    .open("games.ini")
-                {
-                    Err(_) => return true,
-                    Ok(f) => f,
-                };
-
-                let mut conf = Ini::new();
-                conf.with_section(Some(self.log_file_loc.clone()))
-                    .set("name", &self.name)
-                    .set("turns", format!("{}", self.turns));
-
-                conf.write_to(&mut f).unwrap();
-
-                self.logged = true;
-            }
-
-            true
+            Some(json!({
+                "winners": self.state.living_players(),
+                "turns": self.state.turn_num,
+                "name": self.name.clone(),
+                "file": self.log_file_loc.clone(),
+            }))
         } else {
-            false
+            None
         }
     }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FinishedState {
+    pub winners: Vec<u64>,
+    pub turns: u64,
+    pub name: String,
+    pub file: String,
+    pub players: Vec<(u64, String)>,
 }

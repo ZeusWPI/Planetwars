@@ -15,10 +15,9 @@ def execute(cmd):
         raise subprocess.CalledProcessError(return_code, cmd)
 
 def connect(host, port, id):
-    print(host, port)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host, port))
-    s.sendall(f"{id.strip()}\n".encode("utf8"))
+    s.sendall(f"{json.dumps(id)}\n".encode("utf8"))
     return s
 
 def handle_input(it, socket):
@@ -33,11 +32,13 @@ def main():
                         help='What host to connect to')
     parser.add_argument('--port', '-p', default=6666, type=int,
                         help='What port to connect to')
+    parser.add_argument('--name', '-n', default="Silvius",
+                        help='Who are you?')
     parser.add_argument('arguments', nargs=argparse.REMAINDER,
                         help='How to run the bot')
     args = parser.parse_args()
 
-    sock = connect(args.host, args.port, args.id)
+    sock = connect(args.host, args.port, {"id": int(args.id), "name": args.name})
     f = sock.makefile("rw")
 
     it = execute(args.arguments)
@@ -48,6 +49,7 @@ def main():
     line = f.readline()
     content = "Nothing"
     while line:
+        print(line)
         content = json.loads(line)
         if content["type"] == "game_state":
             stdin.write(json.dumps(content["content"])+"\n")

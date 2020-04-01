@@ -116,15 +116,21 @@ async fn game_post(game_req: Json<GameReq>, tp: State<'_, ThreadPool>, gm: State
     let game_id = gm.start_game(game).await.unwrap();
     state.add_game(game_req.name.clone(), game_id);
 
-    if let Some(conns) = gm.get_state(game_id).await {
-        let players: Vec<u64> = conns.iter().map(|conn| match conn {
-            Connect::Waiting(_, key) => *key,
-            _ => 0,
-        }).collect();
+    match gm.get_state(game_id).await {
+        Some(Ok(conns)) => {
+            let players: Vec<u64> = conns.iter().map(|conn| match conn {
+                Connect::Waiting(_, key) => *key,
+                _ => 0,
+            }).collect();
 
-        Ok(Json(GameRes { players }))
-    } else {
-        Err(String::from("Fuck the world"))
+            Ok(Json(GameRes { players }))
+        },
+        Some(Err(v)) => {
+            Err(serde_json::to_string(&v).unwrap())
+        },
+        None => {
+            Err(String::from("Fuck the world"))
+        }
     }
 }
 
