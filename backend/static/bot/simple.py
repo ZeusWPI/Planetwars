@@ -2,7 +2,7 @@ import sys, json, random
 
 def move(command):
     record = { 'moves': [command] }
-    json.dump(record, sys.stdout)
+    print(json.dumps(record))
     sys.stdout.flush()
 
 for line in sys.stdin:
