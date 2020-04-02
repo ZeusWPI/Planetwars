@@ -30,9 +30,9 @@ def main():
                         help='The bot\'s ID')
     parser.add_argument('--host', default="localhost",
                         help='What host to connect to')
-    parser.add_argument('--port', '-p', default=6666, type=int,
+    parser.add_argument('--port', '-p', default=9142, type=int,
                         help='What port to connect to')
-    parser.add_argument('--name', '-n',
+    parser.add_argument('--name', '-n', required=True,
                         help='Who are you?')
     parser.add_argument('arguments', nargs=argparse.REMAINDER,
                         help='How to run the bot')
