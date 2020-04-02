@@ -17,7 +17,7 @@ def execute(cmd):
 def connect(host, port, id):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host, port))
-    s.sendall(f"{id}\n".encode("utf8"))
+    s.sendall(f"{json.dumps(id)}\n".encode("utf8"))
     return s
 
 def handle_input(it, socket):
@@ -30,13 +30,15 @@ def main():
                         help='The bot\'s ID')
     parser.add_argument('--host', default="localhost",
                         help='What host to connect to')
-    parser.add_argument('--port', '-p', default=9142, type=int,
+    parser.add_argument('--port', '-p', default=6666, type=int,
                         help='What port to connect to')
+    parser.add_argument('--name', '-n',
+                        help='Who are you?')
     parser.add_argument('arguments', nargs=argparse.REMAINDER,
                         help='How to run the bot')
     args = parser.parse_args()
 
-    sock = connect(args.host, args.port, args.id)
+    sock = connect(args.host, args.port, {"id": int(args.id), "name": args.name})
     f = sock.makefile("rw")
 
     it = execute(args.arguments)
@@ -47,10 +49,15 @@ def main():
     line = f.readline()
     content = "Nothing"
     while line:
+        print(line)
         content = json.loads(line)
         if content["type"] == "game_state":
             stdin.write(json.dumps(content["content"])+"\n")
             stdin.flush()
+        if content["type"] == "player_action":
+            if content["content"]["type"] == "parse_error":
+                sys.stderr.write(content["content"]["value"] + '\n')
+                sys.stderr.flush()
         line = f.readline()
 
     print(content)

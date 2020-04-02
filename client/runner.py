@@ -32,7 +32,7 @@ def main():
                         help='What host to connect to')
     parser.add_argument('--port', '-p', default=6666, type=int,
                         help='What port to connect to')
-    parser.add_argument('--name', '-n', default="Silvius",
+    parser.add_argument('--name', '-n',
                         help='Who are you?')
     parser.add_argument('arguments', nargs=argparse.REMAINDER,
                         help='How to run the bot')
