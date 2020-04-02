@@ -1,5 +1,6 @@
 
 use serde::{Deserialize};
+use serde_json::Value;
 
 use rocket::{Route, State};
 use rocket::response::NamedFile;
@@ -107,6 +108,7 @@ struct GameReq {
 #[derive(Serialize)]
 struct GameRes {
     players: Vec<u64>,
+    state: Value,
 }
 
 use mozaic::util::request::Connect;
@@ -117,13 +119,13 @@ async fn game_post(game_req: Json<GameReq>, tp: State<'_, ThreadPool>, gm: State
     state.add_game(game_req.name.clone(), game_id);
 
     match gm.get_state(game_id).await {
-        Some(Ok(conns)) => {
+        Some(Ok((state, conns))) => {
             let players: Vec<u64> = conns.iter().map(|conn| match conn {
                 Connect::Waiting(_, key) => *key,
                 _ => 0,
             }).collect();
 
-            Ok(Json(GameRes { players }))
+            Ok(Json(GameRes { players, state }))
         },
         Some(Err(v)) => {
             Err(serde_json::to_string(&v).unwrap())

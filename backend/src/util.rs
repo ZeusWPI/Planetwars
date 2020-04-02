@@ -52,6 +52,8 @@ impl From<Connect> for PlayerStatus {
     }
 }
 
+use serde_json::Value;
+
 #[derive(Serialize, Eq, PartialEq)]
 #[serde(tag = "type")]
 pub enum GameState {
@@ -68,6 +70,7 @@ pub enum GameState {
         players: Vec<PlayerStatus>,
         connected: usize,
         total: usize,
+        state: Value,
     },
 }
 
@@ -94,7 +97,6 @@ impl Ord for GameState {
     }
 }
 
-use std::path::PathBuf;
 impl From<FinishedState> for GameState {
     fn from(mut state: FinishedState) -> Self {
         state.players.sort_by_key(|x| x.0);
@@ -105,7 +107,7 @@ impl From<FinishedState> for GameState {
             .iter()
             .map(|(id, name)| (name.clone(), state.winners.contains(&id)))
             .collect(),
-            map: PathBuf::from(state.map).file_stem().and_then(|x| x.to_str()).unwrap().to_string(),
+            map: state.map,
             name: state.name,
             turns: state.turns,
             file: state.file,
@@ -238,7 +240,7 @@ pub async fn get_states(
     for (gs, name) in gss {
         if let Some(state) = gs {
             match state {
-                Ok(conns) => {
+                Ok((state, conns)) => {
                     let players: Vec<PlayerStatus> =
                         conns.iter().cloned().map(|x| x.into()).collect();
                     let connected = players.iter().filter(|x| x.connected).count();
@@ -248,6 +250,7 @@ pub async fn get_states(
                         players,
                         connected,
                         map: String::new(),
+                        state,
                     });
                 }
                 Err(value) => {

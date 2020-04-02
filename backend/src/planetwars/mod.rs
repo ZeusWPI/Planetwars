@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::convert::TryInto;
 use std::fs::{create_dir, File};
 use std::io::Write;
+use std::path::PathBuf;
 
 mod pw_config;
 mod pw_protocol;
@@ -47,7 +48,7 @@ impl PlanetWarsGame {
             log_file: file,
             turns: 0,
             name: name.to_string(),
-            map: map.to_string(),
+            map: PathBuf::from(map).file_stem().and_then(|x| x.to_str()).unwrap().to_string(),
         }
     }
 
@@ -192,6 +193,12 @@ impl game::Controller for PlanetWarsGame {
         self.dispatch_state(alive, &mut updates);
 
         updates
+    }
+
+    fn state(&mut self) -> Value {
+        json!({
+            "map": self.map,
+        })
     }
 
     fn is_done(&mut self) -> Option<Value> {
