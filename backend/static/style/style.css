@@ -42,7 +42,7 @@ body {
 .lobby_wrapper {
     flex-grow: 1;
     position: relative;
-    ;
+    height: 100%;
 }
 
 .lobby {
@@ -50,8 +50,9 @@ body {
     display: flex;
     flex-wrap: wrap;
     align-self: flex-start;
-    overflow-y: scroll;
+    overflow-y: auto;
     justify-content: center;
+    max-height: 100%;
 }
 
 .input_container {
@@ -81,7 +82,7 @@ body {
 }
 
 .map_select {
-    overflow-y: scroll;
+    overflow-y: auto;
     flex-shrink: 5;
     width: 75%;
     height: 100%;
