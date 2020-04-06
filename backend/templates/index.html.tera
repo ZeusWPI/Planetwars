@@ -2,76 +2,50 @@
 
 {% block content %}
 
-<div class="info">
-    <div>
-        <h1>
-            Planetwars
-        </h1>
-    <p>
-        Welcome to Planetwars. Finally <a target="_blank" href="https://github.com/ZeusWPI/MOZAICP">MOZAICP</a> is ready to be used.
-    </p>
-    <p>
-        Feel free to create games, watch games, join games and build maps.
-    </p>
-</div>
-    <div>
-        <h3>Lobby</h3>
-        <p>
-            The lobby is the central hub, here you can find active and finished games. When a game is active you can find a key to enter, more on this later.
-        </p>
-        <p>
-            In the lobby you can also create games, you should specify the name of your game, so you can later view it in the Visualizer. Specify a map, maximum number of turns and the number of players.
-        </p>
-        <p>
-            Yes the lobby is ugly, yes, part of the html is refreshed every second. It's opensource, <a target="_blank" href="https://github.com/ZeusWPI/Planetwars">please fix</a> <span class="heart"></span>.
-        </p>
-    </div>
-
-    <div>
-        <h3>Visualizer</h3>
-        <p>
-            The visualizer is an interesting peace of software. With Webassembly and WebGL, it is pretty cool. Here you can view played games. When your hardware is too weak the voronoi diagram will disappear for the ultimate performance.
-        </p>
-        <p>
-            Why have an ugly scrollbar on the bottom on of the page? Instead of a scroll bar on the right side? Exellent question, it's opensource, <a target="_blank" href="https://github.com/ZeusWPI/Planetwars">please fix</a> <span class="heart"></span>.
-        </p>
-    </div>
-
-    <div>
-        <h3>Map builder</h3>
-        <p>The mapbuilder is probably the best looking page you will find here, thanks <a target="_blank" href="https://github.com/Arnhoudt">Arnhoudt</a>!</p>
-        <p>Feel free to create as many dick maps as you want. There are a few caveats, first don't forget to name your map in your map name field... Secondly, watch your players, the grey hexagons are neutral planets, they have no owner. Next if you create a map for 2 players, only use the first two colours, that blue and that cyan. If you mix in red, shit will break, I don't know where though.</p>
-        <p>Ever built a map, and not have it show in up the lobby? Well probably something broke, too bad you have no confirmation that something broke, or if your upload was succesful. It's opensource, <a target="_blank" href="https://github.com/ZeusWPI/Planetwars">please fix</a> <span class="heart"></span>.</p>
-    </div>
-
-    <div>
-        <h3>Debut Station</h3>
-        <p>The debug station is nothing special, it just shows the current state of the underlying MOZAICP infrastructure.</p>
-    </div>
-
-    <div>
-        <h3>How to play?</h3>
-        <p>Build a bot! All information about the planetwars game, <a target="_blank" href="https://docs.google.com/presentation/d/1YXr7IsmEiBpRwgAoFPqsjFoKoyXOv9LAhPbsambGX70/edit?usp=sharing">please visit</a> for input output format etc. You can find an example bot <a href="bot/simple.py">here</a>.</p>
-        <p>Optionally, you can create your own custom with the mapbuilder</p>
-        <p>Start a game instance in the lobby, don't forget to name it, watching the visualization afterwars is the only way to know who won atm.</p>
-        <p>Start up your bot and connect to the game instance. In the lobby you will see keys corresponding to players in the game. You can use <a href="bot/runner.py">the botrunner</a> to run your bot, with the command <span style="font-style: italic;">python runner.py --host mozaic.zeus.gent -n {your name} -i {your key} {The command to start you bot}</span>.
-        <p>Invite friends!</p>
-        <p>Bash your friends because you have the superior bot, according to the visualizer</p>
-    </div>
-
-    <div>
-        <h3>Contribute!</h3>
-        <p>There is a lot that can still be done. Difficulty ranging from easy, like creating favicon, to very challenging, like add blockly client back from BottleBats.</p>
-        <p>This project ranges from shitty frontend code, to exotic shader language, and back to beautiful* rust. If you would like to help, but are confused due to the lack of documentation, or anything else, hit me up @silvius on <a href="mattermost.zeus.gent">mattermost</a> or anywhere else.</p>
-        <h3><a href="https://github.com/ZeusWPI/Planetwars">Planetwars</a> is made with <span class="heart"></span>.</h3>
+<div class="info_wrapper">
+    <div class="info">
+        <div>
+            <h1>
+                Planetwars
+            </h1>
+            <h3 style="color: #bbb">
+                powered by MOZAIC
+            </h3>
+        </div>
+        <div class="steps">
+            <a class="step" href='/mapbuilder'>
+                <div class="step_content">
+                    <h2>Step 1:</h2>
+                    <div>
+                        <h3>(Optional)</h3>
+                        <h3>Build a map</h3>
+                    </div>
+                </div>
+            </a>
+            <a class="step" href='/lobby'>
+                <div class="step_content">
+                    <h2>Step 2:</h2>
+                    <h3>Create a game</h3>
+                </div>
+            </a>
+            <a class="step" href='/info'>
+                <div class="step_content">
+                    <h2>Step 3:</h2>
+                    <h3>Play!</h3>
+                </div>
+            </a>
+        </div>
+        <div>
+            <p style="font-size: 1.4em;">If you want to build your own bot, and own the competition. Checkout <a href="/info">more information</a></p>
+        </div>
+        <div>
+            <h1 class="contribute">
+                <a href='https://github.com/ZeusWPI/Planetwars' target="_blank">
+                    Contribute! <span class="heart"></span>
+                </a>
+            </h1>
+        </div>
     </div>
 </div>
-
-<style>
-    body {
-        height: unset;
-        min-height: 100vh;
-    }
-</style>
 
 {% endblock %}

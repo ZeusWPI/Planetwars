@@ -3,8 +3,8 @@ use async_std::prelude::*;
 
 static NAV: [(&'static str, &'static str); 5] = [
     ("/", "Home"),
-    ("/lobby", "Lobby"),
     ("/mapbuilder", "Map Builder"),
+    ("/lobby", "Lobby"),
     ("/visualizer", "Visualizer"),
     ("/debug", "Debug Station"),
 ];
