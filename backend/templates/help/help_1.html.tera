@@ -1,0 +1,42 @@
+{% extends "help/base" %}
+
+{% block header %}
+
+How does it work?
+
+{% endblock %}
+
+
+{% block help %}
+
+    <div class="help_content_1">
+        <div class="boxed centering">
+            <div>
+                Game State
+            </div>
+        </div>
+        <div class="arrow centering">
+            <div>
+                stdin
+            </div>
+        </div>
+        <div class="boxed centering">
+            <div>
+                Bot (you!)
+            </div>
+        </div>
+        <div class="arrow centering">
+            <div>
+                stdout
+            </div>
+        </div>
+        <div class="boxed centering">
+            <div>
+                Actions
+            </div>
+        </div>
+    </div>
+    <div class=help_content_1_sub>
+        <div>Turn</div>
+    </div>
+{% endblock %}

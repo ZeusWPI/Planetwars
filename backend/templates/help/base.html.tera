@@ -1,0 +1,37 @@
+{% extends "base" %}
+
+{% block content %}
+    <link rel="stylesheet" href="/style/help.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    {% if prev %}
+    <a class="pointer" href="/info/{{prev}}">
+        <div class="p_left"></div>
+        <div class="p_left"></div>
+    </a>
+    {% else %}
+    <div class="pointer"></div>
+    {% endif %}
+
+    <div class="content_wrapper">
+        <div class="header">
+            <p>{% block header %}{% endblock header %}</p>
+            <p>Planetwars 2020</p>
+        </div>
+        <hr style="width:100%">
+        <div class="help_content">
+        {% block help %}{% endblock help %}
+        </div>
+    </div>
+
+
+    {% if next %}
+    <a class="pointer" href="/info/{{next}}">
+        <div class="p_right"></div>
+        <div class="p_right"></div>
+    </a>
+    {% else %}
+    <div class="pointer"></div>
+    {% endif %}
+
+{% endblock %}

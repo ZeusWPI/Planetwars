@@ -33,6 +33,7 @@ use futures::future::FutureExt;
 use mozaic::graph;
 use mozaic::modules::*;
 
+mod info;
 mod planetwars;
 mod routes;
 mod util;
@@ -80,6 +81,7 @@ async fn main() {
 
     let mut routes = Vec::new();
     routes::fuel(&mut routes);
+    info::fuel(&mut routes);
 
     let tera = Template::custom(|engines: &mut Engines| {
         engines.tera.register_filter("calc_viewbox", calc_viewbox);

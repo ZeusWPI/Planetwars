@@ -5,7 +5,7 @@
     <title>Planetwars</title>
     <link rel="stylesheet" href="/style/base.css">
     <link rel="stylesheet" href="/style/style.css">
-    <link rel="shortcut icon" type="image/png" href="favicon.ico">
+    <link rel="shortcut icon" type="image/png" href="/favicon.ico">
   </head>
   <body>
     <div class="nav">

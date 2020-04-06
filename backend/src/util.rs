@@ -1,12 +1,13 @@
 use async_std::fs;
 use async_std::prelude::*;
 
-static NAV: [(&'static str, &'static str); 5] = [
+static NAV: [(&'static str, &'static str); 6] = [
     ("/", "Home"),
     ("/mapbuilder", "Map Builder"),
     ("/lobby", "Lobby"),
     ("/visualizer", "Visualizer"),
     ("/debug", "Debug Station"),
+    ("/info", "Info"),
 ];
 
 pub static COLOURS: [&'static str; 9] = [
