@@ -149,13 +149,13 @@
     text-align: center;
 }
 
-ul {
+.content_wrapper ul {
     margin: 10px inherit;
     color: #eee;
     font-size: 1.5em;
 }
 
-li {
+.content_wrapper li {
     margin: 10px 10px;
 }
 
