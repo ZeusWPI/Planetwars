@@ -1,7 +1,7 @@
 import sys, json, random
 
-def move(command):
-    record = { 'moves': [command] }
+def move(moves):
+    record = {'moves': moves}
     print(json.dumps(record))
     sys.stdout.flush()
 
@@ -13,12 +13,12 @@ for line in sys.stdin:
     other_planets = [p for p in state['planets'] if p['owner'] != 1]
 
     if not my_planets or not other_planets:
-        move(None)
+        move([])
     else:
         planet = max(my_planets, key=lambda p: p['ship_count'])
         dest = min(other_planets, key=lambda p: p['ship_count'])
-        move({
+        move([{
             'origin': planet['name'],
             'destination': dest['name'],
             'ship_count': planet['ship_count'] - 1
-        })
+        }])
