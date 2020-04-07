@@ -7,15 +7,24 @@ const OPTIONS = document.getElementById("options");
 
 const game_location = LOCATION + "static/games/mod.ini";
 
-fetch(game_location)
-    .then((r) => r.text())
-    .then((response) => {
-        if (OPTIONS) {
+if (OPTIONS) {
+    fetch(game_location)
+        .then((r) => r.text())
+        .then((response) => {
             parse_ini(response);
-        } else {
-            console.log("Options is not defined, tera?");
+        }).catch(console.error);
+} else {
+    const options = document.getElementsByClassName("options");
+    if (options[0]) {
+        const options_div = <HTMLDivElement> options[0];
+        if (options_div.children[0]) {
+            setTimeout(
+                () => options_div.children[0].dispatchEvent(new Event('click')),
+                200,
+            );
         }
-    }).catch(console.error);
+    }
+}
 
 export function handle(location, name: string) {
     set_loading(true);

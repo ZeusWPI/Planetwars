@@ -373,25 +373,6 @@ function step(time: number) {
 
     requestAnimationFrame(step);
 }
-set_loading(true);
+// set_loading(false);
 
 requestAnimationFrame(step);
-
-
-// import { voronoi, Point } from './voronoi'
-// function test() {
-//     const points = [
-//         new Point(14, 6),
-//         new Point(13, 11),
-//         new Point(8, 7.5),
-//         new Point(7, 4),
-//         new Point(4, 11),
-//     ];
-
-//     console.log(voronoi(points));
-// }
-
-// import { test as dcelt_test } from './dcel';
-// // dcelt_test();
-
-// test();
