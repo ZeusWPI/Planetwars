@@ -1,0 +1,30 @@
+{% extends "help/base" %}
+
+{% block header %}
+
+Format: Player turn (actions)
+
+{% endblock %}
+
+
+{% block help %}
+
+<div class="help_content_2">
+    <pre>
+        <code>{
+    “moves”: [
+        {
+            “origin”: “my boring planet”,
+            “destination”: “my cool planet”,
+            “ship_count”: 23
+        }
+    ]
+}</code>
+    </pre>
+
+<h3>Invalid commands are ignored by the game implementation.</h3>
+<h3>If your bot crashes, you can reconnect but chances of winning are slim.</h3>
+<h3>Your bot is allowed one second to compute its turn.</h3>
+</div>
+
+{% endblock %}

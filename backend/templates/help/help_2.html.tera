@@ -2,13 +2,25 @@
 
 {% block header %}
 
-
+Information
 
 {% endblock %}
 
 
 {% block help %}
 
-
+<div class="help_content_2">
+    <h2>Combat resolution</h2>
+    <ul>
+        <li>fleets belonging to the same player are merged</li>
+        <li>each ship destroys one ship in all other fleets</li>
+        <li>this means the largest fleet wins, with <em>|fleet| - |second largest fleet|</em> ships remaining</li>
+    </ul>
+    <h2>How to win</h2>
+    <ul>
+        <li>The last player standing wins!</li>
+        <li>When the turn limit is reached, all remaining players tie.</li>
+    </ul>
+</div>
 
 {% endblock %}

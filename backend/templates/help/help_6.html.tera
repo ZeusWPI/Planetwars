@@ -1,0 +1,28 @@
+{% extends "help/base" %}
+
+{% block header %}
+
+How to connect
+
+{% endblock %}
+
+
+{% block help %}
+
+<div class="help_content_2">
+
+    <h2>You run your bot at your own pc and connect over tcp.</h2>
+    <h3>Follow these commands to connect using <em>simple.py</em>.</h3>
+
+    <pre class="commands">
+        <code>
+$ wget mozaic.zeus.gent/bot/runner.py
+$ wget mozaic.zeus.gent/bot/simple.py
+$ python runner.py -p 9142 --host mozaic.zeus.gent \
+    -n &lt;Your name&gt; -i &lt;Id from the lobby&gt; \
+    python simple.py
+        </code>
+    </pre>
+</div>
+
+{% endblock %}

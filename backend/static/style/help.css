@@ -1,5 +1,6 @@
 .content {
     justify-content: center;
+    max-height: 100%;
 }
 
 .pointer {
@@ -16,14 +17,14 @@
     height: 70%;
     width: 100%;
     clip-path: polygon(100% 0%, 50% 48%, 100% 100%, 50% 100%, 0% 50%, 50% 0);
-    background-color: #ff7f00;
+    background-color: #A35200;
 }
 
 .p_right {
     margin: 5px;
     height: 70%;
     width: 100%;
-    background-color: #ff7f00;
+    background-color: #A35200;
     clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0% 100%, 50% 50%, 0% 0%);
 }
 
@@ -70,6 +71,11 @@
     margin: auto;
 }
 
+.help_content {
+    overflow: auto;
+    height: 100%;
+}
+
 .boxed {
     border: 3px #A35200 solid;
     border-radius: 50px;
@@ -109,6 +115,28 @@
     margin: 10px;
 }
 
+.help_content_2 {
+    display: flex;
+    flex-direction: column;
+    width: 80%;
+    justify-content: space-evenly;
+    margin: 0 auto;
+}
+
+.help_content_2 h2 {
+    margin: 2px 0;
+    margin-top: 20px;
+}
+
+.help_content_2 em {
+    color: #A35200;
+}
+
+.help_content_2 h3 {
+    margin: 5px;
+    color: #bbb;
+}
+
 .arrow {
     width: 20%;
     background-color: #A35200;
@@ -119,4 +147,36 @@
 
 .arrow>div {
     text-align: center;
+}
+
+ul {
+    margin: 10px inherit;
+    color: #eee;
+    font-size: 1.5em;
+}
+
+li {
+    margin: 10px 10px;
+}
+
+.help_content_1 h2 {
+    color: #bbb;
+    margin-top: 2em;
+    font-size: 1.7;
+}
+
+pre {
+    padding: 0;
+    margin-bottom: -20px;
+}
+
+pre code {
+    background-color: #333;
+    border: 1px solid #eee;
+    display: block;
+    padding: 20px;
+}
+
+.commands {
+    font-size: 1.3em;
 }

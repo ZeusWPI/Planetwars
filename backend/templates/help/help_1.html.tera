@@ -2,41 +2,29 @@
 
 {% block header %}
 
-How does it work?
+Information
 
 {% endblock %}
 
 
 {% block help %}
 
-    <div class="help_content_1">
-        <div class="boxed centering">
-            <div>
-                Game State
-            </div>
-        </div>
-        <div class="arrow centering">
-            <div>
-                stdin
-            </div>
-        </div>
-        <div class="boxed centering">
-            <div>
-                Bot (you!)
-            </div>
-        </div>
-        <div class="arrow centering">
-            <div>
-                stdout
-            </div>
-        </div>
-        <div class="boxed centering">
-            <div>
-                Actions
-            </div>
-        </div>
-    </div>
-    <div class=help_content_1_sub>
-        <div>Turn</div>
-    </div>
+<div class="help_content_2">
+    <h2>Rules</h2>
+    <ul>
+        <li>turn-based</li>
+        <li>planets  on 2d plane</li>
+        <li>players can occupy planets</li>
+        <li>each turn, an occupied planet constructs a new ship for its owner</li>
+        <li>spaceship travel time is proportional to the euclidean distance (floor(sqrt(dx * dx - dy * dy)))</li>
+        <li>combat happens only on planets</li>
+    </ul>
+    <h2>Turn Order</h2>
+    <ul>
+        <li>ship construction</li>
+        <li>dispatches</li>
+        <li>combat resolution</li>
+    </ul>
+</div>
+
 {% endblock %}

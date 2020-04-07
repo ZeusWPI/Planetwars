@@ -1,0 +1,42 @@
+{% extends "help/base" %}
+
+{% block header %}
+
+Format: Game state
+
+{% endblock %}
+
+
+{% block help %}
+
+<div class="help_content_2">
+    <pre>
+        <code>{
+    "planets": [
+        {
+            “name”: “my cool planet”,
+            “x”: 42,
+            “y”: 42,
+            “owner”: 1,
+            “ship_count”: 23
+        }
+    ],
+    "expeditions": [
+        {
+            “id”: 1000,
+            “origin”: “my boring planet”,
+            “destination”: “my cool planet”,
+            “turns_remaining”: 3,
+            “owner”: 2,
+            “ship_count”: 18
+        }
+    ]
+}</code>
+    </pre>
+
+<h3>Player numbers are rotated so that you are always player 1.</h3>
+<h3>Note that player numbers are 1-based.</h3>
+<h3>Neutral planets exist, they don’t have an owner (not in JSON, null, …)</h3>
+</div>
+
+{% endblock %}

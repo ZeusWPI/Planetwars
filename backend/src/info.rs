@@ -5,7 +5,7 @@ use rocket_contrib::templates::Template;
 
 use crate::util::*;
 
-const MAX: usize = 3;
+const MAX: usize = 6;
 
 #[get("/info")]
 fn help_base() -> Redirect {
