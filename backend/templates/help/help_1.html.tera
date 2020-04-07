@@ -16,7 +16,7 @@ Information
         <li>planets  on 2d plane</li>
         <li>players can occupy planets</li>
         <li>each turn, an occupied planet constructs a new ship for its owner</li>
-        <li>spaceship travel time is proportional to the euclidean distance (floor(sqrt(dx * dx - dy * dy)))</li>
+        <li>spaceship travel time is proportional to the euclidean distance (floor(sqrt(dx * dx + dy * dy)))</li>
         <li>combat happens only on planets</li>
     </ul>
     <h2>Turn Order</h2>
