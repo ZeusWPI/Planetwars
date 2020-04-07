@@ -8,7 +8,7 @@
             <h1>
                 Planetwars
             </h1>
-            <h3 style="color: #bbb">
+            <h3>
                 powered by MOZAIC
             </h3>
         </div>
@@ -36,7 +36,7 @@
             </a>
         </div>
         <div>
-            <p style="font-size: 1.4em;">If you want to build your own bot, and own the competition. Checkout <a href="/info">more information</a></p>
+            <p style="font-size: 1.4em;">To build your own bot and own the competition <a href="/info" class="contribute">more information</a></p>
         </div>
         <div>
             <h1 class="contribute">

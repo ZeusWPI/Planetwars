@@ -14,7 +14,7 @@
 
 .p_left {
     margin: 5px;
-    height: 70%;
+    height: 40%;
     width: 100%;
     clip-path: polygon(100% 0%, 50% 48%, 100% 100%, 50% 100%, 0% 50%, 50% 0);
     background-color: #A35200;
@@ -22,7 +22,7 @@
 
 .p_right {
     margin: 5px;
-    height: 70%;
+    height: 40%;
     width: 100%;
     background-color: #A35200;
     clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0% 100%, 50% 50%, 0% 0%);
@@ -66,7 +66,7 @@
     top: 100%;
     left: 50%;
     transform: translate(-50%, -120%);
-    color: #eee;
+    color: antiquewhite;
     font-size: 1.5em;
     margin: auto;
 }
@@ -108,7 +108,7 @@
 }
 
 .help_content_1 {
-    color: #eee;
+    color: antiquewhite;
 }
 
 .help_content_1>div {
@@ -134,7 +134,7 @@
 
 .help_content_2 h3 {
     margin: 5px;
-    color: #bbb;
+    color: antiquewhite;
 }
 
 .arrow {
@@ -151,7 +151,7 @@
 
 .content_wrapper ul {
     margin: 10px inherit;
-    color: #eee;
+    color: antiquewhite;
     font-size: 1.5em;
 }
 
@@ -160,7 +160,7 @@
 }
 
 .help_content_1 h2 {
-    color: #bbb;
+    color: antiquewhite;
     margin-top: 2em;
     font-size: 1.7;
 }
@@ -172,7 +172,7 @@ pre {
 
 pre code {
     background-color: #333;
-    border: 1px solid #eee;
+    border: 1px solid antiquewhite;
     display: block;
     padding: 20px;
 }

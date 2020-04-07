@@ -2,6 +2,7 @@ html,
 body {
     margin: 0;
     padding: 0;
+    font-family: sans-serif;
 }
 
 .small {
@@ -90,7 +91,7 @@ body {
 
 .map {
     padding: 5px;
-    background-color: lightgray;
+    background-color: antiquewhite;
     color: black;
 }
 
@@ -111,7 +112,7 @@ body {
     /* width: 25%; */
     justify-content: space-between;
     align-items: center;
-    color: #aaa;
+    color: antiquewhite;
 }
 
 .creator h1 {

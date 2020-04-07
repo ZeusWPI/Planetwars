@@ -1,5 +1,6 @@
 .nav ul {
     list-style-type: none;
+    font-weight: bold;
     margin: 0;
     padding: 0;
     overflow: hidden;
@@ -17,7 +18,7 @@
 
 .nav li a {
     display: block;
-    color: white;
+    color: antiquewhite;
     text-align: center;
     padding: 14px 16px;
     text-decoration: none;
@@ -85,7 +86,7 @@ body {
 }
 
 .step {
-    border: 3px #bbb solid;
+    border: 3px antiquewhite solid;
     border-radius: 50px;
     margin: 0 5%;
     flex-grow: 1;
@@ -95,7 +96,7 @@ body {
 }
 
 .step h2 {
-    color: #bbb;
+    color: #ff7f00;
 }
 
 .step:hover {
@@ -134,17 +135,19 @@ p a {
 
 .contribute {
     display: inline;
-    padding: 20px;
+    padding: 15px;
     border-radius: 30px;
-    background-color: #ff7f00;
+    background-color: #A35200;
     -webkit-transition: all .2s ease-in-out;
     -ms-transition: all .2s ease-in-out;
     -o-transition: all .2s ease-in-out;
     transition: all .2s ease-in-out;
 }
 
-.contribute a {
-    color: black !important;
+.contribute,
+.content a {
+    font-weight: bold;
+    color: antiquewhite !important;
 }
 
 .contribute a:hover {
@@ -156,8 +159,12 @@ p a {
 }
 
 .info div h3 {
-    color: #ff7f00;
+    color: antiquewhite;
     margin-bottom: 10px;
+}
+
+.info h3 {
+    color: antiquewhite;
 }
 
 .info div h1 {
