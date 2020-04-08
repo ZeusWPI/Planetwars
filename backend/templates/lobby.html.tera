@@ -22,7 +22,7 @@
             </div>
             <div class="input_container number">
                 <label for="turns">Max turns:</label>
-                <input id="turns" type="number" value=200></input>
+                <input id="turns" type="number" value=1000></input>
             </div>
             <div class="input_container number">
                 <label for="nop">Number of players:</label>

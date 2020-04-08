@@ -18,9 +18,9 @@ How to connect
         <code>
 $ wget mozaic.zeus.gent/bot/runner.py
 $ wget mozaic.zeus.gent/bot/simple.py
-$ python runner.py -p 9142 --host mozaic.zeus.gent \
+$ python3 runner.py -p 9142 --host mozaic.zeus.gent \
     -n &lt;Your name&gt; -i &lt;Id from the lobby&gt; \
-    python simple.py
+    python3 simple.py
         </code>
     </pre>
 </div>
