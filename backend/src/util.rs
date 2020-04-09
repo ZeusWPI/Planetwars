@@ -20,7 +20,8 @@ pub static COLOURS: [&'static str; 9] = [
 
 /// The state of a player, in a running game.
 /// This represents actual players or connection keys.
-#[derive(Serialize, Eq, PartialEq)]
+#[derive(Serialize, Educe)]
+#[educe(PartialEq, Eq, PartialOrd, Ord)]
 pub struct PlayerStatus {
     pub waiting: bool,
     pub connected: bool,
@@ -56,9 +57,21 @@ impl From<Connect> for PlayerStatus {
 /// The GameState is the state of a game.
 /// Either Finished, so the game is done, not running, and there is a posible visualization.
 /// Or Playing, the game is still being managed by the mozaic framework.
-#[derive(Serialize, Eq, PartialEq)]
+#[derive(Serialize, Educe)]
 #[serde(tag = "type")]
+#[educe(PartialEq, Eq, PartialOrd, Ord)]
 pub enum GameState {
+    #[educe(PartialOrd(rank = 1))]
+    Playing {
+        name: String,
+        map: String,
+        players: Vec<PlayerStatus>,
+        connected: usize,
+        total: usize,
+        #[educe(Ord(ignore), PartialOrd(ignore))]
+        state: Value,
+    },
+    #[educe(PartialOrd(rank = 2))]
     Finished {
         name: String,
         map: String,
@@ -66,36 +79,28 @@ pub enum GameState {
         turns: u64,
         file: String,
     },
-    Playing {
-        name: String,
-        map: String,
-        players: Vec<PlayerStatus>,
-        connected: usize,
-        total: usize,
-        state: Value,
-    },
 }
 
-impl PartialOrd for GameState {
-    fn partial_cmp(&self, other: &GameState) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
+// impl PartialOrd for GameState {
+//     fn partial_cmp(&self, other: &GameState) -> Option<Ordering> {
+//         Some(self.cmp(other))
+//     }
+// }
 
-impl Ord for GameState {
-    fn cmp(&self, other: &GameState) -> Ordering {
-        match self {
-            GameState::Finished { name, .. } => match other {
-                GameState::Finished { name: _name, .. } => name.cmp(_name),
-                _ => Ordering::Greater,
-            },
-            GameState::Playing { name, .. } => match other {
-                GameState::Playing { name: _name, .. } => name.cmp(_name),
-                _ => Ordering::Less,
-            },
-        }
-    }
-}
+// impl Ord for GameState {
+//     fn cmp(&self, other: &GameState) -> Ordering {
+//         match self {
+//             GameState::Finished { name, .. } => match other {
+//                 GameState::Finished { name: _name, .. } => name.cmp(_name),
+//                 _ => Ordering::Greater,
+//             },
+//             GameState::Playing { name, .. } => match other {
+//                 GameState::Playing { name: _name, .. } => name.cmp(_name),
+//                 _ => Ordering::Less,
+//             },
+//         }
+//     }
+// }
 
 impl From<FinishedState> for GameState {
     fn from(mut state: FinishedState) -> Self {
