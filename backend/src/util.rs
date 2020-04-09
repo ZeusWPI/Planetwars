@@ -1,5 +1,9 @@
-use async_std::fs;
-use async_std::prelude::*;
+use crate::planetwars::FinishedState;
+use mozaic::util::request::Connect;
+use serde_json::Value;
+
+use std::cmp::Ordering;
+use std::sync::{Arc, Mutex};
 
 static NAV: [(&'static str, &'static str); 6] = [
     ("/", "Home"),
@@ -14,18 +18,14 @@ pub static COLOURS: [&'static str; 9] = [
     "gray", "blue", "cyan", "green", "yellow", "orange", "red", "pink", "purple",
 ];
 
-#[derive(Serialize)]
-pub struct Map {
-    name: String,
-    url: String,
-}
-
+/// The state of a player, in a running game.
+/// This represents actual players or connection keys.
 #[derive(Serialize, Eq, PartialEq)]
 pub struct PlayerStatus {
-    waiting: bool,
-    connected: bool,
-    reconnecting: bool,
-    value: String,
+    pub waiting: bool,
+    pub connected: bool,
+    pub reconnecting: bool,
+    pub value: String,
 }
 impl From<Connect> for PlayerStatus {
     fn from(value: Connect) -> Self {
@@ -53,8 +53,9 @@ impl From<Connect> for PlayerStatus {
     }
 }
 
-use serde_json::Value;
-
+/// The GameState is the state of a game.
+/// Either Finished, so the game is done, not running, and there is a posible visualization.
+/// Or Playing, the game is still being managed by the mozaic framework.
 #[derive(Serialize, Eq, PartialEq)]
 #[serde(tag = "type")]
 pub enum GameState {
@@ -74,8 +75,6 @@ pub enum GameState {
         state: Value,
     },
 }
-
-use std::cmp::Ordering;
 
 impl PartialOrd for GameState {
     fn partial_cmp(&self, other: &GameState) -> Option<Ordering> {
@@ -104,10 +103,10 @@ impl From<FinishedState> for GameState {
 
         GameState::Finished {
             players: state
-            .players
-            .iter()
-            .map(|(id, name)| (name.clone(), state.winners.contains(&id)))
-            .collect(),
+                .players
+                .iter()
+                .map(|(id, name)| (name.clone(), state.winners.contains(&id)))
+                .collect(),
             map: state.map,
             name: state.name,
             turns: state.turns,
@@ -116,6 +115,7 @@ impl From<FinishedState> for GameState {
     }
 }
 
+/// Link struct, holding all necessary information
 #[derive(Serialize)]
 struct Link {
     name: String,
@@ -123,18 +123,21 @@ struct Link {
     active: bool,
 }
 
-#[derive(Serialize)]
-pub struct Lobby {
-    pub games: Vec<GameState>,
-    pub maps: Vec<Map>,
+impl Link {
+    fn build_nav(active: &str) -> Vec<Link> {
+        NAV.iter()
+            .map(|(href, name)| Link {
+                name: name.to_string(),
+                href: href.to_string(),
+                active: *name == active,
+            })
+            .collect()
+    }
 }
 
-// #[derive(Serialize)]
-// #[serde(rename_all = "camelCase")]
-// pub enum ContextT {
-//     Games(Vec<GameState>),
-// }
-
+/// Context used as template context.
+/// This way you know to add nav bar support etc.
+/// This T can be anything that is serializable, like json!({}) macro.
 #[derive(Serialize)]
 pub struct Context<T> {
     pub name: String,
@@ -146,14 +149,7 @@ pub struct Context<T> {
 
 impl<T> Context<T> {
     pub fn new_with(active: &str, t: T) -> Self {
-        let nav = NAV
-            .iter()
-            .map(|(href, name)| Link {
-                name: name.to_string(),
-                href: href.to_string(),
-                active: *name == active,
-            })
-            .collect();
+        let nav = Link::build_nav(active);
 
         Context {
             nav,
@@ -165,14 +161,7 @@ impl<T> Context<T> {
 
 impl Context<()> {
     pub fn new(active: &str) -> Self {
-        let nav = NAV
-            .iter()
-            .map(|(href, name)| Link {
-                name: name.to_string(),
-                href: href.to_string(),
-                active: *name == active,
-            })
-            .collect();
+        let nav = Link::build_nav(active);
 
         Context {
             nav,
@@ -182,92 +171,8 @@ impl Context<()> {
     }
 }
 
-pub async fn get_maps() -> Result<Vec<Map>, String> {
-    let mut maps = Vec::new();
-    let mut entries = fs::read_dir("maps")
-        .await
-        .map_err(|_| "IO error".to_string())?;
-    while let Some(file) = entries.next().await {
-        let file = file.map_err(|_| "IO error".to_string())?.path();
-        if let Some(stem) = file.file_stem().and_then(|x| x.to_str()) {
-            maps.push(Map {
-                name: stem.to_string(),
-                url: file.to_str().unwrap().to_string(),
-            });
-        }
-    }
 
-    Ok(maps)
-}
-
-use async_std::io::BufReader;
-use futures::stream::StreamExt;
-pub async fn get_games() -> Vec<GameState> {
-    match fs::File::open("games.ini").await {
-        Ok(file) => {
-            let file = BufReader::new(file);
-            file.lines()
-                .filter_map(move |maybe| async {
-                    maybe
-                        .ok()
-                        .and_then(|line| serde_json::from_str::<FinishedState>(&line).ok())
-                })
-                .map(|state| state.into())
-                .collect()
-                .await
-        }
-        Err(_) => Vec::new(),
-    }
-}
-
-use crate::planetwars::FinishedState;
-
-use futures::future::{join_all, FutureExt};
-use mozaic::modules::game;
-use mozaic::util::request::Connect;
-pub async fn get_states(
-    game_ids: &Vec<(String, u64)>,
-    manager: &game::Manager,
-) -> Result<Vec<GameState>, String> {
-    let mut states = Vec::new();
-    let gss = join_all(
-        game_ids
-            .iter()
-            .cloned()
-            .map(|(name, id)| manager.get_state(id).map(move |f| (f, name))),
-    )
-    .await;
-
-    for (gs, name) in gss {
-        if let Some(state) = gs {
-            match state {
-                Ok((state, conns)) => {
-                    let players: Vec<PlayerStatus> =
-                        conns.iter().cloned().map(|x| x.into()).collect();
-                    let connected = players.iter().filter(|x| x.connected).count();
-                    states.push(GameState::Playing {
-                        name: name,
-                        total: players.len(),
-                        players,
-                        connected,
-                        map: String::new(),
-                        state,
-                    });
-                }
-                Err(value) => {
-                    let state: FinishedState = serde_json::from_value(value).expect("Shit failed");
-                    states.push(state.into());
-                }
-            }
-        }
-    }
-
-    states.sort();
-    Ok(states)
-}
-
-use std::sync::{Arc, Mutex};
-
+/// Games is the game manager wrapper so Rocket can manage it
 pub struct Games {
     inner: Arc<Mutex<Vec<(String, u64)>>>,
 }

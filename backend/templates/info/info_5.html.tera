@@ -1,4 +1,4 @@
-{% extends "help/base" %}
+{% extends "info/base" %}
 
 {% block header %}
 
@@ -7,7 +7,7 @@ Format: Player turn (actions)
 {% endblock %}
 
 
-{% block help %}
+{% block info %}
 
 <div class="help_content_2">
     <pre>

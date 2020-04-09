@@ -20,7 +20,7 @@
         </div>
         <hr style="width:100%">
         <div class="help_content">
-        {% block help %}{% endblock help %}
+        {% block info %}{% endblock info %}
         </div>
     </div>
 
