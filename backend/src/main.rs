@@ -25,7 +25,7 @@ use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 use std::net::SocketAddr;
 
-use mozaic::modules::{game};
+use mozaic::modules::game;
 
 use futures::executor::ThreadPool;
 use futures::future::FutureExt;
@@ -39,8 +39,8 @@ mod util;
 use util::Games;
 use util::COLOURS;
 
-use rocket_contrib::templates::{Template, Engines};
 use rocket_contrib::templates::tera::{self, Value};
+use rocket_contrib::templates::{Engines, Template};
 
 use std::collections::HashMap;
 
@@ -54,18 +54,34 @@ fn calc_viewbox(value: Value, _: HashMap<String, Value>) -> tera::Result<Value> 
     for v in value.as_array().unwrap() {
         let x = v.get("x").and_then(|v| v.as_f64()).unwrap();
         let y = v.get("y").and_then(|v| v.as_f64()).unwrap();
-        if x < min_x { min_x = x; }
-        if x > max_x { max_x = x; }
-        if y < min_y { min_y = y; }
-        if y > max_y { max_y = y; }
+        if x < min_x {
+            min_x = x;
+        }
+        if x > max_x {
+            max_x = x;
+        }
+        if y < min_y {
+            min_y = y;
+        }
+        if y > max_y {
+            max_y = y;
+        }
     }
 
-    return Ok(Value::String(format!("{} {} {} {}", min_x - 3., min_y - 3., (max_x - min_x) + 6., (max_y - min_y) + 6.)));
+    return Ok(Value::String(format!(
+        "{} {} {} {}",
+        min_x - 3.,
+        min_y - 3.,
+        (max_x - min_x) + 6.,
+        (max_y - min_y) + 6.
+    )));
 }
 
 /// Get's the right colour for planets
 fn get_colour(value: Value, _: HashMap<String, Value>) -> tera::Result<Value> {
-    return Ok(Value::String(COLOURS[value.as_u64().unwrap_or(0) as usize].to_string()));
+    return Ok(Value::String(
+        COLOURS[value.as_u64().unwrap_or(0) as usize].to_string(),
+    ));
 }
 
 /// Async main function, starting logger, graph and rocket

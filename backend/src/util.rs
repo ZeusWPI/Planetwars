@@ -171,7 +171,6 @@ impl Context<()> {
     }
 }
 
-
 /// Games is the game manager wrapper so Rocket can manage it
 pub struct Games {
     inner: Arc<Mutex<Vec<(String, u64)>>>,

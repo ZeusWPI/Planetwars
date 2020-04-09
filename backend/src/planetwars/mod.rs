@@ -48,7 +48,11 @@ impl PlanetWarsGame {
             log_file: file,
             turns: 0,
             name: name.to_string(),
-            map: PathBuf::from(map).file_stem().and_then(|x| x.to_str()).unwrap().to_string(),
+            map: PathBuf::from(map)
+                .file_stem()
+                .and_then(|x| x.to_str())
+                .unwrap()
+                .to_string(),
         }
     }
 

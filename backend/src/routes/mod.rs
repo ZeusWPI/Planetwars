@@ -1,21 +1,21 @@
-use crate::util::*;
 use crate::planetwars::FinishedState;
+use crate::util::*;
 
-use rocket::{Route};
 use rocket::response::NamedFile;
+use rocket::Route;
 use rocket_contrib::templates::Template;
 
-use async_std::prelude::*;
-use async_std::io::BufReader;
 use async_std::fs;
+use async_std::io::BufReader;
+use async_std::prelude::*;
 
 use futures::stream::StreamExt;
 
 use std::path::{Path, PathBuf};
 
+mod info;
 mod lobby;
 mod maps;
-mod info;
 
 /// Handles all files located in the static folder
 #[get("/<file..>", rank = 6)]
@@ -48,13 +48,22 @@ async fn debug_get() -> Result<Template, String> {
 #[get("/visualizer")]
 async fn visualizer_get() -> Template {
     let game_options = get_played_games().await;
-    let context = Context::new_with("Visualizer", json!({"games": game_options, "colours": COLOURS}));
+    let context = Context::new_with(
+        "Visualizer",
+        json!({"games": game_options, "colours": COLOURS}),
+    );
     Template::render("visualizer", &context)
 }
 
 /// Fuels all routes
 pub fn fuel(routes: &mut Vec<Route>) {
-    routes.extend(routes![files, index, builder_get, visualizer_get, debug_get]);
+    routes.extend(routes![
+        files,
+        index,
+        builder_get,
+        visualizer_get,
+        debug_get
+    ]);
     lobby::fuel(routes);
     maps::fuel(routes);
     info::fuel(routes);
