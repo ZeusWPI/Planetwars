@@ -8,6 +8,7 @@ use std::convert::TryInto;
 use std::fs::{create_dir, File};
 use std::io::Write;
 use std::path::PathBuf;
+use std::time::SystemTime;
 
 mod pw_config;
 mod pw_protocol;
@@ -213,11 +214,16 @@ impl game::Controller for PlanetWarsGame {
                 "name": self.name,
                 "map": self.map,
                 "file": self.log_file_loc,
+                "time": SystemTime::now(),
             }))
         } else {
             None
         }
     }
+}
+
+fn get_epoch() -> SystemTime {
+    SystemTime::UNIX_EPOCH
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -227,5 +233,7 @@ pub struct FinishedState {
     pub name: String,
     pub file: String,
     pub map: String,
+    #[serde(default = "get_epoch")]
+    pub time: SystemTime,
     pub players: Vec<(u64, String)>,
 }

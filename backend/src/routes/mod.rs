@@ -47,7 +47,9 @@ async fn debug_get() -> Result<Template, String> {
 /// Routes the visualizer page, rendering the visualizer Template.
 #[get("/visualizer")]
 async fn visualizer_get() -> Template {
-    let game_options = get_played_games().await;
+    let mut game_options: Vec<GameState> = get_played_games().await;
+    game_options.sort();
+
     let context = Context::new_with(
         "Visualizer",
         json!({"games": game_options, "colours": COLOURS}),

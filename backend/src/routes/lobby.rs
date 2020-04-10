@@ -1,4 +1,4 @@
-use crate::planetwars;
+use crate::planetwars::{self, FinishedState};
 use crate::util::*;
 
 use rocket::{Route, State};
@@ -13,10 +13,12 @@ use async_std::fs;
 use async_std::prelude::StreamExt;
 
 use futures::executor::ThreadPool;
+use futures::future::{join_all, FutureExt};
 
 use serde_json::Value;
 
 use rand::prelude::*;
+use std::time::SystemTime;
 
 /// The type required to build a game.
 /// (json in POST request).
@@ -174,11 +176,8 @@ async fn get_maps() -> Result<Vec<Map>, String> {
     Ok(maps)
 }
 
-use crate::planetwars::FinishedState;
-
-use futures::future::{join_all, FutureExt};
 pub async fn get_states(
-    game_ids: &Vec<(String, u64)>,
+    game_ids: &Vec<(String, u64, SystemTime)>,
     manager: &game::Manager,
 ) -> Result<Vec<GameState>, String> {
     let mut states = Vec::new();
@@ -186,17 +185,18 @@ pub async fn get_states(
         game_ids
             .iter()
             .cloned()
-            .map(|(name, id)| manager.get_state(id).map(move |f| (f, name))),
+            .map(|(name, id, time)| manager.get_state(id).map(move |f| (f, name, time))),
     )
     .await;
 
-    for (gs, name) in gss {
+    for (gs, name, time) in gss {
         if let Some(state) = gs {
             match state {
                 Ok((state, conns)) => {
                     let players: Vec<PlayerStatus> =
                         conns.iter().cloned().map(|x| x.into()).collect();
                     let connected = players.iter().filter(|x| x.connected).count();
+
                     states.push(GameState::Playing {
                         name: name,
                         total: players.len(),
@@ -204,6 +204,7 @@ pub async fn get_states(
                         connected,
                         map: String::new(),
                         state,
+                        time,
                     });
                 }
                 Err(value) => {

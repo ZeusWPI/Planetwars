@@ -19,7 +19,8 @@ extern crate tracing_subscriber;
 extern crate rocket;
 extern crate rocket_contrib;
 
-extern crate ini;
+#[macro_use]
+extern crate educe;
 
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
