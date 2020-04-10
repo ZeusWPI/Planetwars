@@ -29,7 +29,6 @@ async function on_load() {
         const urlVars = new URLSearchParams(window.location.search);
 
         if (urlVars.get("game") && urlVars.get("name")) {
-            console.log(urlVars.get("game")+' '+urlVars.get("name"))
             handle(urlVars.get("game"),urlVars.get("name"))
         } else if (options[0]) {
             const options_div = <HTMLDivElement> options[0];
@@ -40,6 +39,8 @@ async function on_load() {
     }
 }
 window.addEventListener("load", on_load, false);
+
+window.addEventListener("load", on_load);
 
 export function handle(location, name: string) {
     game_file = location;
