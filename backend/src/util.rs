@@ -15,8 +15,8 @@ static NAV: [(&'static str, &'static str); 6] = [
     ("/info", "Info"),
 ];
 
-pub static COLOURS: [&'static str; 9] = [
-    "gray", "blue", "cyan", "green", "yellow", "orange", "red", "pink", "purple",
+pub static COLOURS: [&'static str; 10] = [
+    "#808080", "#FF8000", "#0080ff", "#FF6693", "#3fcb55", "#cbc33f", "#cf40e9", "#FF3F0D", "#1beef0", "#0DC5FF"
 ];
 
 /// The state of a player, in a running game.
