@@ -4,27 +4,29 @@ import { ConfigIniParser } from 'config-ini-parser'
 
 const OPTIONS = document.getElementById("options");
 
-
 const game_location = LOCATION + "static/games/mod.ini";
 
-if (OPTIONS) {
-    fetch(game_location)
-        .then((r) => r.text())
-        .then((response) => {
-            parse_ini(response);
-        }).catch(console.error);
-} else {
-    const options = document.getElementsByClassName("options");
-    if (options[0]) {
-        const options_div = <HTMLDivElement> options[0];
-        if (options_div.children[0]) {
-            setTimeout(
-                () => options_div.children[0].dispatchEvent(new Event('click')),
-                200,
-            );
+async function on_load() {
+    if (OPTIONS) {
+        const r = await fetch(game_location);
+        const response = await r.text();
+        parse_ini(response);
+    } else {
+        const options = document.getElementsByClassName("options");
+        const urlVars = new URLSearchParams(window.location.search);
+
+        if (urlVars.get("game") && urlVars.get("name")) {
+            handle(urlVars.get("game"),urlVars.get("name"))
+        } else if (options[0]) {
+            const options_div = <HTMLDivElement> options[0];
+            if (options_div.children[0]) {
+                options_div.children[0].dispatchEvent(new Event('click'));
+            }
         }
     }
 }
+
+window.addEventListener("load", on_load);
 
 export function handle(location, name: string) {
     set_loading(true);
