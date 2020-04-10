@@ -4,6 +4,7 @@ use serde_json::Value;
 
 use std::cmp::Ordering;
 use std::sync::{Arc, Mutex};
+use std::time::SystemTime;
 
 static NAV: [(&'static str, &'static str); 6] = [
     ("/", "Home"),
@@ -54,6 +55,10 @@ impl From<Connect> for PlayerStatus {
     }
 }
 
+fn partial_cmp(a: &SystemTime, b: &SystemTime) -> Option<Ordering> {
+    b.partial_cmp(a)
+}
+
 /// The GameState is the state of a game.
 /// Either Finished, so the game is done, not running, and there is a posible visualization.
 /// Or Playing, the game is still being managed by the mozaic framework.
@@ -63,6 +68,9 @@ impl From<Connect> for PlayerStatus {
 pub enum GameState {
     #[educe(PartialOrd(rank = 1))]
     Playing {
+        #[educe(PartialOrd(method = "partial_cmp"))]
+        time: SystemTime,
+
         name: String,
         map: String,
         players: Vec<PlayerStatus>,
@@ -73,34 +81,16 @@ pub enum GameState {
     },
     #[educe(PartialOrd(rank = 2))]
     Finished {
+        #[educe(PartialOrd(method = "partial_cmp"))]
+        time: SystemTime,
         name: String,
         map: String,
+
         players: Vec<(String, bool)>,
         turns: u64,
         file: String,
     },
 }
-
-// impl PartialOrd for GameState {
-//     fn partial_cmp(&self, other: &GameState) -> Option<Ordering> {
-//         Some(self.cmp(other))
-//     }
-// }
-
-// impl Ord for GameState {
-//     fn cmp(&self, other: &GameState) -> Ordering {
-//         match self {
-//             GameState::Finished { name, .. } => match other {
-//                 GameState::Finished { name: _name, .. } => name.cmp(_name),
-//                 _ => Ordering::Greater,
-//             },
-//             GameState::Playing { name, .. } => match other {
-//                 GameState::Playing { name: _name, .. } => name.cmp(_name),
-//                 _ => Ordering::Less,
-//             },
-//         }
-//     }
-// }
 
 impl From<FinishedState> for GameState {
     fn from(mut state: FinishedState) -> Self {
@@ -116,6 +106,7 @@ impl From<FinishedState> for GameState {
             name: state.name,
             turns: state.turns,
             file: state.file,
+            time: state.time,
         }
     }
 }
@@ -176,9 +167,9 @@ impl Context<()> {
     }
 }
 
-/// Games is the game manager wrapper so Rocket can manage it
+/// State of current live games
 pub struct Games {
-    inner: Arc<Mutex<Vec<(String, u64)>>>,
+    inner: Arc<Mutex<Vec<(String, u64, SystemTime)>>>,
 }
 
 impl Games {
@@ -189,10 +180,13 @@ impl Games {
     }
 
     pub fn add_game(&self, name: String, id: u64) {
-        self.inner.lock().unwrap().push((name, id));
+        self.inner
+            .lock()
+            .unwrap()
+            .push((name, id, SystemTime::now()));
     }
 
-    pub fn get_games(&self) -> Vec<(String, u64)> {
+    pub fn get_games(&self) -> Vec<(String, u64, SystemTime)> {
         self.inner.lock().unwrap().clone()
     }
 }
