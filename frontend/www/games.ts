@@ -39,7 +39,7 @@ async function on_load() {
         }
     }
 }
-window.addEventListener("load", on_load, false);
+// window.addEventListener("load", on_load, false);
 
 export function handle(location, name: string) {
     game_file = location;
