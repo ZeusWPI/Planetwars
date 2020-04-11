@@ -50,3 +50,20 @@
     content: "\f091";
     transform: translate(-30px, 0px);
 }
+
+.link::before {
+    content: "";
+    display: block;
+    width: 16px;
+    height: 16px;
+    float: left;
+    margin: 0 -20px 0 0;
+    font-family: 'fontawesome';
+    content: "\f14c";
+    transform: translate(-20px, 0px);
+    color: antiquewhite;
+}
+
+.link:hover::before {
+    color: #ff7f00;
+}

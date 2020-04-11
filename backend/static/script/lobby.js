@@ -36,12 +36,9 @@ async function start_game() {
     };
 
     xhr.open("POST", "/lobby");
-    xhr.send(JSON.stringify(obj));
+    xhr.addEventListener("loadend", refresh_state);
 
-    setTimeout(
-        () => refresh_state(),
-        200
-    );
+    xhr.send(JSON.stringify(obj));
 }
 
 window.onload = () => refresh_state();

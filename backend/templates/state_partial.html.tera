@@ -4,7 +4,7 @@
     <h2 class="handle">
         <label for="handle_{{loop.index}}">
             <span>{{state.name}} ({% if state.state %}{{state.state.map}}{% else %}{{state.map}}{% endif %})</span>
-            <span style="float: right">{% if state.type == "Playing" %}{{ state.connected }}/{{state.total}}{% endif %}</span>
+            <span style="float: right">{% if state.type == "Playing" %}{{ state.connected }}/{{state.total}}{% else %}<a class="link" href='/visualizer?name={{state.name | safe }}&game=/games/{{state.file | safe}}'></a>{% endif %}</span>
         </label>
     </h2>
     <div class="content">
