@@ -30,10 +30,6 @@ const SLIDER = <HTMLInputElement>document.getElementById("turnSlider");
 const FILESELECTOR = <HTMLInputElement> document.getElementById("fileselect");
 const SPEED = <HTMLInputElement> document.getElementById("speed");
 
-document.getElementById("addbutton").onclick = function() {
-    FILESELECTOR.click();
-}
-
 export function set_loading(loading: boolean) {
     if (loading) {
         if (!LOADER.classList.contains("loading")) {

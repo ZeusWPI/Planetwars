@@ -6,7 +6,20 @@ const OPTIONS = document.getElementById("options");
 
 const game_location = LOCATION + "static/games/mod.ini";
 
+var game_name, game_file;
+
+document.getElementById("addbutton").onclick = function() {
+    const loc = window.location;
+    const query = `?game=${game_file}&name=${game_name}`;
+    navigator.clipboard.writeText(loc.origin+loc.pathname+encodeURI(query)).then(() => {
+        console.log("Success");
+    }, () => {
+        console.log("Failed");
+    });
+}
+
 async function on_load() {
+    console.log("ON LOAD");
     if (OPTIONS) {
         const r = await fetch(game_location);
         const response = await r.text();
@@ -16,7 +29,8 @@ async function on_load() {
         const urlVars = new URLSearchParams(window.location.search);
 
         if (urlVars.get("game") && urlVars.get("name")) {
-            handle("/games/"+urlVars.get("game"),urlVars.get("name"))
+            console.log(urlVars.get("game")+' '+urlVars.get("name"))
+            handle(urlVars.get("game"),urlVars.get("name"))
         } else if (options[0]) {
             const options_div = <HTMLDivElement> options[0];
             if (options_div.children[0]) {
@@ -25,10 +39,12 @@ async function on_load() {
         }
     }
 }
-
-window.addEventListener("load", on_load);
+window.addEventListener("load", on_load, false);
 
 export function handle(location, name: string) {
+    game_file = location;
+    game_name = name;
+
     set_loading(true);
 
     fetch(location)
