@@ -172,9 +172,9 @@ class GameInstance {
 
             {
                 const transform = new UniformMatrix3fv([
-                    0.5, 0, 0,
-                    0, 0.5, 0,
-                    -planets[i * 3], -planets[i * 3 + 1] - 1.1, 0.5,
+                    1., 0, 0,
+                    0, 1., 0,
+                    -planets[i * 3], -planets[i * 3 + 1] -1.2, 1.,
                 ]);
 
                 const label = this.text_factory.build(GL, transform);
@@ -230,11 +230,12 @@ class GameInstance {
             const u2 = new Uniform3f(colours[i * 6 + 3], colours[i * 6 + 4], colours[i * 6 + 5]);
             this.renderer.updateUniform(2 * i + 1, (us) => us["u_color_next"] = u2);
 
-            this.planet_labels[i].setText(GL, "*"+planet_ships[i], Align.Center);
+            this.planet_labels[i].setText(GL, "*"+planet_ships[i], Align.Middle, Align.Begin);
         }
 
         const ship_count = this.game.get_ship_count();
         const ships = f32v(this.game.get_ship_locations(), ship_count * 9 * 2);
+        const labels = f32v(this.game.get_ship_label_locations(), ship_count * 9 * 2);
         const ship_counts = i32v(this.game.get_ship_counts(), ship_count);
         const ship_colours = f32v(this.game.get_ship_colours(), ship_count * 3);
 
@@ -242,7 +243,7 @@ class GameInstance {
             const index = this.ship_indices[i];
             if (i < ship_count) {
 
-                this.ship_labels[i].setText(GL, "*"+ship_counts[i], Align.Center);
+                this.ship_labels[i].setText(GL, ""+ship_counts[i], Align.Middle, Align.Middle);
 
                 this.renderer.enableRendershit(index);
                 this.renderer.enableRendershit(index+1);
@@ -254,6 +255,9 @@ class GameInstance {
                 const t1 = new UniformMatrix3fv(ships.slice(i * 18, i * 18 + 9));
                 const t2 = new UniformMatrix3fv(ships.slice(i * 18 + 9, i * 18 + 18));
 
+                const tl1 = new UniformMatrix3fv(labels.slice(i * 18, i * 18 + 9));
+                const tl2 = new UniformMatrix3fv(labels.slice(i * 18 + 9, i * 18 + 18));
+
                 this.renderer.updateUniform(index, (us) => {
                     us["u_color"] = u;
                     us["u_color_next"] = u;
@@ -262,9 +266,10 @@ class GameInstance {
                 });
 
                 this.renderer.updateUniform(index+1, (us) => {
-                    us["u_trans"] = t1;
-                    us["u_trans_next"] = t2;
+                    us["u_trans"] = tl1;
+                    us["u_trans_next"] = tl2;
                 });
+
             } else {
                 this.renderer.disableRenderShift(index);
                 this.renderer.disableRenderShift(index+1);

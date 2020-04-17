@@ -7,9 +7,9 @@ import { VertexBufferLayout, VertexArray } from "./vertexBufferLayout";
 
 
 export enum Align {
-    Left,
-    Right,
-    Center,
+    Begin,
+    End,
+    Middle,
 }
 
 export class GlypInfo {
@@ -75,23 +75,32 @@ export class Label implements Renderable {
         return this.inner.render(gl);
     }
 
-    setText(gl: WebGLRenderingContext, text: string, align?: Align) {
-        align = align || Align.Left;
-
+    setText(gl: WebGLRenderingContext, text: string, h_align = Align.Begin, v_align = Align.Begin) {
         const idxs = [];
         const verts = [];
 
         const letterHeight = this.font.letterHeight / this.font.textureHeight;
         let xPos = 0;
 
-        switch (align) {
-            case Align.Left:
+        switch (h_align) {
+            case Align.Begin:
                 break;
-            case Align.Right:
+            case Align.End:
                 xPos = -1 * [...text].map(n => this.font.glyphInfos[n] ? this.font.glyphInfos[n].width : this.font.spaceWidth).reduce((a, b) => a + b, 0) / this.font.letterHeight;
                 break;
-            case Align.Center:
+            case Align.Middle:
                 xPos = -1 * [...text].map(n => this.font.glyphInfos[n] ? this.font.glyphInfos[n].width : this.font.spaceWidth).reduce((a, b) => a + b, 0) / this.font.letterHeight / 2;
+                break;
+        }
+        let yStart = 0;
+        switch (v_align) {
+            case Align.Begin:
+                break;
+            case Align.End:
+                yStart = 1;
+                break;
+            case Align.Middle:
+                yStart = 0.5;
                 break;
         }
 
@@ -103,13 +112,13 @@ export class Label implements Renderable {
                 const letterWidth = info.width / this.font.textureWidth;
                 const x0 = info.x / this.font.textureWidth;
                 const y0 = info.y / this.font.textureHeight;
-                verts.push(xPos, 0, x0, y0);
-                verts.push(xPos + dx, 0, x0 + letterWidth, y0);
-                verts.push(xPos, -1, x0, y0 + letterHeight);
-                verts.push(xPos + dx, -1, x0 + letterWidth, y0 + letterHeight);
+                verts.push(xPos,      yStart,   x0,               y0);
+                verts.push(xPos + dx, yStart,   x0 + letterWidth, y0);
+                verts.push(xPos,      yStart-1, x0,               y0 + letterHeight);
+                verts.push(xPos + dx, yStart-1, x0 + letterWidth, y0 + letterHeight);
                 xPos += dx;
 
-                idxs.push(j + 0, j + 1, j + 2, j + 1, j + 2, j + 3);
+                idxs.push(j+0, j+1, j+2, j+1, j+2, j+3);
                 j += 4;
             } else {
                 // Just move xPos
