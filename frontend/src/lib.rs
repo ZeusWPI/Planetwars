@@ -44,6 +44,11 @@ fn spr(from: f32) -> f32 {
 
 impl Circle {
     pub fn new(p1: &types::Planet, p2: &types::Planet) -> Self {
+        use std::f32::consts::PI;
+
+        let pi2 = 2.0 * PI;
+        console_log!("Test");
+
         let x1 = p1.x;
         let y1 = p1.y;
         let x2 = p2.x;
@@ -284,6 +289,10 @@ impl Game {
         }).collect();
     }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> e5af4f4... too late commit lol
     fn update_ship_counts(&mut self) {
         self.ship_counts = self.states[self.turn].expeditions.iter().map(|s| {
             s.ship_count as usize
