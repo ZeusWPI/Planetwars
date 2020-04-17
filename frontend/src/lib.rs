@@ -78,23 +78,23 @@ impl Circle {
         }
     }
 
-    pub fn get_for_remaining(&self, remaining: usize) -> (Mat3<f32>, Mat3<f32>) {
+    pub fn get_for_remaining(&self, remaining: usize) -> ((Mat3<f32>, f32), (Mat3<f32>, f32)) {
         (
             self.get_remaining(remaining),
             self.get_remaining((remaining + 1).min(self.distance - 1)),
         )
     }
 
-    fn get_remaining(&self, remaining: usize) -> Mat3<f32> {
+    fn get_remaining(&self, remaining: usize) -> (Mat3<f32>, f32) {
         let alpha = self.a0 + (1.0 - (remaining as f32 / self.distance as f32)) * self.ad;
 
         let cos = alpha.cos();
         let sin = alpha.sin();
-        Mat3::new(
+        (Mat3::new(
             0.3, 0.0, 0.0,
             0.0, 0.3, 0.0,
             -self.x + cos * self.r, -self.y + sin * self.r, 0.3,
-        ) * Mat3::rotate_z(alpha)
+        ), alpha)
     }
 }
 
@@ -142,6 +142,7 @@ pub struct Game {
     planet_ships: Vec<usize>,
 
     ship_locations: Vec<[f32;9]>,
+    ship_label_locations: Vec<[f32;9]>,
     ship_colours: Vec<Vec3<f32>>,
     ship_counts: Vec<usize>,
 
@@ -157,7 +158,7 @@ impl Game {
     pub fn new(file: &str) -> Self {
         utils::set_panic_hook();
 
-        console_log!("Rust is busy bein awesome!");
+        console_log!("Rust is busy being awesome!");
 
         // First line is fucked but we just filter out things that cannot parse
         let states: Vec<types::State> = file.split("\n").filter_map(|line|
@@ -188,6 +189,7 @@ impl Game {
             turn: 0,
             states,
             ship_locations: Vec::new(),
+            ship_label_locations: Vec::new(),
             ship_colours: Vec::new(),
             ship_counts: Vec::new(),
             current_planet_colours: Vec::new(),
@@ -262,19 +264,25 @@ impl Game {
     }
 
     fn update_ship_locations(&mut self) {
-        let mut new_vec = Vec::new();
+        self.ship_locations = Vec::new();
+        self.ship_label_locations = Vec::new();
+        let t = Mat3::new(0.2, 0., 0.,
+                          0., 0.2, 0.0,
+                          0., -0.5, 0.2);
+
         for ship in self.states[self.turn].expeditions.iter() {
-            let (o1, o2) = self.planet_map.get(&(ship.origin.clone(), ship.destination.clone())).unwrap().get_for_remaining(ship.turns_remaining as usize);
-            new_vec.push(o1.to_array());
-            new_vec.push(o2.to_array());
+            let ((o1, a1), (o2, a2)) = self.planet_map.get(&(ship.origin.clone(), ship.destination.clone())).unwrap().get_for_remaining(ship.turns_remaining as usize);
+            self.ship_locations.push((o1 * Mat3::rotate_z(a1)).to_array());
+            self.ship_locations.push((o2 * Mat3::rotate_z(a2)).to_array());
+
+            self.ship_label_locations.push((o1 + t).to_array());
+            self.ship_label_locations.push((o2 + t).to_array());
         }
-        self.ship_locations = new_vec;
 
         self.ship_colours = self.states[self.turn].expeditions.iter().map(|s| {
             utils::COLORS[s.owner as usize % utils::COLORS.len()].into()
         }).collect();
     }
-
 
     fn update_ship_counts(&mut self) {
         self.ship_counts = self.states[self.turn].expeditions.iter().map(|s| {
@@ -292,6 +300,10 @@ impl Game {
 
     pub fn get_ship_locations(&self) -> *const [f32;9] {
         self.ship_locations.as_ptr()
+    }
+
+    pub fn get_ship_label_locations(&self) -> *const [f32;9] {
+        self.ship_label_locations.as_ptr()
     }
 
     pub fn get_ship_colours(&self) -> *const Vec3<f32> {
