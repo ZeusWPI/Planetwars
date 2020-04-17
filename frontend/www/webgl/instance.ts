@@ -17,6 +17,8 @@ function createAndSetupTexture(gl: WebGLRenderingContext): WebGLTexture {
 }
 
 export class Foo implements Renderable {
+    uniforms: Dictionary<Uniform>;
+
     stages: Stage[];
 
     textures: WebGLTexture[];
@@ -25,28 +27,34 @@ export class Foo implements Renderable {
     width: number;
     height: number;
 
+
     constructor(gl: WebGLRenderingContext, width: number, height: number) {
+        this.uniforms = {};
         this.width = width;
         this.height = height;
 
         for (let ii = 0; ii < 2; ++ii) {
             const texture = createAndSetupTexture(gl);
             this.textures.push(texture);
-         
+
             // make the texture the same size as the image
             gl.texImage2D(
                 gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0,
                 gl.RGBA, gl.UNSIGNED_BYTE, null);
-         
+
             // Create a framebuffer
             const fbo = gl.createFramebuffer();
             this.framebuffers.push(fbo);
             gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-         
+
             // Attach a texture to it.
             gl.framebufferTexture2D(
                 gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
         }
+    }
+
+    getUniforms(): Dictionary<Uniform> {
+        return this.uniforms;
     }
 
     render(gl: WebGLRenderingContext) {
@@ -61,6 +69,10 @@ export class Foo implements Renderable {
 class Stage implements Renderable {
     program: Shader;
     uniforms: Dictionary<Uniform>;
+
+    getUniforms(): Dictionary<Uniform> {
+        return this.uniforms;
+    }
 
     render(gl: WebGLRenderingContext) {
         this.program.bind(gl);

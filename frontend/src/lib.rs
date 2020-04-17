@@ -14,6 +14,12 @@ mod types;
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
+macro_rules! console_log {
+    // Note that this is using the `log` function imported above during
+    // `bare_bones`
+    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
+}
+
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
 #[cfg(feature = "wee_alloc")]
@@ -32,17 +38,26 @@ pub struct Circle {
 
 impl Circle {
     pub fn new(p1: &types::Planet, p2: &types::Planet) -> Self {
+        use std::f32::consts::PI;
+
+        let pi2 = 2.0 * PI;
+        console_log!("Test");
+
         let x1 = p1.x;
         let y1 = p1.y;
         let x2 = p2.x;
         let y2 = p2.y;
 
+        // Distance between planets
         let q = ((x2-x1).powi(2) + (y2-y1).powi(2)).sqrt();
+        // Center of between planets
         let x3 = (x1+x2)/2.0;
         let y3 = (y1+y2)/2.0;
 
-        let r = q * 1.1;
+        // Radius of circle
+        let r = q * 0.7;    // first 1.1
 
+        // Center of circle
         let mut x = x3 + (r.powi(2)-(q/2.0).powi(2)).sqrt() * (y1-y2)/q;
         let mut y = y3 + (r.powi(2)-(q/2.0).powi(2)).sqrt() * (x2-x1)/q;
 
@@ -51,12 +66,16 @@ impl Circle {
         let mut a2 = (y - y2).atan2(x - x2);
 
         if a2 < a1 {
+            console_log!("a1 {} a2 {}", a1, a2);
 
             x = x3 - (r.powi(2)-(q/2.0).powi(2)).sqrt() * (y1-y2)/q;
             y = y3 - (r.powi(2)-(q/2.0).powi(2)).sqrt() * (x2-x1)/q;
 
             a1 = (y - y1).atan2(x - x1);
             a2 = (y - y2).atan2(x - x2);
+            // let t = a1;
+            // a1 = a2;
+            // a2 = t;
         }
 
         let distance = q.ceil() as usize + 1;
@@ -80,57 +99,11 @@ impl Circle {
         let sin = alpha.sin();
         Mat3::new(
             0.3, 0.0, 0.0,
-            0.0, 0.4, 0.0,
+            0.0, 0.3, 0.0,
             -self.x + cos * self.r, -self.y + sin * self.r, 0.3,
         ) * Mat3::rotate_z(alpha)
     }
 }
-
-// struct Line {
-//     x1: f32,
-//     y1: f32,
-//     x2: f32,
-//     y2: f32,
-//     a: f32,
-//     d: usize,
-// }
-// impl Line {
-//     pub fn new(p1: &types::Planet, p2: &types::Planet) -> Self {
-//         let dx = p1.x - p2.x;
-//         let dy = p1.y - p2.y;
-//         let a = dy.atan2(dx);
-//         // let a = (dy / dx).atan();
-//         let d = (dx * dx + dy * dy).sqrt().ceil() as usize + 1;
-
-//         Self {
-//             x1: p1.x,
-//             x2: p2.x,
-//             y1: p1.y,
-//             y2: p2.y,
-//             d, a,
-//         }
-//     }
-
-//     pub fn get_for_remaining(&self, remaining: usize) -> (Mat3<f32>, Mat3<f32>) {
-//         (
-//             self.get_remaining(remaining),
-//             self.get_remaining((remaining + 1).min(self.d - 1)),
-//         )
-//     }
-
-//     fn get_remaining(&self, remaining: usize) -> Mat3<f32> {
-//         let x = (self.x1 * remaining as f32 + (self.d - remaining) as f32 * self.x2) / self.d as f32;
-//         // let x = self.x1 + (remaining as f32 / self.d as f32) * (self.x2 - self.x1);
-//         let y = (self.y1 * remaining as f32 + (self.d - remaining) as f32 * self.y2) / self.d as f32;
-
-//         // let y = self.y1 + (remaining as f32 / self.d as f32) * (self.y2 - self.y1);
-//         Mat3::new(
-//             0.3, 0.0, 0.0,
-//             0.0, 0.3, 0.0,
-//             x, y, 0.3,
-//         ) * Mat3::rotate_z(self.a)
-//     }
-// }
 
 fn create_voronoi(planets: &Vec<types::Planet>, bbox: f32) -> (Vec<Vec2<f32>>, Vec<usize>) {
     let mut verts: Vec<Vec2<f32>> = planets.iter().map(|p| Vec2::new(p.x, p.y)).collect();
@@ -173,9 +146,12 @@ pub struct Game {
     view_box: Vec<f32>,
 
     planets: Vec<Vec3<f32>>,
+    planet_ships: Vec<usize>,
 
     ship_locations: Vec<[f32;9]>,
     ship_colours: Vec<Vec3<f32>>,
+    ship_counts: Vec<usize>,
+
     current_planet_colours: Vec<Vec3<f32>>,
 
     voronoi_vertices: Vec<Vec2<f32>>,
@@ -210,6 +186,7 @@ impl Game {
 
         Self {
             planets: utils::get_planets(&states[0].planets, 2.0),
+            planet_ships: Vec::new(),
             view_box,
 
             planet_map,
@@ -217,6 +194,7 @@ impl Game {
             states,
             ship_locations: Vec::new(),
             ship_colours: Vec::new(),
+            ship_counts: Vec::new(),
             current_planet_colours: Vec::new(),
 
             voronoi_vertices,
@@ -231,6 +209,10 @@ impl Game {
 
     pub fn get_planets(&self) -> *const Vec3<f32> {
         self.planets.as_ptr()
+    }
+
+    pub fn get_planet_ships(&self) -> *const usize {
+        self.planet_ships.as_ptr()
     }
 
     pub fn get_planet_colors(&self) -> *const Vec3<f32> {
@@ -248,11 +230,17 @@ impl Game {
     pub fn update_turn(&mut self, turn: usize) -> usize {
         self.turn = turn.min(self.states.len() -1);
 
+        self.update_planet_ships();
         self.update_planet_colours();
         self.update_voronoi_colors();
         self.update_ship_locations();
+        self.update_ship_counts();
 
         self.turn
+    }
+
+    fn update_planet_ships(&mut self) {
+        self.planet_ships = self.states[self.turn].planets.iter().map(|p| p.ship_count as usize).collect();
     }
 
     fn update_voronoi_colors(&mut self) {
@@ -292,6 +280,13 @@ impl Game {
         }).collect();
     }
 
+
+    fn update_ship_counts(&mut self) {
+        self.ship_counts = self.states[self.turn].expeditions.iter().map(|s| {
+            s.ship_count as usize
+        }).collect();
+    }
+
     pub fn get_max_ships(&self) -> usize {
         self.states.iter().map(|s| s.expeditions.len()).max().unwrap()
     }
@@ -306,6 +301,10 @@ impl Game {
 
     pub fn get_ship_colours(&self) -> *const Vec3<f32> {
         self.ship_colours.as_ptr()
+    }
+
+    pub fn get_ship_counts(&self) -> *const usize {
+        self.ship_counts.as_ptr()
     }
 
     pub fn get_voronoi_vert_count(&self) -> usize {
@@ -331,6 +330,8 @@ impl Game {
 
 
 #[wasm_bindgen]
-extern {
+extern "C" {
     fn alert(s: &str);
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &str);
 }

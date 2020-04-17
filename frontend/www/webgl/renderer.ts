@@ -6,17 +6,16 @@ import { Texture } from './texture';
 import { Dictionary } from './util';
 
 export interface Renderable {
+    getUniforms() : Dictionary<Uniform>;
     render(gl: WebGLRenderingContext): void;
 }
 
-class RenderShit implements Renderable {
+export class RenderShit implements Renderable {
     ibo: IndexBuffer;
     va: VertexArray;
     shader: Shader;
     textures: Texture[];
     uniforms: Dictionary<Uniform>;
-
-    enabled: boolean;
 
     constructor(
         ibo: IndexBuffer,
@@ -25,7 +24,6 @@ class RenderShit implements Renderable {
         textures: Texture[],
         uniforms: Dictionary<Uniform>,
     ) {
-        this.enabled = true;
         this.ibo = ibo;
         this.va = va;
         this.shader = shader;
@@ -33,10 +31,11 @@ class RenderShit implements Renderable {
         this.uniforms = uniforms;
     }
 
+    getUniforms(): Dictionary<Uniform> {
+        return this.uniforms;
+    }
+
     render(gl: WebGLRenderingContext): void {
-        if (!this.enabled) {
-            return;
-        }
 
         const indexBuffer = this.ibo;
         const vertexArray = this.va;
@@ -73,35 +72,34 @@ class RenderShit implements Renderable {
         }
 
     }
-
 }
 
 export class Renderer {
-    renderables: RenderShit[];
+    renderables: [Renderable, boolean][];
 
     constructor() {
         this.renderables = [];
     }
 
     updateUniform(i: number, f: (uniforms: Dictionary<Uniform>) => void) {
-        f(this.renderables[i].uniforms);
+        f(this.renderables[i][0].getUniforms());
     }
 
     disableRenderShift(i: number) {
-        this.renderables[i].enabled = false;
+        this.renderables[i][1] = false;
     }
 
     enableRendershit(i: number) {
-        this.renderables[i].enabled = true;
+        this.renderables[i][1] = true;
     }
 
-    // addRenderable(item: Renderable) {
-    //     this.renderables.push(item);
-    // }
+    addRenderable(item: Renderable): number {
+        this.renderables.push([item, true]);
+        return this.renderables.length - 1;
+    }
 
     addToDraw(indexBuffer: IndexBuffer, vertexArray: VertexArray, shader: Shader, uniforms?: Dictionary<Uniform>, texture?: Texture[]): number {
-
-        this.renderables.push(
+        return this.addRenderable(
             new RenderShit(
                 indexBuffer,
                 vertexArray,
@@ -110,8 +108,6 @@ export class Renderer {
                 uniforms || {},
             )
         );
-
-        return this.renderables.length - 1;
     }
 
     render(gl: WebGLRenderingContext, frameBuffer?: WebGLFramebuffer, width?: number, height?: number) {
@@ -121,7 +117,8 @@ export class Renderer {
 
         const maxTextures = gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS);
 
-        for (let r of this.renderables) {
+        for (let [r, e] of this.renderables) {
+            if (!e) continue;
             r.render(gl);
         }
 
