@@ -5,7 +5,9 @@ import { Shader, Uniform4f, Uniform2fv, Uniform3fv, Uniform1i, Uniform1f, Unifor
 import { Renderer } from "./webgl/renderer";
 import { VertexBuffer, IndexBuffer } from "./webgl/buffer";
 import { VertexBufferLayout, VertexArray } from "./webgl/vertexBufferLayout";
+import { Texture } from "./webgl/texture";
 import { callbackify } from "util";
+import { defaultLabelFactory, LabelFactory, Align, Label } from "./webgl/text";
 
 function f32v(ptr: number, size: number): Float32Array {
     return new Float32Array(memory.buffer, ptr, size);
@@ -27,8 +29,8 @@ const COUNTER = new FPSCounter();
 const LOADER = document.getElementById("main");
 
 const SLIDER = <HTMLInputElement>document.getElementById("turnSlider");
-const FILESELECTOR = <HTMLInputElement> document.getElementById("fileselect");
-const SPEED = <HTMLInputElement> document.getElementById("speed");
+const FILESELECTOR = <HTMLInputElement>document.getElementById("fileselect");
+const SPEED = <HTMLInputElement>document.getElementById("speed");
 
 export function set_loading(loading: boolean) {
     if (loading) {
@@ -40,7 +42,7 @@ export function set_loading(loading: boolean) {
     }
 }
 
-const URL = window.location.origin+window.location.pathname;
+const URL = window.location.origin + window.location.pathname;
 export const LOCATION = URL.substring(0, URL.lastIndexOf("/") + 1);
 const CANVAS = <HTMLCanvasElement>document.getElementById("c");
 const RESOLUTION = [CANVAS.width, CANVAS.height];
@@ -67,11 +69,23 @@ ShaderFactory.create_factory(
     LOCATION + "static/shaders/frag/vor.glsl", LOCATION + "static/shaders/vert/vor.glsl"
 ).then((e) => VOR_SHADER_FACTORY = e);
 
+var IMAGE_SHADER_FACTORY: ShaderFactory;
+ShaderFactory.create_factory(
+    LOCATION + "static/shaders/frag/image.glsl", LOCATION + "static/shaders/vert/simple.glsl"
+).then((e) => IMAGE_SHADER_FACTORY = e);
+
 class GameInstance {
     resizer: Resizer;
     game: Game;
+
     shader: Shader;
     vor_shader: Shader;
+    image_shader: Shader;
+
+    text_factory: LabelFactory;
+    planet_labels: Label[];
+    ship_labels: Label[];
+
     renderer: Renderer;
     planet_count: number;
 
@@ -86,14 +100,23 @@ class GameInstance {
 
     turn_count = 0;
 
-    constructor(game: Game, meshes: Mesh[], ship_mesh: Mesh)  {
+    constructor(game: Game, meshes: Mesh[], ship_mesh: Mesh) {
         this.game = game;
         this.planet_count = this.game.get_planet_count();
-        this.shader = SHADERFACOTRY.create_shader(GL, {"MAX_CIRCLES": ''+this.planet_count});
-        this.vor_shader = VOR_SHADER_FACTORY.create_shader(GL, {"PLANETS": ''+this.planet_count});
+
+        this.shader = SHADERFACOTRY.create_shader(GL, { "MAX_CIRCLES": '' + this.planet_count });
+        this.image_shader = IMAGE_SHADER_FACTORY.create_shader(GL);
+        this.vor_shader = VOR_SHADER_FACTORY.create_shader(GL, { "PLANETS": '' + this.planet_count });
+
+        this.text_factory = defaultLabelFactory(GL, this.image_shader);
+        this.planet_labels = [];
+        this.ship_labels = [];
+
         this.resizer = new Resizer(CANVAS, [...f32v(game.get_viewbox(), 4)], true);
         this.renderer = new Renderer();
         this.game.update_turn(0);
+
+
 
         const indexBuffer = new IndexBuffer(GL, [
             0, 1, 2,
@@ -120,31 +143,44 @@ class GameInstance {
 
         const planets = f32v(game.get_planets(), this.planet_count * 3);
 
-        for(let i=0; i < this.planet_count; i++){
+        for (let i = 0; i < this.planet_count; i++) {
+            {
+                const transform = new UniformMatrix3fv([
+                    1, 0, 0,
+                    0, 1, 0,
+                    -planets[i * 3], -planets[i * 3 + 1], 1,
+                ]);
 
-            const transform = new UniformMatrix3fv([
-                1, 0, 0,
-                0, 1, 0,
-                -planets[i*3], -planets[i*3+1], 1,
-            ]);
+                const indexBuffer = new IndexBuffer(GL, meshes[i % meshes.length].cells);
+                const positionBuffer = new VertexBuffer(GL, meshes[i % meshes.length].positions);
 
-            const indexBuffer = new IndexBuffer(GL, meshes[i % meshes.length].cells);
-            const positionBuffer = new VertexBuffer(GL, meshes[i % meshes.length].positions);
+                const layout = new VertexBufferLayout();
+                layout.push(GL.FLOAT, 3, 4, "a_position");
+                const vao = new VertexArray();
+                vao.addBuffer(positionBuffer, layout);
 
-            const layout = new VertexBufferLayout();
-            layout.push(GL.FLOAT, 3, 4, "a_position");
-            const vao = new VertexArray();
-            vao.addBuffer(positionBuffer, layout);
+                this.renderer.addToDraw(
+                    indexBuffer,
+                    vao,
+                    this.shader,
+                    {
+                        "u_trans": transform,
+                        "u_trans_next": transform,
+                    }
+                );
+            }
 
-            this.renderer.addToDraw(
-                indexBuffer,
-                vao,
-                this.shader,
-                {
-                    "u_trans": transform,
-                    "u_trans_next": transform,
-                }
-            );
+            {
+                const transform = new UniformMatrix3fv([
+                    0.5, 0, 0,
+                    0, 0.5, 0,
+                    -planets[i * 3], -planets[i * 3 + 1] - 1.1, 0.5,
+                ]);
+
+                const label = this.text_factory.build(GL, transform);
+                this.renderer.addRenderable(label);
+                this.planet_labels.push(label);
+            }
         }
 
         this.turn_count = game.turn_count();
@@ -166,6 +202,10 @@ class GameInstance {
                     {}
                 )
             );
+
+            const label = this.text_factory.build(GL);
+            this.ship_labels.push(label);
+            this.renderer.addRenderable(label)
         }
 
         this.vor_shader.uniform(GL, "u_planets", new Uniform3fv(planets));
@@ -180,26 +220,34 @@ class GameInstance {
 
     _update_state() {
         const colours = f32v(this.game.get_planet_colors(), this.planet_count * 6);
+        const planet_ships = i32v(this.game.get_planet_ships(), this.planet_count);
 
         this.vor_shader.uniform(GL, "u_planet_colours", new Uniform3fv(colours));
 
-        for(let i=0; i < this.planet_count; i++){
-            const u = new Uniform3f(colours[i*6], colours[i*6 + 1], colours[i*6 + 2]);
-            this.renderer.updateUniform(i+1, (us) => us["u_color"] = u);
-            const u2 = new Uniform3f(colours[i*6 + 3], colours[i*6 + 4], colours[i*6 + 5]);
-            this.renderer.updateUniform(i+1, (us) => us["u_color_next"] = u2);
+        for (let i = 0; i < this.planet_count; i++) {
+            const u = new Uniform3f(colours[i * 6], colours[i * 6 + 1], colours[i * 6 + 2]);
+            this.renderer.updateUniform(2 * i + 1, (us) => us["u_color"] = u);
+            const u2 = new Uniform3f(colours[i * 6 + 3], colours[i * 6 + 4], colours[i * 6 + 5]);
+            this.renderer.updateUniform(2 * i + 1, (us) => us["u_color_next"] = u2);
+
+            this.planet_labels[i].setText(GL, "*"+planet_ships[i], Align.Center);
         }
 
-        const ships = f32v(this.game.get_ship_locations(), this.game.get_ship_count() * 9 * 2);
-        const ship_colours = f32v(this.game.get_ship_colours(), this.game.get_ship_count() * 3);
+        const ship_count = this.game.get_ship_count();
+        const ships = f32v(this.game.get_ship_locations(), ship_count * 9 * 2);
+        const ship_counts = i32v(this.game.get_ship_counts(), ship_count);
+        const ship_colours = f32v(this.game.get_ship_colours(), ship_count * 3);
 
-        for (let i=0; i < this.game.get_max_ships(); i++) {
+        for (let i = 0; i < this.game.get_max_ships(); i++) {
             const index = this.ship_indices[i];
-            if (i < this.game.get_ship_count()) {
+            if (i < ship_count) {
+
+                this.ship_labels[i].setText(GL, "*"+ship_counts[i], Align.Center);
 
                 this.renderer.enableRendershit(index);
+                this.renderer.enableRendershit(index+1);
 
-                const u = new Uniform3f(ship_colours[i*3], ship_colours[i*3 + 1], ship_colours[i*3 + 2]);
+                const u = new Uniform3f(ship_colours[i * 3], ship_colours[i * 3 + 1], ship_colours[i * 3 + 2]);
                 // const t1 = new UniformMatrix3fv(new Float32Array(ships, i * 18, 9));
                 // const t2 = new UniformMatrix3fv(new Float32Array(ships, i * 18 + 9, 9));
 
@@ -212,8 +260,14 @@ class GameInstance {
                     us["u_trans"] = t1;
                     us["u_trans_next"] = t2;
                 });
+
+                this.renderer.updateUniform(index+1, (us) => {
+                    us["u_trans"] = t1;
+                    us["u_trans_next"] = t2;
+                });
             } else {
                 this.renderer.disableRenderShift(index);
+                this.renderer.disableRenderShift(index+1);
             }
         }
     }
@@ -236,6 +290,7 @@ class GameInstance {
 
             this.shader.uniform(GL, "u_viewbox", new Uniform4f(this.resizer.get_viewbox()));
             this.vor_shader.uniform(GL, "u_viewbox", new Uniform4f(this.resizer.get_viewbox()));
+            this.image_shader.uniform(GL, "u_viewbox", new Uniform4f(this.resizer.get_viewbox()));
 
             this.renderer.render(GL);
             return;
@@ -258,7 +313,11 @@ class GameInstance {
         this.shader.uniform(GL, "u_mouse", new Uniform2f(this.resizer.get_mouse_pos()));
         this.shader.uniform(GL, "u_viewbox", new Uniform4f(this.resizer.get_viewbox()));
         this.shader.uniform(GL, "u_resolution", new Uniform2f(RESOLUTION));
-        this.shader.uniform(GL, "u_vor", new UniformBool(true));
+
+        this.image_shader.uniform(GL, "u_time", new Uniform1f((time - this.last_time) / ms_per_frame));
+        this.image_shader.uniform(GL, "u_mouse", new Uniform2f(this.resizer.get_mouse_pos()));
+        this.image_shader.uniform(GL, "u_viewbox", new Uniform4f(this.resizer.get_viewbox()));
+        this.image_shader.uniform(GL, "u_resolution", new Uniform2f(RESOLUTION));
 
         this.renderer.render(GL);
     }
@@ -332,33 +391,33 @@ export async function set_instance(source: string) {
     set_loading(false);
 }
 
-window.addEventListener('resize', function() {
+window.addEventListener('resize', function () {
     resizeCanvasToDisplaySize(CANVAS);
 
     if (game_instance) {
         game_instance.on_resize();
     }
-}, { capture: false, passive: true})
+}, { capture: false, passive: true })
 
-SLIDER.oninput = function() {
+SLIDER.oninput = function () {
     if (game_instance) {
         game_instance.updateTurn(parseInt(SLIDER.value));
     }
 }
 
-FILESELECTOR.onchange = function(){
+FILESELECTOR.onchange = function () {
     const file = FILESELECTOR.files[0];
-    if(!file) { return; }
+    if (!file) { return; }
     var reader = new FileReader();
 
-    reader.onload = function() {
-        set_instance(<string> reader.result);
+    reader.onload = function () {
+        set_instance(<string>reader.result);
     }
 
     reader.readAsText(file);
 }
 
-SPEED.onchange = function() {
+SPEED.onchange = function () {
     ms_per_frame = parseInt(SPEED.value);
 }
 
