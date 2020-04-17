@@ -44,11 +44,6 @@ fn spr(from: f32) -> f32 {
 
 impl Circle {
     pub fn new(p1: &types::Planet, p2: &types::Planet) -> Self {
-        use std::f32::consts::PI;
-
-        let pi2 = 2.0 * PI;
-        console_log!("Test");
-
         let x1 = p1.x;
         let y1 = p1.y;
         let x2 = p2.x;
