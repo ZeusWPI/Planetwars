@@ -31,18 +31,19 @@ pub struct Circle {
     r: f32,
     x: f32,
     y: f32,
-    a1: f32,
-    a2: f32,
+    a0: f32,
+    ad: f32,
     distance: usize,
+}
+
+use std::f32::consts::PI;
+fn spr(from: f32) -> f32 {
+    let pi2 = PI*2.;
+    ((from % pi2) + pi2) % pi2
 }
 
 impl Circle {
     pub fn new(p1: &types::Planet, p2: &types::Planet) -> Self {
-        use std::f32::consts::PI;
-
-        let pi2 = 2.0 * PI;
-        console_log!("Test");
-
         let x1 = p1.x;
         let y1 = p1.y;
         let x2 = p2.x;
@@ -55,33 +56,25 @@ impl Circle {
         let y3 = (y1+y2)/2.0;
 
         // Radius of circle
-        let r = q * 0.7;    // first 1.1
+        let r = q * 1.0;
 
         // Center of circle
-        let mut x = x3 + (r.powi(2)-(q/2.0).powi(2)).sqrt() * (y1-y2)/q;
-        let mut y = y3 + (r.powi(2)-(q/2.0).powi(2)).sqrt() * (x2-x1)/q;
+        let x = x3 + (r.powi(2)-(q/2.0).powi(2)).sqrt() * (y1-y2)/q;
+        let y = y3 + (r.powi(2)-(q/2.0).powi(2)).sqrt() * (x2-x1)/q;
+        // console_log!("{},{} -> {},{} ({},{} r={})", x1, y1, x2, y2, x, y, r);
 
+        let a0 = spr((y - y1).atan2(x - x1));
+        let a2 = spr((y - y2).atan2(x - x2));
 
-        let mut a1 = (y - y1).atan2(x - x1);
-        let mut a2 = (y - y2).atan2(x - x2);
-
-        if a2 < a1 {
-            console_log!("a1 {} a2 {}", a1, a2);
-
-            x = x3 - (r.powi(2)-(q/2.0).powi(2)).sqrt() * (y1-y2)/q;
-            y = y3 - (r.powi(2)-(q/2.0).powi(2)).sqrt() * (x2-x1)/q;
-
-            a1 = (y - y1).atan2(x - x1);
-            a2 = (y - y2).atan2(x - x2);
-            // let t = a1;
-            // a1 = a2;
-            // a2 = t;
+        let mut ad = spr(a0 - a2);
+        if ad > PI {
+            ad = spr(a2 - a0);
         }
+        // console_log!("a1 {} a2 {} ad {}", a0/PI * 180.0, a2/PI * 180.0, ad/PI*180.0);
 
         let distance = q.ceil() as usize + 1;
-
         Self {
-            r, x, y, a1, a2, distance
+            r, x, y, a0, ad, distance
         }
     }
 
@@ -93,7 +86,7 @@ impl Circle {
     }
 
     fn get_remaining(&self, remaining: usize) -> Mat3<f32> {
-        let alpha = (self.a1 * remaining as f32 + (self.distance - remaining) as f32 * self.a2) / self.distance as f32;
+        let alpha = self.a0 + (1.0 - (remaining as f32 / self.distance as f32)) * self.ad;
 
         let cos = alpha.cos();
         let sin = alpha.sin();
@@ -163,6 +156,8 @@ pub struct Game {
 impl Game {
     pub fn new(file: &str) -> Self {
         utils::set_panic_hook();
+
+        console_log!("Rust is busy bein awesome!");
 
         // First line is fucked but we just filter out things that cannot parse
         let states: Vec<types::State> = file.split("\n").filter_map(|line|
