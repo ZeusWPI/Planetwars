@@ -102,3 +102,5 @@ function parse_ini(inifile: string) {
         );
     }
 }
+
+on_load();
