@@ -284,10 +284,6 @@ impl Game {
         }).collect();
     }
 
-<<<<<<< HEAD
-=======
-
->>>>>>> e5af4f4... too late commit lol
     fn update_ship_counts(&mut self) {
         self.ship_counts = self.states[self.turn].expeditions.iter().map(|s| {
             s.ship_count as usize
