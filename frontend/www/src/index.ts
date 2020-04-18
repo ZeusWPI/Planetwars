@@ -60,6 +60,7 @@ GL.clear(GL.COLOR_BUFFER_BIT);
 GL.enable(GL.BLEND);
 GL.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA);
 
+// TODO: fix this
 var SHADERFACOTRY: ShaderFactory;
 ShaderFactory.create_factory(
     LOCATION + "static/shaders/frag/simple.glsl", LOCATION + "static/shaders/vert/simple.glsl"
@@ -180,8 +181,8 @@ class GameInstance {
                 ]);
 
                 const label = this.text_factory.build(GL, transform);
-                this.renderer.addRenderable(label);
                 this.planet_labels.push(label);
+                this.renderer.addRenderable(label.getRenderable());
             }
         }
 
@@ -207,7 +208,7 @@ class GameInstance {
 
             const label = this.text_factory.build(GL);
             this.ship_labels.push(label);
-            this.renderer.addRenderable(label)
+            this.renderer.addRenderable(label.getRenderable())
         }
 
         this.vor_shader.uniform(GL, "u_planets", new Uniform3fv(planets));
@@ -247,8 +248,8 @@ class GameInstance {
 
                 this.ship_labels[i].setText(GL, ""+ship_counts[i], Align.Middle, Align.Middle);
 
-                this.renderer.enableRendershit(index);
-                this.renderer.enableRendershit(index+1);
+                this.renderer.enableRenderable(index);
+                this.renderer.enableRenderable(index+1);
 
                 const u = new Uniform3f(ship_colours[i * 3], ship_colours[i * 3 + 1], ship_colours[i * 3 + 2]);
                 // const t1 = new UniformMatrix3fv(new Float32Array(ships, i * 18, 9));
@@ -273,8 +274,8 @@ class GameInstance {
                 });
 
             } else {
-                this.renderer.disableRenderShift(index);
-                this.renderer.disableRenderShift(index+1);
+                this.renderer.disableRenderable(index);
+                this.renderer.disableRenderable(index+1);
             }
         }
     }

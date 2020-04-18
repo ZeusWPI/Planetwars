@@ -8,9 +8,11 @@ import { Dictionary } from './util';
 export interface Renderable {
     getUniforms() : Dictionary<Uniform>;
     render(gl: WebGLRenderingContext): void;
+    updateVAOBuffer(gl: WebGLRenderingContext, index: number, data: number[]);
+    updateIndexBuffer(gl: WebGLRenderingContext, data: number[]);
 }
 
-export class RenderShit implements Renderable {
+export class DefaultRenderable implements Renderable {
     ibo: IndexBuffer;
     va: VertexArray;
     shader: Shader;
@@ -33,6 +35,14 @@ export class RenderShit implements Renderable {
 
     getUniforms(): Dictionary<Uniform> {
         return this.uniforms;
+    }
+
+    updateVAOBuffer(gl: WebGLRenderingContext, index: number, data: number[]) {
+        this.va.updateBuffer(gl, index, data);
+    }
+
+    updateIndexBuffer(gl: WebGLRenderingContext, data: number[]) {
+        this.ibo.updateData(gl, data);
     }
 
     render(gl: WebGLRenderingContext): void {
@@ -85,11 +95,11 @@ export class Renderer {
         f(this.renderables[i][0].getUniforms());
     }
 
-    disableRenderShift(i: number) {
+    disableRenderable(i: number) {
         this.renderables[i][1] = false;
     }
 
-    enableRendershit(i: number) {
+    enableRenderable(i: number) {
         this.renderables[i][1] = true;
     }
 
@@ -100,7 +110,7 @@ export class Renderer {
 
     addToDraw(indexBuffer: IndexBuffer, vertexArray: VertexArray, shader: Shader, uniforms?: Dictionary<Uniform>, texture?: Texture[]): number {
         return this.addRenderable(
-            new RenderShit(
+            new DefaultRenderable(
                 indexBuffer,
                 vertexArray,
                 shader,

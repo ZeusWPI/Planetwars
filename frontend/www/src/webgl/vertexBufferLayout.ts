@@ -1,4 +1,4 @@
-import { Buffer, VertexBuffer } from './buffer';
+import { VertexBuffer } from './buffer';
 import { Shader } from './shader';
 
 export class VertexBufferElement {
@@ -59,7 +59,7 @@ export class VertexBufferLayout {
 // glVertexAttribPointer tells gl that that data is at which location in the supplied data
 export class VertexArray {
     // There is no renderer ID, always at bind buffers and use glVertexAttribPointer
-    buffers: Buffer[];
+    buffers: VertexBuffer[];
     layouts: VertexBufferLayout[];
 
     constructor() {
@@ -70,6 +70,10 @@ export class VertexArray {
     addBuffer(vb: VertexBuffer, layout: VertexBufferLayout) {
         this.buffers.push(vb);
         this.layouts.push(layout);
+    }
+
+    updateBuffer(gl: WebGLRenderingContext, index: number, data: number[]) {
+        this.buffers[index].updateData(gl, data);
     }
 
     /// Bind buffers providing program data
@@ -94,7 +98,7 @@ export class VertexArray {
                         element.normalized, layout.stride, offset
                     );
                 }
-                    
+
                 offset += element.amount * element.type_size;
             }
         }
@@ -109,4 +113,3 @@ export class VertexArray {
         })
     }
 }
-

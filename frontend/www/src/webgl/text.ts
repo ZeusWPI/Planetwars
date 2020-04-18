@@ -1,6 +1,6 @@
 import { Texture } from "./texture";
 import { Dictionary } from "./util";
-import { Renderable, RenderShit } from "./renderer";
+import { Renderable, DefaultRenderable } from "./renderer";
 import { Uniform, Shader, UniformMatrix3fv } from "./shader";
 import { IndexBuffer, VertexBuffer } from "./buffer";
 import { VertexBufferLayout, VertexArray } from "./vertexBufferLayout";
@@ -43,10 +43,8 @@ export class LabelFactory {
     }
 }
 
-export class Label implements Renderable {
-    inner: Renderable;
-    ib: IndexBuffer;
-    vb: VertexBuffer;
+export class Label {
+    inner: DefaultRenderable;
 
     font: FontInfo;
 
@@ -54,25 +52,21 @@ export class Label implements Renderable {
         this.font = font;
 
         const uniforms = transform ? { "u_trans": transform, "u_trans_next": transform, } : {};
-        this.ib = new IndexBuffer(gl, []);
-        this.vb = new VertexBuffer(gl, []);
+        const ib = new IndexBuffer(gl, []);
+        const vb = new VertexBuffer(gl, []);
 
         const layout = new VertexBufferLayout();
         layout.push(gl.FLOAT, 2, 4, "a_position");
         layout.push(gl.FLOAT, 2, 4, "a_texCoord");
 
         const vao = new VertexArray();
-        vao.addBuffer(this.vb, layout);
+        vao.addBuffer(vb, layout);
 
-        this.inner = new RenderShit(this.ib, vao, shader, [tex], uniforms);
+        this.inner = new DefaultRenderable(ib, vao, shader, [tex], uniforms);
     }
 
-    getUniforms(): Dictionary<Uniform> {
-        return this.inner.getUniforms();
-    }
-
-    render(gl: WebGLRenderingContext): void {
-        return this.inner.render(gl);
+    getRenderable(): DefaultRenderable {
+        return this.inner;
     }
 
     setText(gl: WebGLRenderingContext, text: string, h_align = Align.Begin, v_align = Align.Begin) {
@@ -126,8 +120,8 @@ export class Label implements Renderable {
             }
         }
 
-        this.ib.updateData(gl, idxs);
-        this.vb.updateData(gl, verts);
+        this.inner.updateIndexBuffer(gl, idxs);
+        this.inner.updateVAOBuffer(gl, 0, verts);
     }
 }
 
