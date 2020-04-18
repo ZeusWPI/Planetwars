@@ -121,28 +121,6 @@ class GameInstance {
         this.renderer = new Renderer();
         this.game.update_turn(0);
 
-
-
-        // const indexBuffer = new IndexBuffer(GL, [
-        //     0, 1, 2,
-        //     1, 2, 3,
-        // ]);
-
-        // const positionBuffer = new VertexBuffer(GL, [
-        //     -1, -1,
-        //     -1, 1,
-        //     1, -1,
-        //     1, 1,
-        // ]);
-
-        // const layout = new VertexBufferLayout();
-        // layout.push(GL.FLOAT, 2, 4, "a_pos");
-
-        // const vao = new VertexArray();
-        // vao.addBuffer(positionBuffer, layout);
-
-        // this.renderer.addToDraw(indexBuffer, vao, this.vor_shader);
-
         // Setup key handling
         document.addEventListener('keydown', this.handleKey.bind(this));
 
@@ -153,7 +131,7 @@ class GameInstance {
         for(let i = 0; i < planets.length; i += 3) {
             planet_points.push({'x': planets[i], 'y': planets[i+1]});
         }
-        const _bbox = f32v(game.get_viewbox(), 4);
+        const _bbox = this.resizer.get_viewbox();
         const bbox = {
             'xl': _bbox[0], 'xr': _bbox[0] + _bbox[2],
             'yt': _bbox[1], 'yb': _bbox[1] + _bbox[3]
@@ -161,9 +139,6 @@ class GameInstance {
 
         this.vor_builder = new VoronoiBuilder(GL, this.vor_shader, planet_points, bbox);
         this.renderer.addRenderable(this.vor_builder.getRenderable());
-        const players= new Array(this.planet_count).fill(undefined).map((_, i) => i);
-        console.log(players);
-        this.vor_builder.updateOwners(GL, players);
 
         for (let i = 0; i < this.planet_count; i++) {
             {
@@ -458,16 +433,3 @@ function step(time: number) {
 // set_loading(false);
 
 requestAnimationFrame(step);
-
-(function() {
-    console.log(Voronoi);
-    console.log(new Voronoi());
-
-    var sites = [{x:300,y:300}, {x:100,y:100}, {x:200,y:500}, {x:250,y:450}, {x:600,y:150}];
-    var bbox = {xl:0, xr:800, yt:0, yb:600};
-
-    const voronoi = new Voronoi();
-    const result = voronoi.compute(sites, bbox);
-
-    console.log(result);
-})();

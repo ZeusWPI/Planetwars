@@ -17,29 +17,46 @@ export class VoronoiBuilder {
 
     constructor(gl: WebGLRenderingContext, shader: Shader, planets: Point[], bbox: BBox) {
         const voronoi = new Voronoi();
+
+        const own_map = {};
+        planets.forEach((p, i)=>own_map[to_key(p)] = i);
+
+        // This voronoi sorts the planets, then owners don't align anymore
         this.vor = voronoi.compute(planets, bbox);
 
-        const a_pos = planets.concat(this.vor.vertices).reduce((a, b) => a.concat([-b.x, -b.y]), []);
-        const a_own = new Array(planets.length + this.vor.vertices.length).fill(-1);
-
-        const vert_indcs = {};
-        planets.concat(this.vor.vertices).forEach((p, i) => vert_indcs[to_key(p)] = i);
-
+        const a_pos = [];
+        const a_own = [];
         const ids = [];
 
-        for (let cell of this.vor.cells) {
-            const baseIndx = vert_indcs[to_key(cell.site)];
-            console.log(baseIndx);
-            for (let edge of cell.halfedges) {
-                ids.push(baseIndx);
+        let vertCount = 0;
 
-                ids.push(vert_indcs[to_key(edge.getStartpoint())]);
-                ids.push(vert_indcs[to_key(edge.getEndpoint())])
+        for (let i = 0; i < this.vor.cells.length; i++) {
+            const cell = this.vor.cells[i];
+            const planetId = own_map[to_key(cell.site)];
+
+            const centerId = vertCount++;
+            a_pos.push(cell.site.x, cell.site.y);
+            a_own.push(planetId);
+
+            for (let edge of cell.halfedges) {
+                ids.push(centerId);
+
+                const start = edge.getStartpoint();
+                ids.push(vertCount++);
+
+                a_pos.push(start.x, start.y);
+                a_own.push(planetId);
+
+                const end = edge.getEndpoint();
+                ids.push(vertCount++);
+
+                a_pos.push(end.x, end.y);
+                a_own.push(planetId);
             }
         }
 
         const ib = new IndexBuffer(gl, ids);
-        const vb_pos = new VertexBuffer(gl, a_pos);
+        const vb_pos = new VertexBuffer(gl, a_pos.map((x) => -1 * x));
         const vb_own = new VertexBuffer(gl, a_own);
 
         const layout_pos = new VertexBufferLayout();
@@ -62,7 +79,7 @@ export class VoronoiBuilder {
     }
 
     updateOwners(gl: WebGLRenderingContext, planets_owners: number[]) {
-        planets_owners.forEach((own, i) => this.a_own[i] = own);
-        this.inner.updateVAOBuffer(gl, 1, this.a_own);
+        // planets_owners.forEach((own, i) => this.a_own[i] = own);
+        // this.inner.updateVAOBuffer(gl, 1, this.a_own);
     }
 }
