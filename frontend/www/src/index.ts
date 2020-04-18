@@ -141,6 +141,7 @@ class GameInstance {
         // Setup key handling
         document.addEventListener('keydown', this.handleKey.bind(this));
 
+        // List of [(x, y, r)] for all planets
         const planets = f32v(game.get_planets(), this.planet_count * 3);
 
         for (let i = 0; i < this.planet_count; i++) {

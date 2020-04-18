@@ -14,7 +14,7 @@ if (typeof mergeInto !== 'undefined') mergeInto(LibraryManager.library, {
     }
 });
 
-import ("./index.js")
+import ("./src/index.js")
 .then(e => {
         h = e.handle;
     })
