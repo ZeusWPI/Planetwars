@@ -9,6 +9,7 @@ import { Texture } from "./webgl/texture";
 import { callbackify } from "util";
 import { defaultLabelFactory, LabelFactory, Align, Label } from "./webgl/text";
 import Voronoi = require("./voronoi/voronoi-core");
+import { VoronoiBuilder } from "./voronoi/voronoi";
 
 function f32v(ptr: number, size: number): Float32Array {
     return new Float32Array(memory.buffer, ptr, size);
@@ -91,6 +92,8 @@ class GameInstance {
     renderer: Renderer;
     planet_count: number;
 
+    vor_builder: VoronoiBuilder;
+
     vor_counter = 3;
     use_vor = true;
     playing = true;    // 0 is paused, 1 is playing but not rerendered, 2 is playing and rerendered
@@ -120,31 +123,47 @@ class GameInstance {
 
 
 
-        const indexBuffer = new IndexBuffer(GL, [
-            0, 1, 2,
-            1, 2, 3,
-        ]);
+        // const indexBuffer = new IndexBuffer(GL, [
+        //     0, 1, 2,
+        //     1, 2, 3,
+        // ]);
 
-        const positionBuffer = new VertexBuffer(GL, [
-            -1, -1,
-            -1, 1,
-            1, -1,
-            1, 1,
-        ]);
+        // const positionBuffer = new VertexBuffer(GL, [
+        //     -1, -1,
+        //     -1, 1,
+        //     1, -1,
+        //     1, 1,
+        // ]);
 
-        const layout = new VertexBufferLayout();
-        layout.push(GL.FLOAT, 2, 4, "a_pos");
+        // const layout = new VertexBufferLayout();
+        // layout.push(GL.FLOAT, 2, 4, "a_pos");
 
-        const vao = new VertexArray();
-        vao.addBuffer(positionBuffer, layout);
+        // const vao = new VertexArray();
+        // vao.addBuffer(positionBuffer, layout);
 
-        this.renderer.addToDraw(indexBuffer, vao, this.vor_shader);
+        // this.renderer.addToDraw(indexBuffer, vao, this.vor_shader);
 
         // Setup key handling
         document.addEventListener('keydown', this.handleKey.bind(this));
 
         // List of [(x, y, r)] for all planets
         const planets = f32v(game.get_planets(), this.planet_count * 3);
+
+        const planet_points = [];
+        for(let i = 0; i < planets.length; i += 3) {
+            planet_points.push({'x': planets[i], 'y': planets[i+1]});
+        }
+        const _bbox = f32v(game.get_viewbox(), 4);
+        const bbox = {
+            'xl': _bbox[0], 'xr': _bbox[0] + _bbox[2],
+            'yt': _bbox[1], 'yb': _bbox[1] + _bbox[3]
+        };
+
+        this.vor_builder = new VoronoiBuilder(GL, this.vor_shader, planet_points, bbox);
+        this.renderer.addRenderable(this.vor_builder.getRenderable());
+        const players= new Array(this.planet_count).fill(undefined).map((_, i) => i);
+        console.log(players);
+        this.vor_builder.updateOwners(GL, players);
 
         for (let i = 0; i < this.planet_count; i++) {
             {
@@ -211,7 +230,7 @@ class GameInstance {
             this.renderer.addRenderable(label.getRenderable())
         }
 
-        this.vor_shader.uniform(GL, "u_planets", new Uniform3fv(planets));
+        // this.vor_shader.uniform(GL, "u_planets", new Uniform3fv(planets));
 
         // Set slider correctly
         SLIDER.max = this.turn_count - 1 + '';
