@@ -8,6 +8,7 @@ import { VertexBufferLayout, VertexArray } from "./webgl/vertexBufferLayout";
 import { Texture } from "./webgl/texture";
 import { callbackify } from "util";
 import { defaultLabelFactory, LabelFactory, Align, Label } from "./webgl/text";
+import Voronoi = require("./voronoi/voronoi-core");
 
 function f32v(ptr: number, size: number): Float32Array {
     return new Float32Array(memory.buffer, ptr, size);
@@ -437,3 +438,16 @@ function step(time: number) {
 // set_loading(false);
 
 requestAnimationFrame(step);
+
+(function() {
+    console.log(Voronoi);
+    console.log(new Voronoi());
+
+    var sites = [{x:300,y:300}, {x:100,y:100}, {x:200,y:500}, {x:250,y:450}, {x:600,y:150}];
+    var bbox = {xl:0, xr:800, yt:0, yb:600};
+
+    const voronoi = new Voronoi();
+    const result = voronoi.compute(sites, bbox);
+
+    console.log(result);
+})();
