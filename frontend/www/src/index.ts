@@ -129,7 +129,7 @@ class GameInstance {
 
         const planet_points = [];
         for(let i = 0; i < planets.length; i += 3) {
-            planet_points.push({'x': planets[i], 'y': planets[i+1]});
+            planet_points.push({'x': -planets[i], 'y': -planets[i+1]});
         }
         const _bbox = this.resizer.get_viewbox();
         const bbox = {
@@ -307,6 +307,7 @@ class GameInstance {
         GL.viewport(0, 0, GL.canvas.width, GL.canvas.height);
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
+        this.vor_shader.uniform(GL, "u_time", new Uniform1f((time - this.last_time) / ms_per_frame));
         this.vor_shader.uniform(GL, "u_viewbox", new Uniform4f(this.resizer.get_viewbox()));
         this.vor_shader.uniform(GL, "u_resolution", new Uniform2f(RESOLUTION));
         this.vor_shader.uniform(GL, "u_vor", new UniformBool(this.use_vor));

@@ -12,5 +12,5 @@ varying vec3 v_color;
 varying vec2 v_pos;
 
 void main() {
-    gl_FragColor = vec4(v_color, 0.3);
+    gl_FragColor = vec4(v_color, 0.6);
 }

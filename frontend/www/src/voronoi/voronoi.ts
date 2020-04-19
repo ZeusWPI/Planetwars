@@ -39,24 +39,29 @@ export class VoronoiBuilder {
             a_own.push(planetId);
 
             for (let edge of cell.halfedges) {
-                ids.push(centerId);
-
                 const start = edge.getStartpoint();
-                ids.push(vertCount++);
-
-                a_pos.push(start.x, start.y);
-                a_own.push(planetId);
-
                 const end = edge.getEndpoint();
-                ids.push(vertCount++);
+                const center = {'x': (start.x + end.x) / 2, 'y': (start.y + end.y) / 2};
 
+                ids.push(centerId);
+                ids.push(vertCount++);
+                a_pos.push(start.x, start.y);
+                a_own.push(-1);
+
+                // ids.push(vertCount++);
+                // a_pos.push(center.x, center.y);
+                // a_own.push(planetId);
+
+                // ids.push(centerId);
+                // ids.push(vertCount-1);
+                ids.push(vertCount++);
                 a_pos.push(end.x, end.y);
-                a_own.push(planetId);
+                a_own.push(-1);
             }
         }
 
         const ib = new IndexBuffer(gl, ids);
-        const vb_pos = new VertexBuffer(gl, a_pos.map((x) => -1 * x));
+        const vb_pos = new VertexBuffer(gl, a_pos);
         const vb_own = new VertexBuffer(gl, a_own);
 
         const layout_pos = new VertexBufferLayout();
