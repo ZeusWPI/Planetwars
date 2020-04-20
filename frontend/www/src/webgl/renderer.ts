@@ -5,6 +5,18 @@ import { VertexArray } from './vertexBufferLayout';
 import { Texture } from './texture';
 import { Dictionary } from './util';
 
+function sortedIndex(array, value) {
+    var low = 0,
+        high = array.length;
+
+    while (low < high) {
+        var mid = (low + high) >>> 1;
+        if (array[mid] < value) low = mid + 1;
+        else high = mid;
+    }
+    return low;
+}
+
 export interface Renderable {
     getUniforms() : Dictionary<Uniform>;
     render(gl: WebGLRenderingContext): void;
@@ -85,30 +97,38 @@ export class DefaultRenderable implements Renderable {
 }
 
 export class Renderer {
-    renderables: [Renderable, boolean][];
+    renderables: { [id: number] : [Renderable, boolean][]; };
+    renderable_layers: number[];
 
     constructor() {
-        this.renderables = [];
+        this.renderables = {};
+        this.renderable_layers = [];
     }
 
-    updateUniform(i: number, f: (uniforms: Dictionary<Uniform>) => void) {
-        f(this.renderables[i][0].getUniforms());
+    updateUniform(i: number, f: (uniforms: Dictionary<Uniform>) => void, layer=0, ) {
+        f(this.renderables[layer][i][0].getUniforms());
     }
 
-    disableRenderable(i: number) {
-        this.renderables[i][1] = false;
+    disableRenderable(i: number, layer=0) {
+        this.renderables[layer][i][1] = false;
     }
 
-    enableRenderable(i: number) {
-        this.renderables[i][1] = true;
+    enableRenderable(i: number, layer=0) {
+        this.renderables[layer][i][1] = true;
     }
 
-    addRenderable(item: Renderable): number {
-        this.renderables.push([item, true]);
-        return this.renderables.length - 1;
+    addRenderable(item: Renderable, layer=0): number {
+        if(!this.renderables[layer]) {
+            const idx = sortedIndex(this.renderable_layers, layer);
+            this.renderable_layers.splice(idx, 0, layer);
+            this.renderables[layer] = [];
+        }
+
+        this.renderables[layer].push([item, true]);
+        return this.renderables[layer].length - 1;
     }
 
-    addToDraw(indexBuffer: IndexBuffer, vertexArray: VertexArray, shader: Shader, uniforms?: Dictionary<Uniform>, texture?: Texture[]): number {
+    addToDraw(indexBuffer: IndexBuffer, vertexArray: VertexArray, shader: Shader, uniforms?: Dictionary<Uniform>, texture?: Texture[], layer=0): number {
         return this.addRenderable(
             new DefaultRenderable(
                 indexBuffer,
@@ -116,7 +136,7 @@ export class Renderer {
                 shader,
                 texture || [],
                 uniforms || {},
-            )
+            ), layer
         );
     }
 
@@ -129,10 +149,11 @@ export class Renderer {
 
         const maxTextures = gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS);
 
-        for (let [r, e] of this.renderables) {
-            if (!e) continue;
-            r.render(gl);
+        for (let layer of this.renderable_layers) {
+            for (let [r, e] of this.renderables[layer]) {
+                if (!e) continue;
+                r.render(gl);
+            }
         }
-
     }
 }

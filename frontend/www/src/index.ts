@@ -11,6 +11,14 @@ import { defaultLabelFactory, LabelFactory, Align, Label } from "./webgl/text";
 import Voronoi = require("./voronoi/voronoi-core");
 import { VoronoiBuilder } from "./voronoi/voronoi";
 
+const LAYERS = {
+    'vor': -1,  // Background
+    'planet': 1,
+    'planet_label': 2,
+    'ship': 3,
+    'ship_label': 4
+}
+
 function f32v(ptr: number, size: number): Float32Array {
     return new Float32Array(memory.buffer, ptr, size);
 }
@@ -101,8 +109,6 @@ class GameInstance {
     last_time = 0;
     frame = -1;
 
-    ship_indices: number[];
-
     turn_count = 0;
 
     constructor(game: Game, meshes: Mesh[], ship_mesh: Mesh) {
@@ -138,7 +144,7 @@ class GameInstance {
         };
 
         this.vor_builder = new VoronoiBuilder(GL, this.vor_shader, planet_points, bbox);
-        this.renderer.addRenderable(this.vor_builder.getRenderable());
+        this.renderer.addRenderable(this.vor_builder.getRenderable(), LAYERS.vor);
 
         for (let i = 0; i < this.planet_count; i++) {
             {
@@ -163,7 +169,9 @@ class GameInstance {
                     {
                         "u_trans": transform,
                         "u_trans_next": transform,
-                    }
+                    },
+                    [],
+                    LAYERS.planet
                 );
             }
 
@@ -176,13 +184,12 @@ class GameInstance {
 
                 const label = this.text_factory.build(GL, transform);
                 this.planet_labels.push(label);
-                this.renderer.addRenderable(label.getRenderable());
+                this.renderer.addRenderable(label.getRenderable(), LAYERS.planet_label);
             }
         }
 
         this.turn_count = game.turn_count();
 
-        this.ship_indices = [];
         const ship_ibo = new IndexBuffer(GL, ship_mesh.cells);
         const ship_positions = new VertexBuffer(GL, ship_mesh.positions);
         const ship_layout = new VertexBufferLayout();
@@ -191,18 +198,18 @@ class GameInstance {
         ship_vao.addBuffer(ship_positions, ship_layout);
 
         for (let i = 0; i < this.game.get_max_ships(); i++) {
-            this.ship_indices.push(
-                this.renderer.addToDraw(
-                    ship_ibo,
-                    ship_vao,
-                    this.shader,
-                    {}
-                )
+            this.renderer.addToDraw(
+                ship_ibo,
+                ship_vao,
+                this.shader,
+                {},
+                [],
+                LAYERS.ship
             );
 
             const label = this.text_factory.build(GL);
             this.ship_labels.push(label);
-            this.renderer.addRenderable(label.getRenderable())
+            this.renderer.addRenderable(label.getRenderable(), LAYERS.ship_label)
         }
 
         // this.vor_shader.uniform(GL, "u_planets", new Uniform3fv(planets));
@@ -223,9 +230,9 @@ class GameInstance {
 
         for (let i = 0; i < this.planet_count; i++) {
             const u = new Uniform3f(colours[i * 6], colours[i * 6 + 1], colours[i * 6 + 2]);
-            this.renderer.updateUniform(2 * i + 1, (us) => us["u_color"] = u);
+            this.renderer.updateUniform(i, (us) => us["u_color"] = u, LAYERS.planet);
             const u2 = new Uniform3f(colours[i * 6 + 3], colours[i * 6 + 4], colours[i * 6 + 5]);
-            this.renderer.updateUniform(2 * i + 1, (us) => us["u_color_next"] = u2);
+            this.renderer.updateUniform(i, (us) => us["u_color_next"] = u2, LAYERS.planet);
 
             this.planet_labels[i].setText(GL, "*"+planet_ships[i], Align.Middle, Align.Begin);
         }
@@ -237,17 +244,13 @@ class GameInstance {
         const ship_colours = f32v(this.game.get_ship_colours(), ship_count * 3);
 
         for (let i = 0; i < this.game.get_max_ships(); i++) {
-            const index = this.ship_indices[i];
             if (i < ship_count) {
-
                 this.ship_labels[i].setText(GL, ""+ship_counts[i], Align.Middle, Align.Middle);
 
-                this.renderer.enableRenderable(index);
-                this.renderer.enableRenderable(index+1);
+                this.renderer.enableRenderable(i, LAYERS.ship);
+                this.renderer.enableRenderable(i, LAYERS.ship_label);
 
                 const u = new Uniform3f(ship_colours[i * 3], ship_colours[i * 3 + 1], ship_colours[i * 3 + 2]);
-                // const t1 = new UniformMatrix3fv(new Float32Array(ships, i * 18, 9));
-                // const t2 = new UniformMatrix3fv(new Float32Array(ships, i * 18 + 9, 9));
 
                 const t1 = new UniformMatrix3fv(ships.slice(i * 18, i * 18 + 9));
                 const t2 = new UniformMatrix3fv(ships.slice(i * 18 + 9, i * 18 + 18));
@@ -255,21 +258,21 @@ class GameInstance {
                 const tl1 = new UniformMatrix3fv(labels.slice(i * 18, i * 18 + 9));
                 const tl2 = new UniformMatrix3fv(labels.slice(i * 18 + 9, i * 18 + 18));
 
-                this.renderer.updateUniform(index, (us) => {
+                this.renderer.updateUniform(i, (us) => {
                     us["u_color"] = u;
                     us["u_color_next"] = u;
                     us["u_trans"] = t1;
                     us["u_trans_next"] = t2;
-                });
+                }, LAYERS.ship);
 
-                this.renderer.updateUniform(index+1, (us) => {
+                this.renderer.updateUniform(i, (us) => {
                     us["u_trans"] = tl1;
                     us["u_trans_next"] = tl2;
-                });
+                }, LAYERS.ship_label);
 
             } else {
-                this.renderer.disableRenderable(index);
-                this.renderer.disableRenderable(index+1);
+                this.renderer.disableRenderable(i, LAYERS.ship);
+                this.renderer.disableRenderable(i, LAYERS.ship_label);
             }
         }
     }
