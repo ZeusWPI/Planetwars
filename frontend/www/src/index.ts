@@ -1,6 +1,6 @@
 import { Game } from "planetwars";
 import { memory } from "planetwars/planetwars_bg";
-import { Resizer, resizeCanvasToDisplaySize, FPSCounter, url_to_mesh, Mesh } from "./webgl/util";
+import { Resizer, resizeCanvasToDisplaySize, FPSCounter, url_to_mesh, Mesh, Dictionary } from "./webgl/util";
 import { Shader, Uniform4f, Uniform3fv, Uniform1f, Uniform2f, ShaderFactory, Uniform3f, UniformMatrix3fv, UniformBool } from './webgl/shader';
 import { Renderer } from "./webgl/renderer";
 import { VertexBuffer, IndexBuffer } from "./webgl/buffer";
@@ -9,11 +9,11 @@ import { defaultLabelFactory, LabelFactory, Align, Label } from "./webgl/text";
 import { VoronoiBuilder } from "./voronoi/voronoi";
 
 const LAYERS = {
-    'vor': -1,  // Background
-    'planet': 1,
+    'vor':          -1,  // Background
+    'planet':       1,
     'planet_label': 2,
-    'ship': 3,
-    'ship_label': 4
+    'ship':         3,
+    'ship_label':   4
 }
 
 function f32v(ptr: number, size: number): Float32Array {
@@ -49,8 +49,6 @@ export function set_loading(loading: boolean) {
     }
 }
 
-const URL = window.location.origin + window.location.pathname;
-export const LOCATION = URL.substring(0, URL.lastIndexOf("/") + 1);
 const CANVAS = <HTMLCanvasElement>document.getElementById("c");
 const RESOLUTION = [CANVAS.width, CANVAS.height];
 
@@ -58,29 +56,13 @@ const GL = CANVAS.getContext("webgl");
 
 var ms_per_frame = parseInt(SPEED.value);
 
-resizeCanvasToDisplaySize(CANVAS);
+
 
 GL.clearColor(0, 0, 0, 1);
 GL.clear(GL.COLOR_BUFFER_BIT);
 
 GL.enable(GL.BLEND);
 GL.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA);
-
-// TODO: fix this
-var SHADERFACOTRY: ShaderFactory;
-ShaderFactory.create_factory(
-    LOCATION + "static/shaders/frag/simple.glsl", LOCATION + "static/shaders/vert/simple.glsl"
-).then((e) => SHADERFACOTRY = e);
-
-var VOR_SHADER_FACTORY: ShaderFactory;
-ShaderFactory.create_factory(
-    LOCATION + "static/shaders/frag/vor.glsl", LOCATION + "static/shaders/vert/vor.glsl"
-).then((e) => VOR_SHADER_FACTORY = e);
-
-var IMAGE_SHADER_FACTORY: ShaderFactory;
-ShaderFactory.create_factory(
-    LOCATION + "static/shaders/frag/image.glsl", LOCATION + "static/shaders/vert/simple.glsl"
-).then((e) => IMAGE_SHADER_FACTORY = e);
 
 class GameInstance {
     resizer: Resizer;
@@ -108,13 +90,13 @@ class GameInstance {
 
     turn_count = 0;
 
-    constructor(game: Game, meshes: Mesh[], ship_mesh: Mesh) {
+    constructor(game: Game, meshes: Mesh[], ship_mesh: Mesh, shaders: Dictionary<ShaderFactory>) {
         this.game = game;
         this.planet_count = this.game.get_planet_count();
 
-        this.shader = SHADERFACOTRY.create_shader(GL, { "MAX_CIRCLES": '' + this.planet_count });
-        this.image_shader = IMAGE_SHADER_FACTORY.create_shader(GL);
-        this.vor_shader = VOR_SHADER_FACTORY.create_shader(GL, { "PLANETS": '' + this.planet_count });
+        this.shader = shaders["normal"].create_shader(GL, { "MAX_CIRCLES": '' + this.planet_count });
+        this.image_shader = shaders["image"].create_shader(GL);
+        this.vor_shader = shaders["vor"].create_shader(GL, { "PLANETS": '' + this.planet_count });
 
         this.text_factory = defaultLabelFactory(GL, this.image_shader);
         this.planet_labels = [];
@@ -293,6 +275,7 @@ class GameInstance {
             this.use_vor = false;
         }
 
+        // If not playing, still reder with different viewbox, so people can still pan etc.
         if (!this.playing) {
             this.last_time = time;
 
@@ -303,12 +286,14 @@ class GameInstance {
             this.renderer.render(GL);
             return;
         }
-        if (time > this.last_time + ms_per_frame) {
 
+        // Check if turn is still correct
+        if (time > this.last_time + ms_per_frame) {
             this.last_time = time;
             this.updateTurn(this.frame + 1);
         }
 
+        // Do GL things
         GL.bindFramebuffer(GL.FRAMEBUFFER, null);
         GL.viewport(0, 0, GL.canvas.width, GL.canvas.height);
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
@@ -328,6 +313,7 @@ class GameInstance {
         this.image_shader.uniform(GL, "u_viewbox", new Uniform4f(this.resizer.get_viewbox()));
         this.image_shader.uniform(GL, "u_resolution", new Uniform2f(RESOLUTION));
 
+        // Render
         this.renderer.render(GL);
     }
 
@@ -342,7 +328,7 @@ class GameInstance {
             this.playing = true;
         }
 
-        TURNCOUNTER.innerHTML = this.frame + " / " + this.turn_count;
+        TURNCOUNTER.innerHTML = this.frame + " / " + (this.turn_count - 1);
         SLIDER.value = this.frame + '';
     }
 
@@ -382,20 +368,35 @@ class GameInstance {
 }
 
 var game_instance: GameInstance;
-var meshes;
+var meshes: Mesh[];
+var shaders: Dictionary<ShaderFactory>;
 
 export async function set_instance(source: string) {
-    if (!meshes) {
-        meshes = await Promise.all(
-            ["ship.svg", "earth.svg", "mars.svg", "venus.svg"].map(
-                (name) => "static/res/assets/" + name
-            ).map(url_to_mesh)
+    if (!meshes || !shaders) {
+        const mesh_promises = ["ship.svg", "earth.svg", "mars.svg", "venus.svg"].map(
+            (name) => "static/res/assets/" + name
+        ).map(url_to_mesh);
+
+        const shader_promies = [
+            (async () => <[string, ShaderFactory]> ["normal", await ShaderFactory.create_factory("static/shaders/frag/simple.glsl",  "static/shaders/vert/simple.glsl")])(),
+            (async () => <[string, ShaderFactory]> ["vor",    await ShaderFactory.create_factory("static/shaders/frag/vor.glsl",  "static/shaders/vert/vor.glsl")])(),
+            (async () => <[string, ShaderFactory]> ["image",  await ShaderFactory.create_factory("static/shaders/frag/image.glsl",  "static/shaders/vert/simple.glsl")])(),
+        ];
+        let shaders_array: [string, ShaderFactory][];
+        [meshes, shaders_array] = await Promise.all(
+            [
+                Promise.all(mesh_promises),
+                Promise.all(shader_promies),
+            ]
         );
+
+        shaders = {};
+        shaders_array.forEach(([name, fac]) => shaders[name] = fac);
     }
 
     resizeCanvasToDisplaySize(CANVAS);
 
-    game_instance = new GameInstance(Game.new(source), meshes.slice(1), meshes[0]);
+    game_instance = new GameInstance(Game.new(source), meshes.slice(1), meshes[0], shaders);
 
     set_loading(false);
 }
@@ -437,6 +438,5 @@ function step(time: number) {
 
     requestAnimationFrame(step);
 }
-// set_loading(false);
 
 requestAnimationFrame(step);
