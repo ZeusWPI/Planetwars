@@ -7,6 +7,14 @@ import { VertexBuffer, IndexBuffer } from "./webgl/buffer";
 import { VertexBufferLayout, VertexArray } from "./webgl/vertexBufferLayout";
 import { defaultLabelFactory, LabelFactory, Align, Label } from "./webgl/text";
 import { VoronoiBuilder } from "./voronoi/voronoi";
+import { BBox } from "./voronoi/voronoi-core";
+
+function to_bbox(box: number[]): BBox {
+    return {
+        'xl': box[0], 'xr': box[0] + box[2],
+        'yt': box[1], 'yb': box[1] + box[3]
+    };
+}
 
 function f32v(ptr: number, size: number): Float32Array {
     return new Float32Array(memory.buffer, ptr, size);
@@ -117,11 +125,8 @@ class GameInstance {
         for (let i = 0; i < planets.length; i += 3) {
             planet_points.push({ 'x': -planets[i], 'y': -planets[i + 1] });
         }
-        const _bbox = this.resizer.get_viewbox();
-        const bbox = {
-            'xl': _bbox[0], 'xr': _bbox[0] + _bbox[2],
-            'yt': _bbox[1], 'yb': _bbox[1] + _bbox[3]
-        };
+
+        const bbox = to_bbox(this.resizer.get_viewbox());
 
         this.vor_builder = new VoronoiBuilder(GL, this.vor_shader, planet_points, bbox);
         this.renderer.addRenderable(this.vor_builder.getRenderable(), LAYERS.vor);
@@ -197,13 +202,7 @@ class GameInstance {
 
     on_resize() {
         this.resizer = new Resizer(CANVAS, [...f32v(this.game.get_viewbox(), 4)], true);
-
-        const _bbox = this.resizer.get_viewbox();
-        const bbox = {
-            'xl': _bbox[0], 'xr': _bbox[0] + _bbox[2],
-            'yt': _bbox[1], 'yb': _bbox[1] + _bbox[3]
-        };
-
+        const bbox = to_bbox(this.resizer.get_viewbox());
         this.vor_builder.resize(GL, bbox);
     }
 
@@ -322,6 +321,8 @@ class GameInstance {
 
         // Render
         this.renderer.render(GL);
+
+        COUNTER.frame_end();
     }
 
     updateTurn(turn: number) {

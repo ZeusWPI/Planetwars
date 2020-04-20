@@ -9,7 +9,7 @@
 <div id=wrapper>
 
     <div id="main" class="loading">
-        <canvas id="c"></canvas>
+        <canvas id="canvas"></canvas>
         <div id="name"></div>
         <div id="addbutton" class="button"></div>
 
