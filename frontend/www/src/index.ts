@@ -1,14 +1,11 @@
 import { Game } from "planetwars";
 import { memory } from "planetwars/planetwars_bg";
 import { Resizer, resizeCanvasToDisplaySize, FPSCounter, url_to_mesh, Mesh } from "./webgl/util";
-import { Shader, Uniform4f, Uniform2fv, Uniform3fv, Uniform1i, Uniform1f, Uniform2f, ShaderFactory, Uniform3f, UniformMatrix3fv, UniformBool } from './webgl/shader';
+import { Shader, Uniform4f, Uniform3fv, Uniform1f, Uniform2f, ShaderFactory, Uniform3f, UniformMatrix3fv, UniformBool } from './webgl/shader';
 import { Renderer } from "./webgl/renderer";
 import { VertexBuffer, IndexBuffer } from "./webgl/buffer";
 import { VertexBufferLayout, VertexArray } from "./webgl/vertexBufferLayout";
-import { Texture } from "./webgl/texture";
-import { callbackify } from "util";
 import { defaultLabelFactory, LabelFactory, Align, Label } from "./webgl/text";
-import Voronoi = require("./voronoi/voronoi-core");
 import { VoronoiBuilder } from "./voronoi/voronoi";
 
 const LAYERS = {
@@ -63,7 +60,7 @@ var ms_per_frame = parseInt(SPEED.value);
 
 resizeCanvasToDisplaySize(CANVAS);
 
-GL.clearColor(0, 0, 0, 0);
+GL.clearColor(0, 0, 0, 1);
 GL.clear(GL.COLOR_BUFFER_BIT);
 
 GL.enable(GL.BLEND);
@@ -212,14 +209,20 @@ class GameInstance {
             this.renderer.addRenderable(label.getRenderable(), LAYERS.ship_label)
         }
 
-        // this.vor_shader.uniform(GL, "u_planets", new Uniform3fv(planets));
-
         // Set slider correctly
         SLIDER.max = this.turn_count - 1 + '';
     }
 
     on_resize() {
         this.resizer = new Resizer(CANVAS, [...f32v(this.game.get_viewbox(), 4)], true);
+
+        const _bbox = this.resizer.get_viewbox();
+        const bbox = {
+            'xl': _bbox[0], 'xr': _bbox[0] + _bbox[2],
+            'yt': _bbox[1], 'yb': _bbox[1] + _bbox[3]
+        };
+
+        this.vor_builder.resize(GL, bbox);
     }
 
     _update_state() {
