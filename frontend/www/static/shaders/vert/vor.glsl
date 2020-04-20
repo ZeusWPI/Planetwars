@@ -4,16 +4,19 @@ precision mediump float;
 
 attribute vec2 a_pos;
 attribute float a_own;
+attribute float a_intensity;
 
 uniform vec3 u_planet_colours[$PLANETS * 2];
 uniform vec4 u_viewbox;         // [x, y, width, height]
 uniform vec2 u_resolution;
 uniform float u_time;
 
+varying float v_intensity;
 varying vec2 v_pos;
 varying vec3 v_color;
 
 void main() {
+    v_intensity = a_intensity;
     int own = int(a_own);
 
     vec2 uv = a_pos;

@@ -13,7 +13,6 @@ function to_key(p: Point): string {
 
 function round_point(center: Point, point: Point, amount_fn = (b: number) => 0.7): Point {
     const d = dist(center, point, true);
-    console.log("f:", amount_fn(d));
     const x = center.x + amount_fn(d) * (point.x - center.x);
     const y = center.y + amount_fn(d) * (point.y - center.y);
     return { 'x': x, 'y': y };
@@ -46,10 +45,7 @@ function build_point_map(es: Voronoi.HalfEdge[]): (point: Point) => Point {
 }
 
 function get_round_fn(dist_mean: number, amount = 0.7): (d: number) => number {
-    return (d) => {
-        console.log(arcctg(d - dist_mean));
-        return arcctg((d - dist_mean) * 3) / Math.PI / 2 + 0.5
-    }
+    return (d) => arcctg((d - dist_mean) / dist_mean) / Math.PI + 0.6;
 }
 
 function dist(a: Point, b: Point, norm = false): number {
@@ -89,8 +85,13 @@ export class VoronoiBuilder {
 
             a_pos.push(cell.site.x, cell.site.y);
             a_own.push(planetId);
+            a_own.push(1);
 
-            const dist_mean = cell.halfedges.map(e => dist(cell.site, e.getStartpoint(), true)).reduce((a, b) => a + b, 0) / cell.halfedges.length;
+            const dist_mean = cell.halfedges.map(e => {
+                const start = e.getStartpoint();
+                const end = e.getEndpoint();
+                return dist(cell.site, start, true) + dist(cell.site, {'x': (start.x + end.x) / 2, 'y': (start.y + end.y) / 2}, true)
+            }).reduce((a, b) => a + b, 0) / cell.halfedges.length / 2;
             const round_fn = get_round_fn(dist_mean);
 
             for (let edge of cell.halfedges) {
@@ -107,18 +108,21 @@ export class VoronoiBuilder {
                 ids.push(centerId);
                 ids.push(vertCount++);
                 a_pos.push(start.x, start.y);
-                a_own.push(-1);
+                a_own.push(planetId);
+                a_own.push(0);
 
                 ids.push(vertCount++);
                 a_pos.push(center.x, center.y);
-                a_own.push(-1);
+                a_own.push(planetId);
+                a_own.push(0);
 
                 ids.push(centerId);
                 ids.push(vertCount - 1);
 
                 ids.push(vertCount++);
                 a_pos.push(end.x, end.y);
-                a_own.push(-1);
+                a_own.push(planetId);
+                a_own.push(0);
             }
         }
 
@@ -131,6 +135,7 @@ export class VoronoiBuilder {
 
         const layout_own = new VertexBufferLayout();
         layout_own.push(gl.FLOAT, 1, 4, "a_own");
+        layout_own.push(gl.FLOAT, 1, 4, "a_intensity");
 
         const vao = new VertexArray();
         vao.addBuffer(vb_pos, layout_pos);
