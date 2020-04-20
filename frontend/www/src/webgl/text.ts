@@ -1,6 +1,6 @@
 import { Texture } from "./texture";
 import { Dictionary } from "./util";
-import { Renderable, RenderShit } from "./renderer";
+import { Renderable, DefaultRenderable } from "./renderer";
 import { Uniform, Shader, UniformMatrix3fv } from "./shader";
 import { IndexBuffer, VertexBuffer } from "./buffer";
 import { VertexBufferLayout, VertexArray } from "./vertexBufferLayout";
@@ -43,10 +43,8 @@ export class LabelFactory {
     }
 }
 
-export class Label implements Renderable {
-    inner: Renderable;
-    ib: IndexBuffer;
-    vb: VertexBuffer;
+export class Label {
+    inner: DefaultRenderable;
 
     font: FontInfo;
 
@@ -54,30 +52,31 @@ export class Label implements Renderable {
         this.font = font;
 
         const uniforms = transform ? { "u_trans": transform, "u_trans_next": transform, } : {};
-        this.ib = new IndexBuffer(gl, []);
-        this.vb = new VertexBuffer(gl, []);
+        const ib = new IndexBuffer(gl, []);
+        const vb_pos = new VertexBuffer(gl, []);
+        const vb_tex = new VertexBuffer(gl, []);
 
-        const layout = new VertexBufferLayout();
-        layout.push(gl.FLOAT, 2, 4, "a_position");
-        layout.push(gl.FLOAT, 2, 4, "a_texCoord");
+        const layout_pos = new VertexBufferLayout();
+        layout_pos.push(gl.FLOAT, 2, 4, "a_position");
+
+        const layout_tex = new VertexBufferLayout();
+        layout_tex.push(gl.FLOAT, 2, 4, "a_texCoord");
 
         const vao = new VertexArray();
-        vao.addBuffer(this.vb, layout);
+        vao.addBuffer(vb_pos, layout_pos);
+        vao.addBuffer(vb_tex, layout_tex);
 
-        this.inner = new RenderShit(this.ib, vao, shader, [tex], uniforms);
+        this.inner = new DefaultRenderable(ib, vao, shader, [tex], uniforms);
     }
 
-    getUniforms(): Dictionary<Uniform> {
-        return this.inner.getUniforms();
-    }
-
-    render(gl: WebGLRenderingContext): void {
-        return this.inner.render(gl);
+    getRenderable(): DefaultRenderable {
+        return this.inner;
     }
 
     setText(gl: WebGLRenderingContext, text: string, h_align = Align.Begin, v_align = Align.Begin) {
         const idxs = [];
-        const verts = [];
+        const verts_pos = [];
+        const verts_tex = [];
 
         const letterHeight = this.font.letterHeight / this.font.textureHeight;
         let xPos = 0;
@@ -112,10 +111,16 @@ export class Label implements Renderable {
                 const letterWidth = info.width / this.font.textureWidth;
                 const x0 = info.x / this.font.textureWidth;
                 const y0 = info.y / this.font.textureHeight;
-                verts.push(xPos,      yStart,   x0,               y0);
-                verts.push(xPos + dx, yStart,   x0 + letterWidth, y0);
-                verts.push(xPos,      yStart-1, x0,               y0 + letterHeight);
-                verts.push(xPos + dx, yStart-1, x0 + letterWidth, y0 + letterHeight);
+                verts_pos.push(xPos,      yStart);
+                verts_pos.push(xPos + dx, yStart);
+                verts_pos.push(xPos,      yStart-1);
+                verts_pos.push(xPos + dx, yStart-1);
+
+                verts_tex.push(x0,               y0);
+                verts_tex.push(x0 + letterWidth, y0);
+                verts_tex.push(x0,               y0 + letterHeight);
+                verts_tex.push(x0 + letterWidth, y0 + letterHeight);
+
                 xPos += dx;
 
                 idxs.push(j+0, j+1, j+2, j+1, j+2, j+3);
@@ -126,8 +131,9 @@ export class Label implements Renderable {
             }
         }
 
-        this.ib.updateData(gl, idxs);
-        this.vb.updateData(gl, verts);
+        this.inner.updateIndexBuffer(gl, idxs);
+        this.inner.updateVAOBuffer(gl, 0, verts_pos);
+        this.inner.updateVAOBuffer(gl, 1, verts_tex);
     }
 }
 

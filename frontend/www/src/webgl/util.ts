@@ -36,7 +36,11 @@ export class FPSCounter {
   last: number;
   count: number;
   _delta: number;
-  _prev: number
+  _prev: number;
+
+  _frame_start: number;
+  _total_frametime: number;
+
   constructor() {
     this.last = 0;
     this.count = 0;
@@ -45,15 +49,21 @@ export class FPSCounter {
   }
 
   frame(now: number) {
+    this._frame_start = performance.now();
     this.count += 1;
     this._delta = now - this._prev;
     this._prev = now;
 
     if (now - this.last > 1000) {
       this.last = now;
-      console.log(this.count + " fps");
+      console.log(`${this.count} fps, ${(this._total_frametime / this.count).toFixed(2)}ms avg per frame`);
       this.count = 0;
+      this._total_frametime = 0;
     }
+  }
+
+  frame_end() {
+    this._total_frametime += (performance.now() - this._frame_start);
   }
 
   delta(now: number): number {

@@ -1,13 +1,20 @@
 import { Game } from "planetwars";
 import { memory } from "planetwars/planetwars_bg";
-import { Resizer, resizeCanvasToDisplaySize, FPSCounter, url_to_mesh, Mesh } from "./webgl/util";
-import { Shader, Uniform4f, Uniform2fv, Uniform3fv, Uniform1i, Uniform1f, Uniform2f, ShaderFactory, Uniform3f, UniformMatrix3fv, UniformBool } from './webgl/shader';
+import { Resizer, resizeCanvasToDisplaySize, FPSCounter, url_to_mesh, Mesh, Dictionary } from "./webgl/util";
+import { Shader, Uniform4f, Uniform3fv, Uniform1f, Uniform2f, ShaderFactory, Uniform3f, UniformMatrix3fv, UniformBool } from './webgl/shader';
 import { Renderer } from "./webgl/renderer";
 import { VertexBuffer, IndexBuffer } from "./webgl/buffer";
 import { VertexBufferLayout, VertexArray } from "./webgl/vertexBufferLayout";
-import { Texture } from "./webgl/texture";
-import { callbackify } from "util";
 import { defaultLabelFactory, LabelFactory, Align, Label } from "./webgl/text";
+import { VoronoiBuilder } from "./voronoi/voronoi";
+import { BBox } from "./voronoi/voronoi-core";
+
+function to_bbox(box: number[]): BBox {
+    return {
+        'xl': box[0], 'xr': box[0] + box[2],
+        'yt': box[1], 'yb': box[1] + box[3]
+    };
+}
 
 function f32v(ptr: number, size: number): Float32Array {
     return new Float32Array(memory.buffer, ptr, size);
@@ -18,61 +25,44 @@ function i32v(ptr: number, size: number): Int32Array {
 }
 
 export function set_game_name(name: string) {
-    GAMENAME.innerHTML = name;
+    ELEMENTS["name"].innerHTML = name;
 }
-
-const GAMENAME = document.getElementById("name");
-
-const TURNCOUNTER = document.getElementById("turnCounter");
-
-const COUNTER = new FPSCounter();
-const LOADER = document.getElementById("main");
-
-const SLIDER = <HTMLInputElement>document.getElementById("turnSlider");
-const FILESELECTOR = <HTMLInputElement>document.getElementById("fileselect");
-const SPEED = <HTMLInputElement>document.getElementById("speed");
 
 export function set_loading(loading: boolean) {
     if (loading) {
-        if (!LOADER.classList.contains("loading")) {
-            LOADER.classList.add("loading");
+        if (!ELEMENTS["main"].classList.contains("loading")) {
+            ELEMENTS["main"].classList.add("loading");
         }
     } else {
-        LOADER.classList.remove("loading");
+        ELEMENTS["main"].classList.remove("loading");
     }
 }
 
-const URL = window.location.origin + window.location.pathname;
-export const LOCATION = URL.substring(0, URL.lastIndexOf("/") + 1);
-const CANVAS = <HTMLCanvasElement>document.getElementById("c");
+const ELEMENTS = {};
+["name", "turnCounter", "main", "turnSlider", "fileselect", "speed", "canvas"].forEach(n => ELEMENTS[n] = document.getElementById(n));
+
+const CANVAS = ELEMENTS["canvas"];
 const RESOLUTION = [CANVAS.width, CANVAS.height];
+
+const LAYERS = {
+    'vor': -1,  // Background
+    'planet': 1,
+    'planet_label': 2,
+    'ship': 3,
+    'ship_label': 4
+}
+
+const COUNTER = new FPSCounter();
+
+var ms_per_frame = parseInt(ELEMENTS["speed"].value);
 
 const GL = CANVAS.getContext("webgl");
 
-var ms_per_frame = parseInt(SPEED.value);
-
-resizeCanvasToDisplaySize(CANVAS);
-
-GL.clearColor(0, 0, 0, 0);
+GL.clearColor(0, 0, 0, 1);
 GL.clear(GL.COLOR_BUFFER_BIT);
 
 GL.enable(GL.BLEND);
 GL.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA);
-
-var SHADERFACOTRY: ShaderFactory;
-ShaderFactory.create_factory(
-    LOCATION + "static/shaders/frag/simple.glsl", LOCATION + "static/shaders/vert/simple.glsl"
-).then((e) => SHADERFACOTRY = e);
-
-var VOR_SHADER_FACTORY: ShaderFactory;
-ShaderFactory.create_factory(
-    LOCATION + "static/shaders/frag/vor.glsl", LOCATION + "static/shaders/vert/vor.glsl"
-).then((e) => VOR_SHADER_FACTORY = e);
-
-var IMAGE_SHADER_FACTORY: ShaderFactory;
-ShaderFactory.create_factory(
-    LOCATION + "static/shaders/frag/image.glsl", LOCATION + "static/shaders/vert/simple.glsl"
-).then((e) => IMAGE_SHADER_FACTORY = e);
 
 class GameInstance {
     resizer: Resizer;
@@ -89,24 +79,24 @@ class GameInstance {
     renderer: Renderer;
     planet_count: number;
 
+    vor_builder: VoronoiBuilder;
+
     vor_counter = 3;
     use_vor = true;
-    playing = true;    // 0 is paused, 1 is playing but not rerendered, 2 is playing and rerendered
+    playing = true;
     time_stopped_delta = 0;
     last_time = 0;
     frame = -1;
 
-    ship_indices: number[];
-
     turn_count = 0;
 
-    constructor(game: Game, meshes: Mesh[], ship_mesh: Mesh) {
+    constructor(game: Game, meshes: Mesh[], ship_mesh: Mesh, shaders: Dictionary<ShaderFactory>) {
         this.game = game;
         this.planet_count = this.game.get_planet_count();
 
-        this.shader = SHADERFACOTRY.create_shader(GL, { "MAX_CIRCLES": '' + this.planet_count });
-        this.image_shader = IMAGE_SHADER_FACTORY.create_shader(GL);
-        this.vor_shader = VOR_SHADER_FACTORY.create_shader(GL, { "PLANETS": '' + this.planet_count });
+        this.shader = shaders["normal"].create_shader(GL, { "MAX_CIRCLES": '' + this.planet_count });
+        this.image_shader = shaders["image"].create_shader(GL);
+        this.vor_shader = shaders["vor"].create_shader(GL, { "PLANETS": '' + this.planet_count });
 
         this.text_factory = defaultLabelFactory(GL, this.image_shader);
         this.planet_labels = [];
@@ -116,33 +106,33 @@ class GameInstance {
         this.renderer = new Renderer();
         this.game.update_turn(0);
 
-
-
-        const indexBuffer = new IndexBuffer(GL, [
-            0, 1, 2,
-            1, 2, 3,
-        ]);
-
-        const positionBuffer = new VertexBuffer(GL, [
-            -1, -1,
-            -1, 1,
-            1, -1,
-            1, 1,
-        ]);
-
-        const layout = new VertexBufferLayout();
-        layout.push(GL.FLOAT, 2, 4, "a_pos");
-
-        const vao = new VertexArray();
-        vao.addBuffer(positionBuffer, layout);
-
-        this.renderer.addToDraw(indexBuffer, vao, this.vor_shader);
-
         // Setup key handling
         document.addEventListener('keydown', this.handleKey.bind(this));
 
+        // List of [(x, y, r)] for all planets
         const planets = f32v(game.get_planets(), this.planet_count * 3);
+        this._create_voronoi(planets);
+        this._create_planets(planets, meshes);
+        this._create_shipes(ship_mesh);
 
+        // Set slider correctly
+        this.turn_count = game.turn_count();
+        ELEMENTS["turnSlider"].max = this.turn_count - 1 + '';
+    }
+
+    _create_voronoi(planets: Float32Array) {
+        const planet_points = [];
+        for (let i = 0; i < planets.length; i += 3) {
+            planet_points.push({ 'x': -planets[i], 'y': -planets[i + 1] });
+        }
+
+        const bbox = to_bbox(this.resizer.get_viewbox());
+
+        this.vor_builder = new VoronoiBuilder(GL, this.vor_shader, planet_points, bbox);
+        this.renderer.addRenderable(this.vor_builder.getRenderable(), LAYERS.vor);
+    }
+
+    _create_planets(planets: Float32Array, meshes: Mesh[]) {
         for (let i = 0; i < this.planet_count; i++) {
             {
                 const transform = new UniformMatrix3fv([
@@ -166,7 +156,9 @@ class GameInstance {
                     {
                         "u_trans": transform,
                         "u_trans_next": transform,
-                    }
+                    },
+                    [],
+                    LAYERS.planet
                 );
             }
 
@@ -174,18 +166,17 @@ class GameInstance {
                 const transform = new UniformMatrix3fv([
                     1., 0, 0,
                     0, 1., 0,
-                    -planets[i * 3], -planets[i * 3 + 1] -1.2, 1.,
+                    -planets[i * 3], -planets[i * 3 + 1] - 1.2, 1.,
                 ]);
 
                 const label = this.text_factory.build(GL, transform);
-                this.renderer.addRenderable(label);
                 this.planet_labels.push(label);
+                this.renderer.addRenderable(label.getRenderable(), LAYERS.planet_label);
             }
         }
+    }
 
-        this.turn_count = game.turn_count();
-
-        this.ship_indices = [];
+    _create_shipes(ship_mesh: Mesh) {
         const ship_ibo = new IndexBuffer(GL, ship_mesh.cells);
         const ship_positions = new VertexBuffer(GL, ship_mesh.positions);
         const ship_layout = new VertexBufferLayout();
@@ -194,31 +185,33 @@ class GameInstance {
         ship_vao.addBuffer(ship_positions, ship_layout);
 
         for (let i = 0; i < this.game.get_max_ships(); i++) {
-            this.ship_indices.push(
-                this.renderer.addToDraw(
-                    ship_ibo,
-                    ship_vao,
-                    this.shader,
-                    {}
-                )
+            this.renderer.addToDraw(
+                ship_ibo,
+                ship_vao,
+                this.shader,
+                {},
+                [],
+                LAYERS.ship
             );
 
             const label = this.text_factory.build(GL);
             this.ship_labels.push(label);
-            this.renderer.addRenderable(label)
+            this.renderer.addRenderable(label.getRenderable(), LAYERS.ship_label)
         }
-
-        this.vor_shader.uniform(GL, "u_planets", new Uniform3fv(planets));
-
-        // Set slider correctly
-        SLIDER.max = this.turn_count - 1 + '';
     }
 
     on_resize() {
         this.resizer = new Resizer(CANVAS, [...f32v(this.game.get_viewbox(), 4)], true);
+        const bbox = to_bbox(this.resizer.get_viewbox());
+        this.vor_builder.resize(GL, bbox);
     }
 
     _update_state() {
+        this._update_planets();
+        this._update_ships();
+    }
+
+    _update_planets() {
         const colours = f32v(this.game.get_planet_colors(), this.planet_count * 6);
         const planet_ships = i32v(this.game.get_planet_ships(), this.planet_count);
 
@@ -226,13 +219,15 @@ class GameInstance {
 
         for (let i = 0; i < this.planet_count; i++) {
             const u = new Uniform3f(colours[i * 6], colours[i * 6 + 1], colours[i * 6 + 2]);
-            this.renderer.updateUniform(2 * i + 1, (us) => us["u_color"] = u);
+            this.renderer.updateUniform(i, (us) => us["u_color"] = u, LAYERS.planet);
             const u2 = new Uniform3f(colours[i * 6 + 3], colours[i * 6 + 4], colours[i * 6 + 5]);
-            this.renderer.updateUniform(2 * i + 1, (us) => us["u_color_next"] = u2);
+            this.renderer.updateUniform(i, (us) => us["u_color_next"] = u2, LAYERS.planet);
 
-            this.planet_labels[i].setText(GL, "*"+planet_ships[i], Align.Middle, Align.Begin);
+            this.planet_labels[i].setText(GL, "*" + planet_ships[i], Align.Middle, Align.Begin);
         }
+    }
 
+    _update_ships() {
         const ship_count = this.game.get_ship_count();
         const ships = f32v(this.game.get_ship_locations(), ship_count * 9 * 2);
         const labels = f32v(this.game.get_ship_label_locations(), ship_count * 9 * 2);
@@ -240,17 +235,13 @@ class GameInstance {
         const ship_colours = f32v(this.game.get_ship_colours(), ship_count * 3);
 
         for (let i = 0; i < this.game.get_max_ships(); i++) {
-            const index = this.ship_indices[i];
             if (i < ship_count) {
+                this.ship_labels[i].setText(GL, "" + ship_counts[i], Align.Middle, Align.Middle);
 
-                this.ship_labels[i].setText(GL, ""+ship_counts[i], Align.Middle, Align.Middle);
-
-                this.renderer.enableRendershit(index);
-                this.renderer.enableRendershit(index+1);
+                this.renderer.enableRenderable(i, LAYERS.ship);
+                this.renderer.enableRenderable(i, LAYERS.ship_label);
 
                 const u = new Uniform3f(ship_colours[i * 3], ship_colours[i * 3 + 1], ship_colours[i * 3 + 2]);
-                // const t1 = new UniformMatrix3fv(new Float32Array(ships, i * 18, 9));
-                // const t2 = new UniformMatrix3fv(new Float32Array(ships, i * 18 + 9, 9));
 
                 const t1 = new UniformMatrix3fv(ships.slice(i * 18, i * 18 + 9));
                 const t2 = new UniformMatrix3fv(ships.slice(i * 18 + 9, i * 18 + 18));
@@ -258,21 +249,21 @@ class GameInstance {
                 const tl1 = new UniformMatrix3fv(labels.slice(i * 18, i * 18 + 9));
                 const tl2 = new UniformMatrix3fv(labels.slice(i * 18 + 9, i * 18 + 18));
 
-                this.renderer.updateUniform(index, (us) => {
+                this.renderer.updateUniform(i, (us) => {
                     us["u_color"] = u;
                     us["u_color_next"] = u;
                     us["u_trans"] = t1;
                     us["u_trans_next"] = t2;
-                });
+                }, LAYERS.ship);
 
-                this.renderer.updateUniform(index+1, (us) => {
+                this.renderer.updateUniform(i, (us) => {
                     us["u_trans"] = tl1;
                     us["u_trans_next"] = tl2;
-                });
+                }, LAYERS.ship_label);
 
             } else {
-                this.renderer.disableRenderShift(index);
-                this.renderer.disableRenderShift(index+1);
+                this.renderer.disableRenderable(i, LAYERS.ship);
+                this.renderer.disableRenderable(i, LAYERS.ship_label);
             }
         }
     }
@@ -290,6 +281,7 @@ class GameInstance {
             this.use_vor = false;
         }
 
+        // If not playing, still reder with different viewbox, so people can still pan etc.
         if (!this.playing) {
             this.last_time = time;
 
@@ -300,16 +292,19 @@ class GameInstance {
             this.renderer.render(GL);
             return;
         }
-        if (time > this.last_time + ms_per_frame) {
 
+        // Check if turn is still correct
+        if (time > this.last_time + ms_per_frame) {
             this.last_time = time;
             this.updateTurn(this.frame + 1);
         }
 
+        // Do GL things
         GL.bindFramebuffer(GL.FRAMEBUFFER, null);
         GL.viewport(0, 0, GL.canvas.width, GL.canvas.height);
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
+        this.vor_shader.uniform(GL, "u_time", new Uniform1f((time - this.last_time) / ms_per_frame));
         this.vor_shader.uniform(GL, "u_viewbox", new Uniform4f(this.resizer.get_viewbox()));
         this.vor_shader.uniform(GL, "u_resolution", new Uniform2f(RESOLUTION));
         this.vor_shader.uniform(GL, "u_vor", new UniformBool(this.use_vor));
@@ -324,7 +319,10 @@ class GameInstance {
         this.image_shader.uniform(GL, "u_viewbox", new Uniform4f(this.resizer.get_viewbox()));
         this.image_shader.uniform(GL, "u_resolution", new Uniform2f(RESOLUTION));
 
+        // Render
         this.renderer.render(GL);
+
+        COUNTER.frame_end();
     }
 
     updateTurn(turn: number) {
@@ -338,8 +336,8 @@ class GameInstance {
             this.playing = true;
         }
 
-        TURNCOUNTER.innerHTML = this.frame + " / " + this.turn_count;
-        SLIDER.value = this.frame + '';
+        ELEMENTS["turnCounter"].innerHTML = this.frame + " / " + (this.turn_count - 1);
+        ELEMENTS["turnSlider"].value = this.frame + '';
     }
 
     handleKey(event: KeyboardEvent) {
@@ -365,33 +363,48 @@ class GameInstance {
 
         // d key
         if (event.keyCode == 68) {
-            SPEED.value = ms_per_frame + 10 + '';
-            SPEED.onchange(undefined);
+            ELEMENTS["speed"].value = ms_per_frame + 10 + '';
+            ELEMENTS["speed"].onchange(undefined);
         }
 
         // a key
         if (event.keyCode == 65) {
-            SPEED.value = Math.max(ms_per_frame - 10, 0) + '';
-            SPEED.onchange(undefined);
+            ELEMENTS["speed"].value = Math.max(ms_per_frame - 10, 0) + '';
+            ELEMENTS["speed"].onchange(undefined);
         }
     }
 }
 
 var game_instance: GameInstance;
-var meshes;
+var meshes: Mesh[];
+var shaders: Dictionary<ShaderFactory>;
 
 export async function set_instance(source: string) {
-    if (!meshes) {
-        meshes = await Promise.all(
-            ["ship.svg", "earth.svg", "mars.svg", "venus.svg"].map(
-                (name) => "static/res/assets/" + name
-            ).map(url_to_mesh)
+    if (!meshes || !shaders) {
+        const mesh_promises = ["ship.svg", "earth.svg", "mars.svg", "venus.svg"].map(
+            (name) => "static/res/assets/" + name
+        ).map(url_to_mesh);
+
+        const shader_promies = [
+            (async () => <[string, ShaderFactory]>["normal", await ShaderFactory.create_factory("static/shaders/frag/simple.glsl", "static/shaders/vert/simple.glsl")])(),
+            (async () => <[string, ShaderFactory]>["vor", await ShaderFactory.create_factory("static/shaders/frag/vor.glsl", "static/shaders/vert/vor.glsl")])(),
+            (async () => <[string, ShaderFactory]>["image", await ShaderFactory.create_factory("static/shaders/frag/image.glsl", "static/shaders/vert/simple.glsl")])(),
+        ];
+        let shaders_array: [string, ShaderFactory][];
+        [meshes, shaders_array] = await Promise.all(
+            [
+                Promise.all(mesh_promises),
+                Promise.all(shader_promies),
+            ]
         );
+
+        shaders = {};
+        shaders_array.forEach(([name, fac]) => shaders[name] = fac);
     }
 
     resizeCanvasToDisplaySize(CANVAS);
 
-    game_instance = new GameInstance(Game.new(source), meshes.slice(1), meshes[0]);
+    game_instance = new GameInstance(Game.new(source), meshes.slice(1), meshes[0], shaders);
 
     set_loading(false);
 }
@@ -404,26 +417,14 @@ window.addEventListener('resize', function () {
     }
 }, { capture: false, passive: true })
 
-SLIDER.oninput = function () {
+ELEMENTS["turnSlider"].oninput = function () {
     if (game_instance) {
-        game_instance.updateTurn(parseInt(SLIDER.value));
+        game_instance.updateTurn(parseInt(ELEMENTS["turnSlider"].value));
     }
 }
 
-FILESELECTOR.onchange = function () {
-    const file = FILESELECTOR.files[0];
-    if (!file) { return; }
-    var reader = new FileReader();
-
-    reader.onload = function () {
-        set_instance(<string>reader.result);
-    }
-
-    reader.readAsText(file);
-}
-
-SPEED.onchange = function () {
-    ms_per_frame = parseInt(SPEED.value);
+ELEMENTS["speed"].onchange = function () {
+    ms_per_frame = parseInt(ELEMENTS["speed"].value);
 }
 
 function step(time: number) {
@@ -433,6 +434,5 @@ function step(time: number) {
 
     requestAnimationFrame(step);
 }
-// set_loading(false);
 
 requestAnimationFrame(step);
