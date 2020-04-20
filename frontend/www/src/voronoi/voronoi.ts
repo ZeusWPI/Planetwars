@@ -34,7 +34,7 @@ function build_point_map(es: Voronoi.HalfEdge[]): (point: Point) => Point {
         const start = edge.getStartpoint();
         const end = edge.getEndpoint();
 
-        if (dist(start, end) < 0.1 * mean) {    // These points have to be merged
+        if (dist(start, end) < 0.03 * mean) {    // These points have to be merged
             const middle = { 'x': (start.x + end.x) / 2, 'y': (start.y + end.y) / 2 };
             map[to_key(start)] = middle;
             map[to_key(end)] = middle;
@@ -71,6 +71,7 @@ export class VoronoiBuilder {
 
         const layout = new VertexBufferLayout();
         layout.push(gl.FLOAT, 2, 4, "a_pos");
+        layout.push(gl.FLOAT, 2, 4, "a_center");
         layout.push(gl.FLOAT, 1, 4, "a_own");
         layout.push(gl.FLOAT, 1, 4, "a_intensity");
 
@@ -108,6 +109,7 @@ export class VoronoiBuilder {
             const centerId = vertCount++;
 
             attrs.push(cell.site.x, cell.site.y);
+            attrs.push(cell.site.x, cell.site.y);
             attrs.push(planetId);
             attrs.push(1);
 
@@ -132,11 +134,13 @@ export class VoronoiBuilder {
                 ids.push(centerId);
                 ids.push(vertCount++);
                 attrs.push(start.x, start.y);
+                attrs.push(cell.site.x, cell.site.y);
                 attrs.push(planetId);
                 attrs.push(0);
 
                 ids.push(vertCount++);
                 attrs.push(center.x, center.y);
+                attrs.push(cell.site.x, cell.site.y);
                 attrs.push(planetId);
                 attrs.push(0);
 
@@ -145,6 +149,7 @@ export class VoronoiBuilder {
 
                 ids.push(vertCount++);
                 attrs.push(end.x, end.y);
+                attrs.push(cell.site.x, cell.site.y);
                 attrs.push(planetId);
                 attrs.push(0);
             }
@@ -152,7 +157,6 @@ export class VoronoiBuilder {
 
         this.inner.updateIndexBuffer(gl, ids);
         this.inner.updateVAOBuffer(gl, 0, attrs);
-        // this.inner.updateVAOBuffer(gl, 1, attrs);
 
         console.log(`Vor things took ${new Date().getTime() - start} ms!`)
     }
