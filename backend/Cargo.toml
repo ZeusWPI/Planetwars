@@ -1,6 +1,6 @@
 [package]
-name = "backend"
-version = "0.1.1"
+name = "planetwars"
+version = "0.1.2"
 authors = ["ajuvercr <arthur.vercruysse@ugent.be>"]
 edition = "2018"
 

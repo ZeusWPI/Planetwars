@@ -47,7 +47,7 @@ use std::collections::HashMap;
 
 /// Calculate viewbox from array of points (used in map preview), added to Tera engine.
 /// So this function can be called in template.
-fn calc_viewbox(value: Value, _: HashMap<String, Value>) -> tera::Result<Value> {
+fn calc_viewbox(value: &Value, _: &HashMap<String, Value>) -> tera::Result<Value> {
     let mut min_x = std::f64::MAX;
     let mut min_y = std::f64::MAX;
     let mut max_x = std::f64::MIN;
@@ -79,7 +79,7 @@ fn calc_viewbox(value: Value, _: HashMap<String, Value>) -> tera::Result<Value> 
 }
 
 /// Get's the right colour for planets
-fn get_colour(value: Value, _: HashMap<String, Value>) -> tera::Result<Value> {
+fn get_colour(value: &Value, _: &HashMap<String, Value>) -> tera::Result<Value> {
     return Ok(Value::String(
         COLOURS[value.as_u64().unwrap_or(0) as usize].to_string(),
     ));
