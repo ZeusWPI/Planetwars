@@ -113,8 +113,7 @@ async fn main() {
         .manage(Games::new())
         .attach(tera)
         .mount("/", routes)
-        .launch()
-        .unwrap();
+        .launch().await.unwrap();
 }
 
 /// Creates the actual game_manager
