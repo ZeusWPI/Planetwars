@@ -86,8 +86,8 @@ fn get_colour(value: &Value, _: &HashMap<String, Value>) -> tera::Result<Value> 
 }
 
 /// Async main function, starting logger, graph and rocket
-#[async_std::main]
-async fn main() {
+#[launch]
+async fn rocket() -> rocket::Rocket {
     let fut = graph::set_default();
 
     let sub = FmtSubscriber::builder()
@@ -98,6 +98,7 @@ async fn main() {
     let pool = ThreadPool::new().unwrap();
     pool.spawn_ok(fut.map(|_| ()));
     let gm = create_game_manager("0.0.0.0:9142", pool.clone()).await;
+    async_std::task::sleep(std::time::Duration::from_millis(100)).await;
 
     let mut routes = Vec::new();
     routes::fuel(&mut routes);
@@ -113,7 +114,6 @@ async fn main() {
         .manage(Games::new())
         .attach(tera)
         .mount("/", routes)
-        .launch().await.unwrap();
 }
 
 /// Creates the actual game_manager
