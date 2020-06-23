@@ -1,6 +1,7 @@
 [development]
 address = "localhost"
 port = 8000
+host_name = "localhost"
 
 [staging]
 address = "0.0.0.0"
@@ -9,3 +10,4 @@ port = 80
 [production]
 address = "0.0.0.0"
 port = 8123
+host_name = "mozaic.zeus.gent"
