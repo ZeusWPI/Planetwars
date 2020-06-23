@@ -20,7 +20,7 @@ mod maps;
 /// Handles all files located in the static folder
 #[get("/<file..>", rank = 6)]
 async fn files(file: PathBuf) -> Option<NamedFile> {
-    NamedFile::open(Path::new("static/").join(file)).ok()
+    NamedFile::open(Path::new("static/").join(file)).await.ok()
 }
 
 /// Routes the index page, rendering the index Template.
@@ -79,10 +79,12 @@ async fn get_played_games() -> Vec<GameState> {
         Ok(file) => {
             let file = BufReader::new(file);
             file.lines()
-                .filter_map(move |maybe| async {
-                    maybe
-                        .ok()
-                        .and_then(|line| serde_json::from_str::<FinishedState>(&line).ok())
+                .filter_map(move |maybe| {
+                    async {
+                        maybe
+                            .ok()
+                            .and_then(|line| serde_json::from_str::<FinishedState>(&line).ok())
+                    }
                 })
                 .map(|state| state.into())
                 .collect()
