@@ -124,14 +124,15 @@ class GameInstance {
     shaders: Dictionary<ShaderFactory>
   ) {
     this.game = game;
-    this.planet_count = this.game.get_planet_count();
+    const planets = game.get_planets();
+    this.planet_count = planets.length;
 
     this.shader = shaders["normal"].create_shader(GL, {
-      MAX_CIRCLES: "" + this.planet_count,
+      MAX_CIRCLES: "" + planets.length,
     });
     this.image_shader = shaders["image"].create_shader(GL);
     this.vor_shader = shaders["vor"].create_shader(GL, {
-      PLANETS: "" + this.planet_count,
+      PLANETS: "" + planets.length,
     });
 
     this.text_factory = defaultLabelFactory(GL, this.image_shader);
@@ -146,7 +147,6 @@ class GameInstance {
     document.addEventListener("keydown", this.handleKey.bind(this));
 
     // List of [(x, y, r)] for all planets
-    const planets = game.get_planets();
     this._create_voronoi(planets);
     this._create_planets(planets, meshes);
     this._create_shipes(ship_mesh);
@@ -308,14 +308,13 @@ class GameInstance {
   }
 
   _update_ships() {
-    const ship_count = this.game.get_ship_count();
     const ships = this.game.get_ship_locations();
     const labels = this.game.get_ship_label_locations();
     const ship_counts = this.game.get_ship_counts();
     const ship_colours = this.game.get_ship_colours();
 
     for (let i = 0; i < this.game.get_max_ships(); i++) {
-      if (i < ship_count) {
+      if (i < ship_counts.length) {
         this.ship_labels[i].setText(
           GL,
           "" + ship_counts[i],

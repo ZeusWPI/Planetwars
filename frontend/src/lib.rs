@@ -236,10 +236,6 @@ impl Game {
         self.current_planet_colours.clone()
     }
 
-    pub fn get_planet_count(&self) -> usize {
-        self.planets.len()
-    }
-
     pub fn turn_count(&self) -> usize {
         self.states.len()
     }
@@ -336,10 +332,6 @@ impl Game {
             .unwrap()
     }
 
-    pub fn get_ship_count(&self) -> usize {
-        self.states[self.turn].expeditions.len()
-    }
-
     pub fn get_ship_locations(&self) -> Vec<f32> {
         self.ship_locations.clone()
     }
@@ -356,20 +348,12 @@ impl Game {
         self.ship_counts.clone()
     }
 
-    pub fn get_voronoi_vert_count(&self) -> usize {
-        self.voronoi_vertices.len()
-    }
-
     pub fn get_voronoi_verts(&self) -> Vec<f32> {
         self.voronoi_vertices.clone()
     }
 
     pub fn get_voronoi_colours(&self) -> Vec<f32> {
         self.voronoi_colors.clone()
-    }
-
-    pub fn get_voronoi_ind_count(&self) -> usize {
-        self.voronoi_indices.len()
     }
 
     pub fn get_voronoi_inds(&self) -> Vec<usize> {
