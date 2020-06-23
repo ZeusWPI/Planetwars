@@ -23,6 +23,12 @@ async fn files(file: PathBuf) -> Option<NamedFile> {
     NamedFile::open(Path::new("static/").join(file)).await.ok()
 }
 
+/// Handles all games files to be served
+#[get("/games/<loc>")]
+async fn game_get(loc: String) -> Option<NamedFile> {
+    NamedFile::open(Path::new("games/").join(loc)).await.ok()
+}
+
 /// Routes the index page, rendering the index Template.
 #[get("/")]
 async fn index() -> Template {
@@ -62,6 +68,7 @@ pub fn fuel(routes: &mut Vec<Route>) {
     routes.extend(routes![
         files,
         index,
+        game_get,
         builder_get,
         visualizer_get,
         debug_get
@@ -71,11 +78,11 @@ pub fn fuel(routes: &mut Vec<Route>) {
     info::fuel(routes);
 }
 
-/// Reads games.ini
+/// Reads games.json
 /// File that represents all played games
 /// Ready to be visualized
 async fn get_played_games() -> Vec<GameState> {
-    match fs::File::open("games.ini").await {
+    match fs::File::open("games/games.json").await {
         Ok(file) => {
             let file = BufReader::new(file);
             file.lines()

@@ -36,11 +36,11 @@ impl PlanetWarsGame {
             .map(|p| (p.name.clone(), p.id))
             .collect();
 
-        if let Err(_) = create_dir("static/games") {
-            println!("'static/games' already exists");
+        if let Err(_) = create_dir("games") {
+            println!("'games' already exists");
         }
 
-        let file = File::create(format!("static/games/{}", location)).unwrap();
+        let file = File::create(format!("games/{}", location)).unwrap();
 
         Self {
             state,

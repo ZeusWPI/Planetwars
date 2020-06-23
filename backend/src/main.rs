@@ -125,5 +125,5 @@ async fn create_game_manager(tcp: &str, pool: ThreadPool) -> game::Manager {
     let ep = TcpEndpoint::new(addr, pool.clone());
 
     let gmb = gmb.add_endpoint(ep, "TCP endpoint");
-    gmb.build("games.ini", pool).await.unwrap()
+    gmb.build("games/games.json", pool).await.unwrap()
 }
