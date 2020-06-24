@@ -1,4 +1,4 @@
-#![feature(proc_macro_hygiene)]
+#![feature(proc_macro_hygiene, async_closure)]
 
 extern crate serde;
 #[macro_use]
@@ -40,6 +40,7 @@ mod util;
 use util::Games;
 use util::COLOURS;
 
+use rocket::fairing::AdHoc;
 use rocket_contrib::templates::tera::{self, Value};
 use rocket_contrib::templates::{Engines, Template};
 
@@ -85,6 +86,14 @@ fn get_colour(value: &Value, _: &HashMap<String, Value>) -> tera::Result<Value> 
     ));
 }
 
+struct HostNameFilter(String);
+
+impl tera::Filter for HostNameFilter {
+    fn filter(&self, _: &Value, _: &HashMap<String, Value>) -> tera::Result<Value> {
+        Ok(Value::String(self.0.clone()))
+    }
+}
+
 /// Async main function, starting logger, graph and rocket
 #[launch]
 async fn rocket() -> rocket::Rocket {
@@ -103,16 +112,25 @@ async fn rocket() -> rocket::Rocket {
     let mut routes = Vec::new();
     routes::fuel(&mut routes);
 
-    let tera = Template::custom(|engines: &mut Engines| {
-        engines.tera.register_filter("calc_viewbox", calc_viewbox);
-        engines.tera.register_filter("get_colour", get_colour);
-    });
-
     rocket::ignite()
         .manage(gm)
         .manage(pool)
         .manage(Games::new())
-        .attach(tera)
+        .attach(AdHoc::on_attach("Assets Config", async move |mut rocket| {
+            let host_name = rocket.config().await
+                .get_str("host_name")
+                .unwrap_or("mozaic.zeus.gent")
+                .to_string();
+
+            let tera = Template::custom(move |engines: &mut Engines| {
+                let filter = HostNameFilter(host_name.clone());
+                engines.tera.register_filter("calc_viewbox", calc_viewbox);
+                engines.tera.register_filter("get_colour", get_colour);
+                engines.tera.register_filter("get_host_name", filter);
+            });
+
+            Ok(rocket.attach(tera))
+        }))
         .mount("/", routes)
 }
 
@@ -125,5 +143,5 @@ async fn create_game_manager(tcp: &str, pool: ThreadPool) -> game::Manager {
     let ep = TcpEndpoint::new(addr, pool.clone());
 
     let gmb = gmb.add_endpoint(ep, "TCP endpoint");
-    gmb.build("games.ini", pool).await.unwrap()
+    gmb.build("games/games.json", pool).await.unwrap()
 }

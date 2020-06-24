@@ -1,15 +1,15 @@
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
 extern crate octoon_math;
+extern crate serde_json;
 extern crate voronoi;
 
-use octoon_math::{Mat3, Vec3, Vec2};
-use voronoi::{Point, voronoi, make_polygons};
+use octoon_math::Mat3;
+use voronoi::{make_polygons, voronoi, Point};
 
-mod utils;
 mod types;
+mod utils;
 
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
@@ -38,7 +38,7 @@ pub struct Circle {
 
 use std::f32::consts::PI;
 fn spr(from: f32) -> f32 {
-    let pi2 = PI*2.;
+    let pi2 = PI * 2.;
     ((from % pi2) + pi2) % pi2
 }
 
@@ -50,17 +50,17 @@ impl Circle {
         let y2 = p2.y;
 
         // Distance between planets
-        let q = ((x2-x1).powi(2) + (y2-y1).powi(2)).sqrt();
+        let q = ((x2 - x1).powi(2) + (y2 - y1).powi(2)).sqrt();
         // Center of between planets
-        let x3 = (x1+x2)/2.0;
-        let y3 = (y1+y2)/2.0;
+        let x3 = (x1 + x2) / 2.0;
+        let y3 = (y1 + y2) / 2.0;
 
         // Radius of circle
         let r = q * 1.0;
 
         // Center of circle
-        let x = x3 + (r.powi(2)-(q/2.0).powi(2)).sqrt() * (y1-y2)/q;
-        let y = y3 + (r.powi(2)-(q/2.0).powi(2)).sqrt() * (x2-x1)/q;
+        let x = x3 + (r.powi(2) - (q / 2.0).powi(2)).sqrt() * (y1 - y2) / q;
+        let y = y3 + (r.powi(2) - (q / 2.0).powi(2)).sqrt() * (x2 - x1) / q;
         // console_log!("{},{} -> {},{} ({},{} r={})", x1, y1, x2, y2, x, y, r);
 
         let a0 = spr((y - y1).atan2(x - x1));
@@ -74,7 +74,12 @@ impl Circle {
 
         let distance = q.ceil() as usize + 1;
         Self {
-            r, x, y, a0, ad, distance
+            r,
+            x,
+            y,
+            a0,
+            ad,
+            distance,
         }
     }
 
@@ -90,19 +95,31 @@ impl Circle {
 
         let cos = alpha.cos();
         let sin = alpha.sin();
-        (Mat3::new(
-            0.3, 0.0, 0.0,
-            0.0, 0.3, 0.0,
-            -self.x + cos * self.r, -self.y + sin * self.r, 0.3,
-        ), alpha)
+        (
+            Mat3::new(
+                0.3,
+                0.0,
+                0.0,
+                0.0,
+                0.3,
+                0.0,
+                -self.x + cos * self.r,
+                -self.y + sin * self.r,
+                0.3,
+            ),
+            alpha,
+        )
     }
 }
 
-fn create_voronoi(planets: &Vec<types::Planet>, bbox: f32) -> (Vec<Vec2<f32>>, Vec<usize>) {
-    let mut verts: Vec<Vec2<f32>> = planets.iter().map(|p| Vec2::new(p.x, p.y)).collect();
+fn create_voronoi(planets: &Vec<types::Planet>, bbox: f32) -> (Vec<f32>, Vec<usize>) {
+    let mut verts: Vec<[f32; 2]> = planets.iter().map(|p| [p.x, p.y]).collect();
     let mut ids = Vec::new();
 
-    let vor_points = planets.iter().map(|p| Point::new(p.x as f64, p.y as f64)).collect();
+    let vor_points = planets
+        .iter()
+        .map(|p| Point::new(p.x as f64, p.y as f64))
+        .collect();
 
     let vor = voronoi(vor_points, bbox as f64);
     let vor = make_polygons(&vor);
@@ -113,9 +130,8 @@ fn create_voronoi(planets: &Vec<types::Planet>, bbox: f32) -> (Vec<Vec2<f32>>, V
 
         let mut prev = ids.len() + poly.len() - 1;
         for p in poly.iter() {
-
             let now = verts.len();
-            verts.push(Vec2::new(p.x.0 as f32, p.y.0 as f32));
+            verts.push([p.x.0 as f32, p.y.0 as f32]);
 
             ids.push(idx);
             ids.push(now);
@@ -124,9 +140,8 @@ fn create_voronoi(planets: &Vec<types::Planet>, bbox: f32) -> (Vec<Vec2<f32>>, V
         }
     }
 
-    (verts, ids)
+    (verts.concat(), ids)
 }
-
 
 #[wasm_bindgen]
 pub struct Game {
@@ -138,18 +153,18 @@ pub struct Game {
     /* put extra shit here */
     view_box: Vec<f32>,
 
-    planets: Vec<Vec3<f32>>,
+    planets: Vec<f32>,
     planet_ships: Vec<usize>,
 
-    ship_locations: Vec<[f32;9]>,
-    ship_label_locations: Vec<[f32;9]>,
-    ship_colours: Vec<Vec3<f32>>,
+    ship_locations: Vec<f32>,
+    ship_label_locations: Vec<f32>,
+    ship_colours: Vec<f32>,
     ship_counts: Vec<usize>,
 
-    current_planet_colours: Vec<Vec3<f32>>,
+    current_planet_colours: Vec<f32>,
 
-    voronoi_vertices: Vec<Vec2<f32>>,
-    voronoi_colors: Vec<Vec3<f32>>,
+    voronoi_vertices: Vec<f32>,
+    voronoi_colors: Vec<f32>,
     voronoi_indices: Vec<usize>,
 }
 
@@ -161,9 +176,10 @@ impl Game {
         console_log!("Rust is busy being awesome!");
 
         // First line is fucked but we just filter out things that cannot parse
-        let states: Vec<types::State> = file.split("\n").filter_map(|line|
-            serde_json::from_str(line).ok()
-        ).collect();
+        let states: Vec<types::State> = file
+            .split("\n")
+            .filter_map(|line| serde_json::from_str(line).ok())
+            .collect();
 
         let mut planet_map = HashMap::new();
 
@@ -175,10 +191,14 @@ impl Game {
         }
         let view_box = utils::caclulate_viewbox(&states[0].planets);
 
+        let (voronoi_vertices, voronoi_indices) =
+            create_voronoi(&states[0].planets, view_box[2].max(view_box[3]));
 
-        let (voronoi_vertices, voronoi_indices) = create_voronoi(&states[0].planets, view_box[2].max(view_box[3]));
-
-        let voronoi_colors = voronoi_indices.iter().map(|_| Vec3::new(0.0, 0.0, 0.0)).collect(); // Init these colours on black
+        let voronoi_colors: Vec<f32> = voronoi_indices
+            .iter()
+            .map(|_| [0.0, 0.0, 0.0])
+            .collect::<Vec<[f32; 3]>>()
+            .concat(); // Init these colours on black
 
         Self {
             planets: utils::get_planets(&states[0].planets, 2.0),
@@ -200,24 +220,20 @@ impl Game {
         }
     }
 
-    pub fn get_viewbox(&self) -> *const f32 {
-        self.view_box.as_ptr()
+    pub fn get_viewbox(&self) -> Vec<f32> {
+        self.view_box.clone()
     }
 
-    pub fn get_planets(&self) -> *const Vec3<f32> {
-        self.planets.as_ptr()
+    pub fn get_planets(&self) -> Vec<f32> {
+        self.planets.clone()
     }
 
-    pub fn get_planet_ships(&self) -> *const usize {
-        self.planet_ships.as_ptr()
+    pub fn get_planet_ships(&self) -> Vec<usize> {
+        self.planet_ships.clone()
     }
 
-    pub fn get_planet_colors(&self) -> *const Vec3<f32> {
-        self.current_planet_colours.as_ptr()
-    }
-
-    pub fn get_planet_count(&self) -> usize {
-        self.planets.len()
+    pub fn get_planet_colors(&self) -> Vec<f32> {
+        self.current_planet_colours.clone()
     }
 
     pub fn turn_count(&self) -> usize {
@@ -225,7 +241,7 @@ impl Game {
     }
 
     pub fn update_turn(&mut self, turn: usize) -> usize {
-        self.turn = turn.min(self.states.len() -1);
+        self.turn = turn.min(self.states.len() - 1);
 
         self.update_planet_ships();
         self.update_planet_colours();
@@ -237,104 +253,113 @@ impl Game {
     }
 
     fn update_planet_ships(&mut self) {
-        self.planet_ships = self.states[self.turn].planets.iter().map(|p| p.ship_count as usize).collect();
+        self.planet_ships = self.states[self.turn]
+            .planets
+            .iter()
+            .map(|p| p.ship_count as usize)
+            .collect();
     }
 
     fn update_voronoi_colors(&mut self) {
         for (i, p) in self.states[self.turn].planets.iter().enumerate() {
-            self.voronoi_colors[i] = utils::COLORS[p.owner.unwrap_or(0) as usize % utils::COLORS.len()].into()
+            let color = utils::COLORS[p.owner.unwrap_or(0) as usize % utils::COLORS.len()];
+            self.voronoi_colors[i * 3 + 0] = color[0];
+            self.voronoi_colors[i * 3 + 1] = color[1];
+            self.voronoi_colors[i * 3 + 2] = color[2];
         }
     }
 
     fn update_planet_colours(&mut self) {
-        let mut new_vec = Vec::new();
+        let mut new_vec: Vec<[f32; 3]> = Vec::new();
         let planets_now = self.states[self.turn].planets.iter();
-        let planets_later = self.states[(self.turn + 1).min(self.states.len() - 1)].planets.iter();
+        let planets_later = self.states[(self.turn + 1).min(self.states.len() - 1)]
+            .planets
+            .iter();
 
         for (p1, p2) in planets_now.zip(planets_later) {
-            new_vec.push(
-                utils::COLORS[p1.owner.unwrap_or(0) as usize % utils::COLORS.len()].into()
-            );
-            new_vec.push(
-                utils::COLORS[p2.owner.unwrap_or(0) as usize % utils::COLORS.len()].into()
-            );
+            new_vec
+                .push(utils::COLORS[p1.owner.unwrap_or(0) as usize % utils::COLORS.len()].into());
+            new_vec
+                .push(utils::COLORS[p2.owner.unwrap_or(0) as usize % utils::COLORS.len()].into());
         }
 
-        self.current_planet_colours = new_vec;
+        self.current_planet_colours = new_vec.concat::<f32>();
     }
 
     fn update_ship_locations(&mut self) {
-        self.ship_locations = Vec::new();
-        self.ship_label_locations = Vec::new();
-        let t = Mat3::new(0.2, 0., 0.,
-                          0., 0.2, 0.0,
-                          0., -0.5, 0.2);
+        let mut new_sl = Vec::new();
+        let mut new_sll = Vec::new();
+
+        let t = Mat3::new(0.2, 0., 0., 0., 0.2, 0.0, 0., -0.5, 0.2);
 
         for ship in self.states[self.turn].expeditions.iter() {
-            let ((o1, a1), (o2, a2)) = self.planet_map.get(&(ship.origin.clone(), ship.destination.clone())).unwrap().get_for_remaining(ship.turns_remaining as usize);
-            self.ship_locations.push((o1 * Mat3::rotate_z(a1)).to_array());
-            self.ship_locations.push((o2 * Mat3::rotate_z(a2)).to_array());
+            let ((o1, a1), (o2, a2)) = self
+                .planet_map
+                .get(&(ship.origin.clone(), ship.destination.clone()))
+                .unwrap()
+                .get_for_remaining(ship.turns_remaining as usize);
+            new_sl.push((o1 * Mat3::rotate_z(a1)).to_array());
+            new_sl.push((o2 * Mat3::rotate_z(a2)).to_array());
 
-            self.ship_label_locations.push((o1 + t).to_array());
-            self.ship_label_locations.push((o2 + t).to_array());
+            new_sll.push((o1 + t).to_array());
+            new_sll.push((o2 + t).to_array());
         }
 
-        self.ship_colours = self.states[self.turn].expeditions.iter().map(|s| {
-            utils::COLORS[s.owner as usize % utils::COLORS.len()].into()
-        }).collect();
+        self.ship_locations = new_sl.concat();
+        self.ship_label_locations = new_sll.concat();
+
+        self.ship_colours = self.states[self.turn]
+            .expeditions
+            .iter()
+            .map(|s| utils::COLORS[s.owner as usize % utils::COLORS.len()])
+            .collect::<Vec<[f32; 3]>>()
+            .concat();
     }
 
     fn update_ship_counts(&mut self) {
-        self.ship_counts = self.states[self.turn].expeditions.iter().map(|s| {
-            s.ship_count as usize
-        }).collect();
+        self.ship_counts = self.states[self.turn]
+            .expeditions
+            .iter()
+            .map(|s| s.ship_count as usize)
+            .collect();
     }
 
     pub fn get_max_ships(&self) -> usize {
-        self.states.iter().map(|s| s.expeditions.len()).max().unwrap()
+        self.states
+            .iter()
+            .map(|s| s.expeditions.len())
+            .max()
+            .unwrap()
     }
 
-    pub fn get_ship_count(&self) -> usize {
-        self.states[self.turn].expeditions.len()
+    pub fn get_ship_locations(&self) -> Vec<f32> {
+        self.ship_locations.clone()
     }
 
-    pub fn get_ship_locations(&self) -> *const [f32;9] {
-        self.ship_locations.as_ptr()
+    pub fn get_ship_label_locations(&self) -> Vec<f32> {
+        self.ship_label_locations.clone()
     }
 
-    pub fn get_ship_label_locations(&self) -> *const [f32;9] {
-        self.ship_label_locations.as_ptr()
+    pub fn get_ship_colours(&self) -> Vec<f32> {
+        self.ship_colours.clone()
     }
 
-    pub fn get_ship_colours(&self) -> *const Vec3<f32> {
-        self.ship_colours.as_ptr()
+    pub fn get_ship_counts(&self) -> Vec<usize> {
+        self.ship_counts.clone()
     }
 
-    pub fn get_ship_counts(&self) -> *const usize {
-        self.ship_counts.as_ptr()
+    pub fn get_voronoi_verts(&self) -> Vec<f32> {
+        self.voronoi_vertices.clone()
     }
 
-    pub fn get_voronoi_vert_count(&self) -> usize {
-        self.voronoi_vertices.len()
+    pub fn get_voronoi_colours(&self) -> Vec<f32> {
+        self.voronoi_colors.clone()
     }
 
-    pub fn get_voronoi_verts(&self) -> *const Vec2<f32> {
-        self.voronoi_vertices.as_ptr()
-    }
-
-    pub fn get_voronoi_colours(&self) -> *const Vec3<f32> {
-        self.voronoi_colors.as_ptr()
-    }
-
-    pub fn get_voronoi_ind_count(&self) -> usize {
-        self.voronoi_indices.len()
-    }
-
-    pub fn get_voronoi_inds(&self) -> *const usize {
-        self.voronoi_indices.as_ptr()
+    pub fn get_voronoi_inds(&self) -> Vec<usize> {
+        self.voronoi_indices.clone()
     }
 }
-
 
 #[wasm_bindgen]
 extern "C" {

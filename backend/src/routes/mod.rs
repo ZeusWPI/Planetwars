@@ -20,7 +20,13 @@ mod maps;
 /// Handles all files located in the static folder
 #[get("/<file..>", rank = 6)]
 async fn files(file: PathBuf) -> Option<NamedFile> {
-    NamedFile::open(Path::new("static/").join(file)).ok()
+    NamedFile::open(Path::new("static/").join(file)).await.ok()
+}
+
+/// Handles all games files to be served
+#[get("/games/<loc>")]
+async fn game_get(loc: String) -> Option<NamedFile> {
+    NamedFile::open(Path::new("games/").join(loc)).await.ok()
 }
 
 /// Routes the index page, rendering the index Template.
@@ -62,6 +68,7 @@ pub fn fuel(routes: &mut Vec<Route>) {
     routes.extend(routes![
         files,
         index,
+        game_get,
         builder_get,
         visualizer_get,
         debug_get
@@ -71,18 +78,20 @@ pub fn fuel(routes: &mut Vec<Route>) {
     info::fuel(routes);
 }
 
-/// Reads games.ini
+/// Reads games.json
 /// File that represents all played games
 /// Ready to be visualized
 async fn get_played_games() -> Vec<GameState> {
-    match fs::File::open("games.ini").await {
+    match fs::File::open("games/games.json").await {
         Ok(file) => {
             let file = BufReader::new(file);
             file.lines()
-                .filter_map(move |maybe| async {
-                    maybe
-                        .ok()
-                        .and_then(|line| serde_json::from_str::<FinishedState>(&line).ok())
+                .filter_map(move |maybe| {
+                    async {
+                        maybe
+                            .ok()
+                            .and_then(|line| serde_json::from_str::<FinishedState>(&line).ok())
+                    }
                 })
                 .map(|state| state.into())
                 .collect()

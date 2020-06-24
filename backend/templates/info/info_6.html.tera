@@ -16,9 +16,9 @@ How to connect
 
     <pre class="commands">
         <code>
-$ wget mozaic.zeus.gent/bot/runner.py
-$ wget mozaic.zeus.gent/bot/simple.py
-$ python3 runner.py -p 9142 --host mozaic.zeus.gent \
+$ wget {{ "" | get_host_name}}/bot/runner.py
+$ wget {{ "" | get_host_name}}/bot/simple.py
+$ python3 runner.py -p 9142 --host {{ "" | get_host_name}}\
     -n &lt;Your name&gt; -i &lt;Id from the lobby&gt; \
     python3 simple.py
         </code>
