@@ -77,7 +77,7 @@ async fn post_game(
     state: State<'_, Games>,
 ) -> Result<Json<GameRes>, String> {
     let game = build_builder(
-        tp.clone(),
+        tp.inner().clone(),
         game_req.nop,
         game_req.max_turns,
         &game_req.map,

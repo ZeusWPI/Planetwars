@@ -1,4 +1,4 @@
-#![feature(proc_macro_hygiene, async_closure)]
+#![feature(proc_macro_hygiene, async_closure, decl_macro)]
 
 extern crate serde;
 #[macro_use]
@@ -86,16 +86,19 @@ fn get_colour(value: &Value, _: &HashMap<String, Value>) -> tera::Result<Value> 
     ));
 }
 
-struct HostNameFilter(String);
+#[async_std::main]
+async fn main(){
+    let rocket = rocket().await;
+    rocket.launch().await.expect("ROCKET CRASHED");
+}
 
-impl tera::Filter for HostNameFilter {
-    fn filter(&self, _: &Value, _: &HashMap<String, Value>) -> tera::Result<Value> {
-        Ok(Value::String(self.0.clone()))
-    }
+fn get_host_name(host_name: &str) -> impl Fn(&HashMap<String, Value>) -> tera::Result<Value> + Sync + Send {
+    let host_name = host_name.to_string();
+
+    move |_| Ok(Value::String(host_name.clone()))
 }
 
 /// Async main function, starting logger, graph and rocket
-#[launch]
 async fn rocket() -> rocket::Rocket {
     let fut = graph::set_default();
 
@@ -104,10 +107,11 @@ async fn rocket() -> rocket::Rocket {
         .finish();
     tracing::subscriber::set_global_default(sub).unwrap();
 
-    let pool = ThreadPool::new().unwrap();
+    let pool = ThreadPool::builder().create().unwrap();
     pool.spawn_ok(fut.map(|_| ()));
     let gm = create_game_manager("0.0.0.0:9142", pool.clone()).await;
-    async_std::task::sleep(std::time::Duration::from_millis(100)).await;
+
+    async_std::task::sleep(std::time::Duration::from_millis(200)).await;
 
     let mut routes = Vec::new();
     routes::fuel(&mut routes);
@@ -116,17 +120,16 @@ async fn rocket() -> rocket::Rocket {
         .manage(gm)
         .manage(pool)
         .manage(Games::new())
-        .attach(AdHoc::on_attach("Assets Config", async move |mut rocket| {
-            let host_name = rocket.config().await
-                .get_str("host_name")
-                .unwrap_or("mozaic.zeus.gent")
-                .to_string();
+        .attach(AdHoc::on_attach("Assets Config", async move |rocket| {
+            // let host_name = rocket.config()
+            //     .get_string("host_name")
+            //     .unwrap_or("mozaic.zeus.gent".to_string());
+            let host_name = "mozaic.zeus.gent".to_string();
 
             let tera = Template::custom(move |engines: &mut Engines| {
-                let filter = HostNameFilter(host_name.clone());
                 engines.tera.register_filter("calc_viewbox", calc_viewbox);
                 engines.tera.register_filter("get_colour", get_colour);
-                engines.tera.register_filter("get_host_name", filter);
+                engines.tera.register_function("get_host_name", get_host_name(&host_name));
             });
 
             Ok(rocket.attach(tera))
@@ -139,7 +142,7 @@ async fn rocket() -> rocket::Rocket {
 async fn create_game_manager(tcp: &str, pool: ThreadPool) -> game::Manager {
     let addr = tcp.parse::<SocketAddr>().unwrap();
     let (gmb, handle) = game::Manager::builder(pool.clone());
-    pool.spawn_ok(handle.map(|_| ()));
+    pool.spawn_ok(handle.map(|_| {println!("I'm done")}));
     let ep = TcpEndpoint::new(addr, pool.clone());
 
     let gmb = gmb.add_endpoint(ep, "TCP endpoint");
