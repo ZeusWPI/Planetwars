@@ -86,12 +86,6 @@ fn get_colour(value: &Value, _: &HashMap<String, Value>) -> tera::Result<Value> 
     ));
 }
 
-#[async_std::main]
-async fn main(){
-    let rocket = rocket().await;
-    rocket.launch().await.expect("ROCKET CRASHED");
-}
-
 fn get_host_name(host_name: &str) -> impl Fn(&HashMap<String, Value>) -> tera::Result<Value> + Sync + Send {
     let host_name = host_name.to_string();
 
@@ -99,6 +93,7 @@ fn get_host_name(host_name: &str) -> impl Fn(&HashMap<String, Value>) -> tera::R
 }
 
 /// Async main function, starting logger, graph and rocket
+#[rocket::launch]
 async fn rocket() -> rocket::Rocket {
     let fut = graph::set_default();
 
