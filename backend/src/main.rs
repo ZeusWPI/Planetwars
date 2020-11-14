@@ -11,6 +11,8 @@ extern crate futures;
 extern crate mozaic;
 extern crate rand;
 
+extern crate figment;
+
 extern crate tracing;
 extern crate tracing_futures;
 extern crate tracing_subscriber;
@@ -22,6 +24,7 @@ extern crate rocket_contrib;
 #[macro_use]
 extern crate educe;
 
+use figment::{providers::{Serialized, Env}};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 use std::net::SocketAddr;
@@ -45,6 +48,24 @@ use rocket_contrib::templates::tera::{self, Value};
 use rocket_contrib::templates::{Engines, Template};
 
 use std::collections::HashMap;
+
+/// Config for the planetwars server
+#[derive(Deserialize, Serialize, Debug)]
+pub struct PWConfig {
+    host_name: String,
+    address: String,
+    port: u16,
+}
+
+impl Default for PWConfig {
+    fn default() -> Self {
+        Self {
+            host_name: String::from("localhost"),
+            address: String::from("0.0.0.0"),
+            port: 8000,
+        }
+    }
+}
 
 /// Calculate viewbox from array of points (used in map preview), added to Tera engine.
 /// So this function can be called in template.
@@ -111,15 +132,20 @@ async fn rocket() -> rocket::Rocket {
     let mut routes = Vec::new();
     routes::fuel(&mut routes);
 
-    rocket::ignite()
+    let figment = rocket::Config::figment()
+        .merge(Serialized::defaults(PWConfig::default()))   // Extend but not overwrite
+        .merge(Env::prefixed("PW_"));                       // Overwrite
+
+    rocket::custom(figment)
         .manage(gm)
         .manage(pool)
         .manage(Games::new())
+        .attach(AdHoc::config::<PWConfig>())    // Manage the config
+        .mount("/", routes)
         .attach(AdHoc::on_attach("Assets Config", async move |rocket| {
-            // let host_name = rocket.config()
-            //     .get_string("host_name")
-            //     .unwrap_or("mozaic.zeus.gent".to_string());
-            let host_name = "mozaic.zeus.gent".to_string();
+            let pw_config = rocket.figment().extract::<PWConfig>().unwrap_or_default();
+            println!("PW Config {:?}", pw_config);
+            let host_name = pw_config.host_name.clone();
 
             let tera = Template::custom(move |engines: &mut Engines| {
                 engines.tera.register_filter("calc_viewbox", calc_viewbox);
@@ -129,7 +155,6 @@ async fn rocket() -> rocket::Rocket {
 
             Ok(rocket.attach(tera))
         }))
-        .mount("/", routes)
 }
 
 /// Creates the actual game_manager
