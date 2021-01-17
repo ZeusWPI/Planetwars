@@ -8,17 +8,17 @@ edition = "2018"
 
 [dependencies]
 mozaic = { git = "https://github.com/ZeusWPI/MOZAICP" }
-rand = { version = "0.7.3", default-features = true }
+rand = { version = "0.8.2", default-features = true }
 
-async-std = { version = "1.7.0", features = ["attributes"] }
-futures = { version = "0.3.8", features = ["executor", "thread-pool"] }
+async-std = { version = "1.9.0", features = ["attributes"] }
+futures = { version = "0.3.12", features = ["executor", "thread-pool"] }
 
-figment = "0.9.4"
+figment = "0.10.2"
 
-serde = "1.0.117"
-serde_derive = "1.0.117"
+serde = "1.0.119"
+serde_derive = "1.0.119"
 serde_json = "1.0"
-tracing = "0.1.21"
+tracing = "0.1.22"
 tracing-futures = "0.2.4"
 tracing-subscriber = "0.2.15"
 rocket = { git = "https://github.com/SergioBenitez/Rocket", branch = "master" }

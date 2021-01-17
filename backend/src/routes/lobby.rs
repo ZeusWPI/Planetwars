@@ -108,6 +108,7 @@ fn generate_string_id() -> String {
     rand::thread_rng()
         .sample_iter(&rand::distributions::Alphanumeric)
         .take(15)
+        .map(|x| x as char)
         .collect::<String>()
         + ".json"
 }
